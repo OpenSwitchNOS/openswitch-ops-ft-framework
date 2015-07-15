@@ -1,0 +1,20 @@
+# Files to ignore See "git help gitignore" for syntax.
+
+# Generic dump for one-off test scripts, etc.
+
+# Eclipse project files
+/.buildpath
+/.externalToolBuilders
+/.project
+/.pydevproject
+/.settings
+
+# Local execution results, when running outside autotest.
+/results/[0-9]*/
+
+# Files left by NFS when someone has a file open that gets deleted.
+.nfs*
+
+# Compiled Python files
+*.pyc
+*.pyo
