@@ -50,7 +50,7 @@ import host
 try:
     import RTL
 except ImportError:
-    common.LogOutput('debug', "RTL environment not available")
+    common.LogOutput('debug', "RTL environment not available - Not attached")
 
 # Extract the test case name here
 
