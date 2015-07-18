@@ -43,7 +43,7 @@ def DeviceInteract(**kwargs):
    
    connection.send(command)
    connection.send('\r')
-   time.sleep(10)
+   time.sleep(1)
    connectionBuffer = []
    #if errorCheck is True:
    #   common.LogOutput('debug', "Sending command {" + command + "} to device")
@@ -58,7 +58,7 @@ def DeviceInteract(**kwargs):
                                   'bash-\d+.\d+#\s*$',
                                   pexpect.EOF,
                                   pexpect.TIMEOUT], 
-                                 timeout=30)
+                                 timeout=70)
        #print "Index I got was ", index
        if index == 0:
            # Need to send login string
@@ -84,8 +84,9 @@ def DeviceInteract(**kwargs):
            connectionBuffer.append(connection.before)
        elif index == 4:
            # Got ONIE prompt - reboot and get to where we need to be
-           #print('Got ONIE prompt, Rebooting device')
-           connection.send("reboot \r")
+           #connection.send("reboot \r")
+           ErrorFlag = "Onie"
+           bailflag = 1
            connectionBuffer.append(connection.before)
        elif index == 5:
           # Got bash prompt - virtual
@@ -107,7 +108,7 @@ def DeviceInteract(**kwargs):
            connectionBuffer.append(connection.before)
    #time.sleep(3)
    connectionBuffer.append(connection.after)
-   connection.expect(['$'], timeout=2)
+   connection.expect(['$'], timeout=1)
    # Now lets put in the topology the expect handle
    #print "command: " + command + "\nconn buffer:\n" + str(connectionBuffer)
    santString = ""
@@ -126,6 +127,11 @@ def DeviceInteract(**kwargs):
    #The following portion checks for Errors in CLI commands
    if ErrorFlag == 'CLI' :
       errorCheckRetStruct = switch.CLI.ErrorCheck(connection=connection, buffer=santString)
+      returnCode = errorCheckRetStruct['returnCode']
+
+   #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
+   if ErrorFlag == 'Onie' :
+      errorCheckRetStruct = switch.ErrorCheckOnie(connection=connection, buffer=santString)
       returnCode = errorCheckRetStruct['returnCode']
 
    # Return dictionary

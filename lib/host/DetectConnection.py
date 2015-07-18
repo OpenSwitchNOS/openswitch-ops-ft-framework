@@ -1,3 +1,4 @@
+
 ###PROC+#####################################################################
 # Name:        host.DetectConnection
 #
@@ -17,17 +18,19 @@ import pexpect
 import headers
 import common
 import xml.etree.ElementTree
+import time
 
 def DetectConnection(connection):
     bailflag = 0
-    #print "In detect " 
-    
+    #print "In detect "
+
     connection.send('\r')
     connectionBuffer = []
     sanitizedBuffer = ""
     while bailflag == 0:
+        time.sleep(1)
         index = connection.expect(['login:', 'Password:', 'root@\S+\d+\d+.*#', pexpect.EOF,pexpect.TIMEOUT], timeout=200)
-        #print "Index I got was ", index
+        connection.expect(['$'], timeout=2)
         if index == 0:
             # Need to send login string
             connection.sendline("root")
@@ -42,12 +45,12 @@ def DetectConnection(connection):
             #print('Got prompt, we should be good')
             bailflag = 1
             connectionBuffer.append(connection.before)
-           
+
         elif index == 3:
            # Got EOF
            common.LogOutput('error', "Telnet to host failed")
            return None
-           
+
         elif index == 4:
            # Got a Timeout
            common.LogOutput('error', "Connection timed out")
@@ -63,6 +66,5 @@ def DetectConnection(connection):
        #common.LogOutput('debug', curLine)
        sanitizedBuffer += curLine
     common.LogOutput('debug', sanitizedBuffer)
-    
+
     return connection
- 

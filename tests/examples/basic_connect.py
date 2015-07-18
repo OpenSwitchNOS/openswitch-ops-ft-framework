@@ -1,9 +1,3 @@
-topoDict = {"topoExecution": 1000,
-            "topoTarget": "dut01 dut02",
-            "topoDevices": "dut01 dut02", 
-            "topoLinks": "lnk01:dut01:dut01", 
-            "topoFilters": "dut01:system-category:switch,dut02:system-category:switch"}
-
 common.LogOutput("info", "Sample test case code.")
 
 # Grab the name of the switch from the eTree

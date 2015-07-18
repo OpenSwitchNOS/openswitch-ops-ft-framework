@@ -34,12 +34,13 @@ def ShowLldpNeighborInfo(**kwargs):
     #Enter the vtysh shell to access LLDP commands
     returnStructure = switch.CLI.VtyshShell(connection = connection)
     vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
     returnCode = common.ReturnJSONGetCode(json = returnStructure)
     if returnCode != 0:
        common.LogOutput('error', "Failed to get vtysh prompt")
        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
        return returnJson
+    else :
+       common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
 
     #Pass LLDP commands here 
     command = "show lldp neighbor-info %d"%(port)

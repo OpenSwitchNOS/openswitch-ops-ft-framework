@@ -34,6 +34,7 @@ class tcAction(object):
         self.tcStepDescription = ""
         self.tcName = ""
         self.tcStepReturnCode = TC_STEPVERDICT_PASS
+        self.tcStepFailAction = TC_STEPFAILACTION_CONTINUE
         self.tcRunFlag = 1
         self.tcStepStartTime = 0
         self.tcStepEndTime = 0
@@ -88,7 +89,7 @@ class tcAction(object):
 
     def startStep(self):
         if (self.tcCurrentStep == 0):
-		common.LogOutput("info", "###TCINFO-"+"#"*110)
+                common.LogOutput("info", "###TCINFO-"+"#"*110)
         common.LogOutput("info", "###STEP+"+"#"*112)
         common.LogOutput("info", "Starting Test Step - %s"%self.tcExecutedSteps[self.tcCurrentStep]["tcStepDescription"])
 
@@ -102,30 +103,26 @@ class tcAction(object):
         if (self.tcCurrentStep == 0):
                 self.tcStartTime = time.time()
 
-    def setVerdictAction(self, stepVerdict = 0, stepFailAction = "EXIT"):
-        self.tcStepStatus = stepVerdict
+    def setVerdictAction(self, stepVerdict = TC_STEPVERDICT_PASS, stepFailAction = TC_STEPFAILACTION_CONTINUE):
+        self.tcStepReturnCode = stepVerdict
         self.tcStepFailAction = stepFailAction
 
 
     def endStep(self, **kwargs):
 
-        stepVerdict = kwargs.get("stepVerdict")
-        failAction = kwargs.get("failAction")
         self.tcExecutedSteps[self.tcCurrentStep]["tcStepEndTime"] = time.time()
-        self.tcStepReturnCode = stepVerdict
 
 
         self.tcExecutedSteps[self.tcCurrentStep]["tcStepExecTime"] =  self.tcExecutedSteps[self.tcCurrentStep]["tcStepEndTime"] -  self.tcExecutedSteps[self.tcCurrentStep]["tcStepStartTime"]
-        self.tcExecutedSteps[self.tcCurrentStep]["tcStepReturnCode"] = stepVerdict
-        self.tcExecutedSteps[self.tcCurrentStep]["tcFailAction"] = failAction
+        self.tcExecutedSteps[self.tcCurrentStep]["tcStepReturnCode"] = self.tcStepReturnCode
+        self.tcExecutedSteps[self.tcCurrentStep]["tcFailAction"] = self.tcStepFailAction
 
         #process stepVerdict parameter 1- failed, 0 - passed
-        if (self.tcStepReturnCode == TC_STEPSTATUS_FAILED):
+        if (self.tcStepReturnCode == TC_STEPVERDICT_FAIL):
                 self.tcStepStatus = TC_STEPSTATUS_FAILED
-                self.tcReturnCode = TC_EXECSTATUS_FAILED 
+                self.tcReturnCode = TC_EXECSTATUS_FAILED
                 self.tcExecutedSteps[self.tcCurrentStep]["tcStepStatus"] = TC_STEPSTATUS_FAILED
                 self.tcVerdict = TC_STEPVERDICT_FAIL
-                self.tcStepFailAction = failAction
         else:
                 self.tcStepStatus = TC_STEPSTATUS_PASSED
                 self.tcExecutedSteps[self.tcCurrentStep]["tcStepStatus"] = TC_STEPSTATUS_PASSED
@@ -134,7 +131,7 @@ class tcAction(object):
         #increment the current step
         self.tcCurrentStep += 1
         #check this as a final step
-        if ((self.tcCurrentStep == self.tcTotalSteps) or (self.tcStepFailAction == "exit")):
+        if ((self.tcCurrentStep == self.tcTotalSteps) or (self.tcStepFailAction == TC_STEPFAILACTION_EXIT )):
                 self.tcEndTime = time.clock()
                 self.logTcSummaryResult()
                 self.tcFinal()
@@ -148,7 +145,7 @@ class tcAction(object):
 
     def tcFinal(self):
         totalSteps = 0
-	talliedSteps = 0
+        talliedSteps = 0
         stepsPassed = 0
         stepsFailed = 0
         stepsIncomplete = 0
@@ -156,14 +153,14 @@ class tcAction(object):
         tcExecutionTime = 0
         tcTestVerdict = "PASSED"
         for tcStep in self.tcExecutedSteps:
-		totalSteps += 1
+                totalSteps += 1
                 if(tcStep["tcStepStatus"] == TC_STEPSTATUS_FAILED):
                         stepsFailed += 1
                 elif (tcStep["tcStepStatus"] == TC_STEPSTATUS_PASSED):
                         stepsPassed += 1
                 else:
                         stepsIncomplete += 1
-			stepsSkipped += 1
+                        stepsSkipped += 1
                 tcExecutionTime = tcExecutionTime + tcStep["tcStepExecTime"]
         if (stepsFailed > 0 or stepsIncomplete > 0):
                 tcTestVerdict = "FAILED"
@@ -212,7 +209,7 @@ class tcAction(object):
         for tcStep in self.tcExecutedSteps:
                 stepCtr += 1
                 common.LogOutput("info",      "# Steps %-10d %-10s %-10.3f\t%s"%(stepCtr, tcStep["tcStepStatus"], tcStep["tcStepExecTime"], tcStep["tcStepDescription"]))
-        
+
 
     def cleanup(self):
         print "Baseclass tcAction cleanup"
