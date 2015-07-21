@@ -32,7 +32,7 @@ if dut01_conn == None:
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 
 # Configure bridge on this device
-dut01_conn = switch.Reboot(connection=dut01_conn)
+#dut01_conn = switch.Reboot(connection=dut01_conn)
 dut01BridgeRetVal = switch.OVS.OvsBridgeConfig(connection=dut01_conn,ports=dut01Port)
 tcInstance.endStep()
 

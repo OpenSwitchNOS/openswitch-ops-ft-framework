@@ -38,6 +38,7 @@ class VirtualTopo( HalonTest ):
        self.testdir = "/tmp/halonnet/" + str(self.id)
 
        os.makedirs(self.testdir)
+       self.setLogLevel('info')
        self.hostmounts = []
        self.switchmounts = []
 
@@ -178,6 +179,7 @@ class VirtualTopo( HalonTest ):
            outstring = link + "  =  " + headers.topo[dev1] + ":" + str(dev1Lport) + " <==> " + headers.topo[dev2] + ":" + str(dev2Lport)
            common.LogOutput('info', outstring)
         common.LogOutput('info', "=====================================================================")
+        self.net.start()
 
     # Routine to alter link state
     def VirtualLinkModifyStatus(self, **kwargs):
