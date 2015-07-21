@@ -6,11 +6,11 @@
 # Author:      Vince Mendoza
 #
 # Purpose:     Writes out TOPOLOGY XML to file
-#              
+#
 #
 # Params:      device - device name
 #
-# Returns:     
+# Returns:
 #
 ##PROC-#####################################################################
 import headers
@@ -25,6 +25,6 @@ def TopologyXMLWrite():
     pretty_xml_as_string = myxml.toprettyxml()
     topoFileName = headers.ResultsDirectory['resultsDir'] + "/physicalTopology.xml"
     topologyXMLFile = open(topoFileName, 'w+')
-    
+
     topologyXMLFile.write(pretty_xml_as_string)
     topologyXMLFile.close()

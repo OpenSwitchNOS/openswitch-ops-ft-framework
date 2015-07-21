@@ -27,7 +27,7 @@ def DetectConnection(**kwargs):
     username = kwargs.get('username')
     password = kwargs.get('password')
     adminPassword = kwargs.get('adminPassword')
-    
+
     bailflag = 0
     level = 0
     connection.send('\n')
@@ -81,6 +81,6 @@ def DetectConnection(**kwargs):
        #common.LogOutput('debug', curLine)
        sanitizedBuffer += curLine
     common.LogOutput('debug', sanitizedBuffer)
-    
+
     return connection
- 
+

@@ -22,8 +22,8 @@ import headers
 import inspect
 import common
 
-def LogOutput(dest, message, **kwargs):  
-   datestamp = kwargs.get('datastamp', False)  
+def LogOutput(dest, message, **kwargs):
+   datestamp = kwargs.get('datastamp', False)
    logType = str(dest)
 
 
@@ -38,7 +38,7 @@ def LogOutput(dest, message, **kwargs):
           #print '\t' + logType + '  ' + msgLine
           print('%s'%msgLine)
        else:
-          # examine the callstack to print out.  
+          # examine the callstack to print out.
           mystack = inspect.stack()
           #print mystack
           mystacklen = len(mystack)
@@ -54,7 +54,7 @@ def LogOutput(dest, message, **kwargs):
              i -= 1
              if i > 0:
                 stackstring += "->"
-             #Inspect the stacktrace to get the called module 
+             #Inspect the stacktrace to get the called module
              #Module trace needs to be dumped to logging module
              stackTrace = inspect.stack()
              module = inspect.getmodule(stackTrace[1][0])
@@ -71,7 +71,7 @@ def LogOutput(dest, message, **kwargs):
           #print(timestring, " ", logType, " ", msgLine)
        #   timestampSent = 1
 
- #Logging messages to Log files based on severity 
+ #Logging messages to Log files based on severity
    try :
     if modulename <> "common.tcAction":
      message = "::%-30s\t%s"%(modulename,message)
@@ -81,5 +81,5 @@ def LogOutput(dest, message, **kwargs):
     if logType == 'info':
        message = "%s"%(message)
     else:
-       message = "::%s"%(message) 
+       message = "::%s"%(message)
    common.LogLib.LogOutputToFile(headers.ResultsDirectory['resultsDir'], dest, message)

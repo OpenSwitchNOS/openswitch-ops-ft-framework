@@ -26,11 +26,11 @@ import time
 import xml.etree.ElementTree
 import pdb
 def DeviceInteract(**kwargs):
-  
+
    connection = kwargs.get('connection')
    command = kwargs.get('command')
    errorCheck = kwargs.get('errorCheck',True)
-   ErrorFlag = kwargs.get('CheckError')   
+   ErrorFlag = kwargs.get('CheckError')
 
    # Local variables
    bailflag = 0
@@ -38,26 +38,26 @@ def DeviceInteract(**kwargs):
    retStruct = dict()
    retStruct['returnCode'] = 1
    retStruct['buffer'] = []
-   
+
    # Send the command
-   
+
    connection.send(command)
    connection.send('\r')
    time.sleep(1)
    connectionBuffer = []
    #if errorCheck is True:
    #   common.LogOutput('debug', "Sending command {" + command + "} to device")
-   
+
    while bailflag == 0:
        #DEBUG print connection
-       index = connection.expect(['login:\s*$', 
+       index = connection.expect(['login:\s*$',
                                   'root@\S+:.*#\s*$',
-                                  '[A-Za-z]+[0-9]+#', 
+                                  '[A-Za-z]+[0-9]+#',
                                   '\(config\)#',
-                                  'ONIE:/\s+#\s*$', 
+                                  'ONIE:/\s+#\s*$',
                                   'bash-\d+.\d+#\s*$',
                                   pexpect.EOF,
-                                  pexpect.TIMEOUT], 
+                                  pexpect.TIMEOUT],
                                  timeout=70)
        #print "Index I got was ", index
        if index == 0:
@@ -114,16 +114,16 @@ def DeviceInteract(**kwargs):
    santString = ""
    for curLine in connectionBuffer:#
      santString += str(curLine)
-   
+
    #Error Check routine identification
    #There are seperate Error check libraries for CLI,OVS and REST commands.
-   #The following portion checks for Errors for OVS commands  
+   #The following portion checks for Errors for OVS commands
    if errorCheck is True and returnCode == 0 and ErrorFlag == None :
       errorCheckRetStruct = switch.ErrorCheck(connection=connection, buffer=santString)
       returnCode = errorCheckRetStruct['returnCode']
       # Dump the buffer the the debug log
       common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
-   
+
    #The following portion checks for Errors in CLI commands
    if ErrorFlag == 'CLI' :
       errorCheckRetStruct = switch.CLI.ErrorCheck(connection=connection, buffer=santString)

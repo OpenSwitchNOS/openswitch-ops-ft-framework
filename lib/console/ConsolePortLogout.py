@@ -8,7 +8,7 @@
 # Purpose:     Queries for port needed and logs out that port
 #
 # Params:      connection - device connection
-#              tcpPort    - tcpPort 
+#              tcpPort    - tcpPort
 #
 # Returns:     returnCode
 #
@@ -20,29 +20,29 @@ import re
 def ConsolePortLogout(**kwargs):
     connection = kwargs.get('connection')
     tcpPort = kwargs.get('port')
-    
+
     if connection is None:
        return 1
-    
+
     retStruct = dict()
     retStruct['returnCode'] = 0
-    
+
     command = "show port async summary"
-    
+
     devIntRetStruct = console.DeviceInteract(connection=connection, command=command)
     retCode = devIntRetStruct.get('returnCode')
     if retCode != 0:
        common.LogOutput('error', "Failed run " + command + " on console")
        retStruct['returnCode'] = 1
        return retStruct
-    
+
     buffer = devIntRetStruct.get('buffer')
     physicalPort = 10000
     for curLine in buffer.split('\n'):
        # Match Line of output for show port async summary
        # Port       - group 1
        # Port Name  - group 2
-       # Access      
+       # Access
        # Speed      - group 3
        # TCP Port   - group 4
        # SSH Port   - group 5
@@ -54,8 +54,8 @@ def ConsolePortLogout(**kwargs):
              physicalPort = testForLine.group(1)
              # We found our port, no need to go on...
              break
-    
-    
+
+
     # Now send in the command for killing the port
     if physicalPort == 10000:
        return 1
@@ -67,5 +67,5 @@ def ConsolePortLogout(**kwargs):
        common.LogOutput('error', "Failed to send command " + command)
        retStruct['returnCode'] = 1
        return retStruct
-    
+
     return 0

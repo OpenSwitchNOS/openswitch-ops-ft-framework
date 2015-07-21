@@ -27,16 +27,16 @@ def ErrorCheck(**kwargs):
    buffer = kwargs.get('buffer')
    # Local variables
    returnCode = 0
-   
+
    retStruct = dict()
    retStruct['returnCode'] = returnCode
-   
+
    # Set up the command for error check
    command = "echo $?"
    buffer = ""
    connection.send(command)
    connection.send('\r\n')
-   
+
    index = connection.expect(['root@\S+:.*#\s*$','bash-\d+.\d+#\s*$'], timeout=200)
    if index == 0 or index == 1:
       buffer += connection.before
@@ -45,8 +45,8 @@ def ErrorCheck(**kwargs):
       common.LogOutput('error', "Received timeout in switch.ErrorCheck")
       retStruct['returnCode'] = 1
       return retStruct
-   
-   
+
+
    bufferSplit = buffer.split("\n")
    for curLine in bufferSplit:
       testforValue = re.match("(^[0-9]+)\s*$", curLine)
@@ -57,6 +57,6 @@ def ErrorCheck(**kwargs):
             returnCode = exitValue
          else:
             returnCode = 0
-   
+
    retStruct['returnCode'] = returnCode
    return retStruct

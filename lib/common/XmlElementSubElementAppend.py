@@ -19,4 +19,3 @@ import xml.etree.ElementTree
 def XmlElementSubElementAppend(parentElement, childElement):
     mychild = parentElement.append(childElement)
     return mychild
-    

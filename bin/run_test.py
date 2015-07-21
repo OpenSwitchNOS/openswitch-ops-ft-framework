@@ -60,19 +60,19 @@ testCaseName = testCaseNamePathList[len(testCaseNamePathList) - 1]
 
 
 # Create Result Directory Structure
-# Creating the base results directory structure 
+# Creating the base results directory structure
 # Results directory is created in the local testware/results folder
-# Framework provides the dictionary global variable headers.ResultsDirectory which points to 
+# Framework provides the dictionary global variable headers.ResultsDirectory which points to
 # the results directory the keys are the files present (Current keys :: summary.log , detail.log
 # Dictionary Usage eg :: headers.ResultsDirectory['summaryLog']
-# Script exits with error code (1) if the directory structure is not created 
+# Script exits with error code (1) if the directory structure is not created
 
 currentDir = common.GetCurrentDirectory()
 ts = time.time()
 timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%b-%d_%H:%M:%S')
 baseResultsDir =  os.environ['FT_FRAMEWORK_BASE']+"/results"
 
-#Setting the global variable headers.ResultsDirectory 
+#Setting the global variable headers.ResultsDirectory
 headers.ResultsDirectory['resultsDir'] = baseResultsDir+"/"+timeStamp+"/"
 headers.ResultsDirectory['rtlDir'] = baseResultsDir+"/"+timeStamp+"/RTL"
 headers.ResultsDirectory['summaryLog'] = headers.ResultsDirectory['resultsDir']+"summary.log"
@@ -90,7 +90,7 @@ if retCode['returnCode'] == 0 :
     retCode  = common.CreateDirectory(baseResultsDir+"/"+timeStamp+"/.")
 if retCode['returnCode'] == 0:
     common.ChangeDirectory(headers.ResultsDirectory['resultsDir'])
-    
+
     # Create RTL directory
     if args.phystopo != "virtual":
         retCode  = common.CreateDirectory(baseResultsDir+"/"+timeStamp+"/RTL/.")
@@ -99,12 +99,12 @@ if retCode['returnCode'] == 0:
     if retCode['returnCode'] <> 0 :
         common.LogOutput('error',"File summary.log not created in the directory structure")
         exit(1)
-    #Create Files under the result directory structure(detail.log) 
+    #Create Files under the result directory structure(detail.log)
     retCode = common.FileCreate(headers.ResultsDirectory['resultsDir'],"detail.log")
     if retCode['returnCode'] <> 0 :
         common.LogOutput('error',"File detail.log not created in the directory structure")
         exit(1)
-    #Copy topology.xml and the testcase file to results directory for reference 
+    #Copy topology.xml and the testcase file to results directory for reference
     try :
         shutil.copy(args.testCaseName,headers.ResultsDirectory['resultsDir'])
     except :

@@ -21,21 +21,21 @@ import xml.etree.ElementTree
 
 def DetectConnection(connection):
     bailflag = 0
-    #print "In detect " 
-    
+    #print "In detect "
+
     connection.send('\r')
     time.sleep(2)
     connectionBuffer = []
     sanitizedBuffer = ""
     while bailflag == 0:
-        index = connection.expect(['login:\s*$', 
+        index = connection.expect(['login:\s*$',
                                    'root@\S+:.*#\s*$',
                                    '\(config\)#',
                                    '[A-Za-z]+[0-9]+#',
-                                   'ONIE:/\s+#', 
-                                   'bash-\d+.\d+#', 
+                                   'ONIE:/\s+#',
+                                   'bash-\d+.\d+#',
                                    pexpect.EOF,
-                                   pexpect.TIMEOUT], 
+                                   pexpect.TIMEOUT],
                                    timeout=200)
         #print "Index I got was ", index
         if index == 0:
@@ -86,4 +86,4 @@ def DetectConnection(connection):
        sanitizedBuffer += curLine
     common.LogOutput('debug', sanitizedBuffer)
     return connection
- 
+

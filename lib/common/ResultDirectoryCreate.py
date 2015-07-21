@@ -5,9 +5,9 @@
 #
 # Author:      Payal Upadhyaya
 #
-# Purpose:     Routines to carry out directory and file operations 
+# Purpose:     Routines to carry out directory and file operations
 #q
-# Params:      
+# Params:
 #
 # Returns:     retStruct (A dictionary which contains returnCode (0 for pass , 1 for fail)
 #
@@ -27,8 +27,8 @@ retStruct = dict(returnCode = 1 , buffer = [])
 ts = time.time()
 dateTimeString = datetime.datetime.fromtimestamp(ts).strftime('%Y-%b-%d_%H:%M:%S')
 
-#Function to create a directory 
-#Params ::  Directory Path to be created 
+#Function to create a directory
+#Params ::  Directory Path to be created
 def CreateDirectory(dirName):
    dir = os.path.dirname(dirName)
    if not os.path.exists(dirName):
@@ -42,18 +42,18 @@ def CreateDirectory(dirName):
    else :
     retStruct['returnCode'] = 1
    return retStruct
- 
-#Function to change directory path 
-# Params  :: Destination Path 
+
+#Function to change directory path
+# Params  :: Destination Path
 def ChangeDirectory(path):
    try :
-    os.chdir(path)	
+    os.chdir(path)
     retStruct['returnCode'] = 0
    except :
     retStruct['returnCode'] = 1
    return retStruct
 
-#Function to Get directory 
+#Function to Get directory
 # Returns the current dir path on success
 def GetCurrentDirectory():
     currentDir = os.getcwd()
@@ -63,7 +63,7 @@ def GetCurrentDirectory():
     else :
      return currentDir
 
-#Creating new files 
+#Creating new files
 #Params :: Filename , Directory path where file should exists. (Dir must exist)
 
 def FileCreate(DirPath,fileName):

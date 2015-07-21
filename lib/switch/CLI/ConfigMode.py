@@ -3,7 +3,7 @@
 #
 # Namespace:   switch.CLI
 #
-# Author:      Payal Upadhyaya 
+# Author:      Payal Upadhyaya
 #
 # Purpose:     Enter config mode command to run commands
 #              Exits config mode if the configOption = unconfig
@@ -15,8 +15,8 @@
 # Returns:     JSON structure
 #              returnCode - status of command
 #                           (0 = pass , 1= fail)
-#              data :: 
-#                     "configPrompt": {"Device Buffer"} 
+#              data ::
+#                     "configPrompt": {"Device Buffer"}
 #
 ##PROC-#####################################################################
 import common
@@ -25,19 +25,19 @@ import re
 import pexpect
 
 def ConfigMode (**kwargs):
-    #Parameters 
+    #Parameters
     connection = kwargs.get('connection')
-    configOption = kwargs.get('configOption',"config") 
+    configOption = kwargs.get('configOption',"config")
 
     if connection is None:
        return False
-    
+
     returnDict = dict()
     if configOption == "config":
      #Enter config mode when configOption is config(default)
      command = "config terminal\r"
      common.LogOutput("info","Enter config mode***")
-     #Get the device response buffer as json return structure here 
+     #Get the device response buffer as json return structure here
      devIntRetStruct = switch.DeviceInteract(connection=connection, command=command,CheckError = 'CLI')
      returnCode = devIntRetStruct.get('returnCode')
      returnDict['configPrompt'] = devIntRetStruct.get('buffer')
@@ -49,7 +49,7 @@ def ConfigMode (**kwargs):
      #Exit config mode
      common.LogOutput("debug","config shell Exit")
      command = "end\r"
-     #Get the device response buffer as json return structure here 
+     #Get the device response buffer as json return structure here
      devIntRetStruct = switch.DeviceInteract(connection=connection, command=command,CheckError = 'CLI')
      returnCode = devIntRetStruct.get('returnCode')
      returnDict['configPrompt'] = devIntRetStruct.get('buffer')
@@ -58,7 +58,7 @@ def ConfigMode (**kwargs):
         returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnDict)
         return returnJson
      returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
-     return returnJson 
+     return returnJson
 
 
 

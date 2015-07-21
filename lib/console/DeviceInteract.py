@@ -9,7 +9,7 @@
 #
 # Params:      connection - pexpect connection handle
 #              command    - command to send to device
-#              
+#
 #
 # Returns:     Dictionary with the following
 #              returnCode = 0 for pass, 1 for fail
@@ -25,10 +25,10 @@ import switch
 import xml.etree.ElementTree
 
 def DeviceInteract(**kwargs):
-  
+
    connection = kwargs.get('connection')
    command = kwargs.get('command')
-   
+
 
    # Local variables
    bailflag = 0
@@ -36,12 +36,12 @@ def DeviceInteract(**kwargs):
    retStruct = dict()
    retStruct['returnCode'] = 1
    retStruct['buffer'] = []
-   
+
    # Send the command
    connection.send('\n')
    connection.send(command)
    connection.send('\n')
-   
+
    #connection.send('\n')
    connectionBuffer = []
    expectMatchArray = ['InReach:\d+\s*>>$',
@@ -75,11 +75,11 @@ def DeviceInteract(**kwargs):
    santString = ""
    for curLine in connectionBuffer:#
      santString += curLine
-   
-   
-      
+
+
+
    # Return dictionary
    retStruct['returnCode'] = returnCode
    retStruct['buffer'] = santString
-   
+
    return retStruct

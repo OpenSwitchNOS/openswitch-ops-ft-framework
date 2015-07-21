@@ -6,11 +6,11 @@
 # Author:      Payal Upadhyaya
 #
 # Purpose:    Open pexpect device logs and log timestamped output
-#              
 #
-# Params:     Class which helps to log expect device logs in results directory  
 #
-# Returns:     
+# Params:     Class which helps to log expect device logs in results directory
+#
+# Returns:
 #
 ##PROC-#####################################################################
 
@@ -35,7 +35,7 @@ class DeviceLogger(object):
       if data in [' ', '', '\n', '\r', '\r\n']:
         return
       if data: # non-blank
-        #Inspect the stacktrace to get the called module 
+        #Inspect the stacktrace to get the called module
         #Module trace needs to be dumped to logging module
         #This code will not log unnecessary internal modules (so that log looks clean)
         stackTrace = inspect.stack()
@@ -51,7 +51,7 @@ class DeviceLogger(object):
    def flush(self):
         self.file.flush()
 
- #OpenExpectLog function opens a new file to log the expect buffer output 
+ #OpenExpectLog function opens a new file to log the expect buffer output
  #Return 1 in case of error (expect logfile not created) , expect file handle in case of success
 
    def OpenExpectLog(self,ExpectFileName) :

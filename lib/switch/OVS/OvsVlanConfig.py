@@ -25,17 +25,17 @@ def OvsVlanConfig(**kwargs):
     action = kwargs.get('action', 'config')
     bridge = kwargs.get('bridge', 'br0')
     vlans = kwargs.get('vlans')
-    
+
     if connection is None:
        return False
-    
+
     retStruct = dict()
     if action == 'config':
        #   command = "ovs-vsctl add-vlan " + bridge + " " +
        common.LogOutput("info","Configuring Vlan over OVS bridge")
        for curVlan in vlans:
           command = "ovs-vsctl add-vlan " + bridge + " " + str(curVlan) + " admin=up"
-          # Send command to the switch 
+          # Send command to the switch
           devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
           retCode = devIntRetStruct.get('returnCode')
           if retCode != 0:
@@ -49,7 +49,7 @@ def OvsVlanConfig(**kwargs):
        for curVlan in vlans:
           common.LogOutput("info","Unconfiguring Vlan over OVS bridge")
           command = "ovs-vsctl del-vlan " + bridge + " " + str(curVlan)
-          # Send command to the switch 
+          # Send command to the switch
           devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
           retCode = devIntRetStruct.get('returnCode')
           if retCode != 0:

@@ -6,18 +6,18 @@
 # Author:      Vince Mendoza
 #
 # Purpose:     PUll topology dictionary from the test case & builds out logical topology
-#              
+#
 #
 # Params:      testcase
 #
 # Returns:     json structur
 #               returnCode
-#               data = topology dictionary     
+#               data = topology dictionary
 #
 ##PROC-#####################################################################
 import headers
 import common
-import re 
+import re
 import json
 
 def TopologyDictGet(**kwargs):
@@ -34,7 +34,7 @@ def TopologyDictGet(**kwargs):
           # This means we got it all in 1 shot
           topoDictionary = wholeDictionary.group(1)
           break
-       
+
        if detectDictStart == 0:
           testForDictStart = re.match("^topoDict\s*=\s*({.*$)", curLine)
           if testForDictStart:
@@ -56,7 +56,7 @@ def TopologyDictGet(**kwargs):
              continue
     # close off file
     tcFH.close()
-    
+
     if detectDictStart == 1 and detectDictEnd == 1:
        # This means we found dictionary data in the test case
        # Structure a proper dictionary to return back
@@ -68,4 +68,3 @@ def TopologyDictGet(**kwargs):
     return(retString)
     #for lines in str(testcaseData).split('\n'):
     #   print "line: " + lines
-    

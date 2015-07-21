@@ -8,14 +8,14 @@
 # Purpose:     Library to configure host network IP
 #
 # Params:      connection - pexpect connection handle for host
-#	       eth        - host eth interface to be configured for IP addr	
+#	           eth        - host eth interface to be configured for IP addr
 #              ipAddr     - ipAddr to be configured
 #              netMask    - netmask to be configured
 #              gateway    - gateway or broadcast to be configured
 #	       clear      - clear the configured ip address by default it is False
-# Returns:     
+# Returns:
 #              returnCode = 0 for pass, 1 for fail
-#              
+#
 #
 ##PROC-#####################################################################
 
@@ -36,7 +36,7 @@ FAILED = 1
 PASSED = 0
 
 def ConfigNetwork(**kwargs):
-  
+
    connection = kwargs.get('connection')
    eth = kwargs.get('eth')
    ipAddr = kwargs.get('ipAddr')
@@ -47,8 +47,8 @@ def ConfigNetwork(**kwargs):
    # Local variables
    bailflag = 0
    interfaceUpOption = 0
-   returnCode = PASSED 
-  
+   returnCode = PASSED
+
    retStruct = dict()
    retStruct['returnCode'] = FAILED
    retStruct['buffer'] = []
@@ -68,9 +68,9 @@ def ConfigNetwork(**kwargs):
 
    if returnCode:
         retStruct['returnCode'] = returnCode
-	return retStruct 		
+	return retStruct 
 
-   while bailflag == 0: 
+   while bailflag == 0:
    # Send the command
    	retStruct = host.DeviceInteract(connection=connection, command=LIST_ETH_INTERFACES_CMD)
 	retCode = retStruct.get('returnCode')
@@ -80,7 +80,7 @@ def ConfigNetwork(**kwargs):
         	bailflag = 1
                 returnCode = FAILED
    		retStruct['buffer'] = "Failed to execute the command : " + LIST_ETH_INTERFACES_CMD
-               
+
    	else:
         	common.LogOutput('info', "Successfully executed the command : " + LIST_ETH_INTERFACES_CMD)
    		if retBuff.find(eth)<> -1:
@@ -94,7 +94,7 @@ def ConfigNetwork(**kwargs):
                                 returnCode = FAILED
 				break
 			interfaceUpOption = 1
-   			command = ENABLE_ETH_INTERFACE_CMD %eth 
+   			command = ENABLE_ETH_INTERFACE_CMD %eth
 			retStruct = host.DeviceInteract(connection=connection, command=command)
    			retCode = retStruct.get('returnCode')
 			retBuff = retStruct.get('buffer')
@@ -109,8 +109,8 @@ def ConfigNetwork(**kwargs):
 
    if returnCode:
         retStruct['returnCode'] = returnCode
-	return retStruct 		
-	
+	return retStruct 
+
    if clear:
 
    	command = ETH_INTERFACE_CFGIP_CLEAR_CMD %eth
@@ -148,7 +148,7 @@ def ConfigNetwork(**kwargs):
    			retStruct['buffer'] = "Failed to execute the command : " + command
    		else:
        			common.LogOutput('info', "Successfully executed the command : " + command)
-   	
+   
 		if retBuff.find(ipAddr) == -1:
        			common.LogOutput('error', "IP addr %s is not configured successfully on interface %s : "%(ipAddr,eth))
    			retStruct['buffer'] = "Failed to execute the command : " + command
@@ -156,7 +156,7 @@ def ConfigNetwork(**kwargs):
        			common.LogOutput('info', "IP addr %s configured successfully on interface %s : "%(ipAddr,eth))
 
    retStruct['returnCode'] = returnCode
-   return retStruct 		
+   return retStruct 
 
 
 def ipFormatChk(ip_str):

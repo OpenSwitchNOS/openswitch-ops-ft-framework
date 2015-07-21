@@ -3,9 +3,9 @@
 #
 # Namespace:   switch
 #
-# Author:      
+# Author:
 #
-# Purpose:     
+# Purpose:
 #
 # Params:      connection - expect connection handle
 #
@@ -37,7 +37,7 @@ def TftpProvisioning(**kwargs):
      command = "tftp -g -r %s 120.93.49.9"%(headers.TftpImage['Image'])
      common.LogOutput("info","TFTP download ***")
 
-     #Get the device response buffer as json return structure here 
+     #Get the device response buffer as json return structure here
      devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
      returnCode = devIntRetStruct.get('returnCode')
      returnDict['onieRescue'] = devIntRetStruct.get('buffer')

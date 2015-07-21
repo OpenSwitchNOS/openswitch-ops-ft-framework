@@ -3,7 +3,7 @@
 #
 # Namespace:   switch.CLI
 #
-# Author:      Payal Upadhyaya 
+# Author:      Payal Upadhyaya
 #
 # Purpose:     Run the show lldp commands in vtysh shell
 #
@@ -12,7 +12,7 @@
 #
 # Returns:     JSON structure
 #              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: (LLDP statistics): 
+#              data: (LLDP statistics):
 #                      NeighBour_chasisID:
 #                      NeighbourEntries
 #                      Neighbor_Info
@@ -42,7 +42,7 @@ def ShowLldpNeighborInfo(**kwargs):
     else :
        common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
 
-    #Pass LLDP commands here 
+    #Pass LLDP commands here
     command = "show lldp neighbor-info %d"%(port)
     common.LogOutput("info","Show LLDP command ***"+command)
     devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
@@ -66,10 +66,10 @@ def ShowLldpNeighborInfo(**kwargs):
            returnDict['NeighBour_chasisID'] = NeighBour_chasisID.group(1)
        returnDict['lldpNeighborBuffer'] = rawBuffer
 
-    #Exit the vtysh shell 
+    #Exit the vtysh shell
     returnStructure = switch.CLI.VtyshShell(connection = connection,configOption="unconfig")
     vtyshExitInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    common.LogOutput("debug","vtysh shell buffer: \n"+vtyshExitInfo) 
+    common.LogOutput("debug","vtysh shell buffer: \n"+vtyshExitInfo)
     returnCode = common.ReturnJSONGetCode(json = returnStructure)
     if returnCode != 0:
        common.LogOutput('error', "Failed to exit vtysh prompt")
@@ -79,4 +79,4 @@ def ShowLldpNeighborInfo(**kwargs):
     #Return results
     returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
     return returnJson
-    
+

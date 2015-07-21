@@ -1,8 +1,8 @@
 # Topology definition
 topoDict = {"topoExecution": 1000,
             "topoTarget": "dut01",
-            "topoDevices": "dut01 wrkston01", 
-            "topoLinks": "lnk01:dut01:wrkston01", 
+            "topoDevices": "dut01 wrkston01",
+            "topoLinks": "lnk01:dut01:wrkston01",
             "topoFilters": "dut01:system-category:switch,wrkston01:system-category:workstation"}
 
 TEST_DESCRIPTION = "Virtual Topology / Physical Topology Sample Test"
@@ -47,7 +47,7 @@ host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
 #    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 # dut01BridgeRetVal = switch.OVS.OvsBridgeConfig(connection=dut02_conn,ports=dut02Port)
 tcInstance.endStep()
- 
+
 tcInstance.startStep()
 linkList = [headers.topo['lnk01']]
 returnStruct = topology.LinkStatusConfig(links=linkList, enable=1)
@@ -56,9 +56,9 @@ if returnCode != 0:
    common.LogOutput('error', "Failed to enable links")
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 tcInstance.endStep()
-# Waiting some time for the switch to come up   
+# Waiting some time for the switch to come up
 common.Sleep(seconds=25, message="Waiting for switch processes to fully come up")
- 
+
 # Step 3 - ovs-vsctl show on the first switch
 tcInstance.startStep()
 # Run a command
@@ -72,8 +72,8 @@ else:
    #data = common.ReturnJSONGetData(json=retStruct)
    common.LogOutput('info', "ovs-vsctl output for dut01:\n" + retStruct)
 tcInstance.endStep()
- 
- 
+
+
 # Step 4 - ovs-vsctl show on the second switch
 tcInstance.startStep()
 common.LogOutput('info', "Running ifconfig on wrkston01")
@@ -84,8 +84,8 @@ if retCode != 0:
    common.LogOutput('error', "Failed to run ifconfig on wrkston01")
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_CONTINUE)
 else:
-   
+
    common.LogOutput('info', "ifconfig data on wrkston01:\n" + ifconfigBuffer)
- 
+
 tcInstance.endStep()
 

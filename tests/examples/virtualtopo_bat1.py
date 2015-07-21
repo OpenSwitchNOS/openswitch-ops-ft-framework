@@ -1,8 +1,8 @@
 # Topology definition
 topoDict = {"topoExecution": 1000,
             "topoTarget": "dut01 dut02",
-            "topoDevices": "dut01 dut02", 
-            "topoLinks": "lnk01:dut01:dut02", 
+            "topoDevices": "dut01 dut02",
+            "topoLinks": "lnk01:dut01:dut02",
             "topoFilters": "dut01:system-category:switch,dut02:system-category:switch"}
 
 TEST_DESCRIPTION = "Virtual Topology / Physical Topology Sample Test"
@@ -54,7 +54,7 @@ if returnCode != 0:
    common.LogOutput('error', "Failed to enable links")
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 tcInstance.endStep()
-# Waiting some time for the switch to come up   
+# Waiting some time for the switch to come up
 common.Sleep(seconds=25, message="Waiting for switch processes to fully come up")
 
 # Step 3 - ovs-vsctl show on the first switch

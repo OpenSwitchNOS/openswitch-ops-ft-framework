@@ -7,7 +7,7 @@
 #
 # Purpose:     Routine to load an xml file in to an etree
 #
-# Params:      xmlFile 
+# Params:      xmlFile
 #
 #
 # Returns:     etree - This will be the etree pointer or None if no file exists
@@ -25,4 +25,4 @@ def XmlFileLoad(xmlFile):
       return None
 
    eTree = xml.etree.ElementTree.parse(xmlFile)
-   return eTree    
+   return eTree

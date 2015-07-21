@@ -26,7 +26,7 @@ tcInstance.startStep()
 returnJsonStruct = switch.CLI.ShowLldpNeighborInfo(connection = dut01_conn,port=2)
 Neighbor_Ch = common.ReturnJSONGetData(json=returnJsonStruct,dataElement="Neighbor_Info")
 returnCode = common.ReturnJSONGetCode(json=returnJsonStruct)
-#Insert the logical steps to evaluate the keys obtained from libraries 
+#Insert the logical steps to evaluate the keys obtained from libraries
 #No regular expression parsing should be done in the main testcase .
 if returnCode != 0:
    common.LogOutput('error', "Failed to how lldp commands on "+ headers.topo['dut01'])

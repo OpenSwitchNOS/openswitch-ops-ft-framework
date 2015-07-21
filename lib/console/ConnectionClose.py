@@ -6,7 +6,7 @@
 # Author:      Vince Mendoza
 #
 # Purpose:     Close connection with console server
-#              
+#
 #
 # Params:      connection
 #
@@ -23,7 +23,7 @@ def ConnectionClose(**kwargs):
     # Look up the device name in the topology - grab connectivity information
     connection = kwargs.get('connection')
     connection.close()
-    
+
     return 0
-    
-    
+
+

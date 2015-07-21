@@ -22,7 +22,7 @@ import common
 import time
 import switch
 import xml.etree.ElementTree
-import pdb 
+import pdb
 
 def Reboot(**kwargs):
     connection = kwargs.get('connection')
@@ -117,9 +117,9 @@ def Reboot(**kwargs):
                     bailflag = 1
                     common.LogOutput('debug', "Saw ONIE Starting ONIE Service")
                     common.LogOutput("info", "===ONIE rescue prompt===")
-                    connectionBuffer.append(connection.before)               
+                    connectionBuffer.append(connection.before)
 
-            # Takes the switch to Install OS mode in Onie 
+            # Takes the switch to Install OS mode in Onie
             if onie is True and onieMode != "rescue":
                 common.LogOutput('debug', "going into ONIE loop")
                 bailflag = 0
@@ -158,7 +158,7 @@ def Reboot(**kwargs):
                 santString = ""
                 for curLine in connectionBuffer:  #
                     santString += curLine
-                    
+
         return connection
     else:
         # This is for if we are a virtual setup
@@ -175,7 +175,7 @@ def Reboot(**kwargs):
         connection.send('reboot\n')
         connectionBuffer = []
         while bailflag == 0:
-            # '\S+@\S+:.*#', 
+            # '\S+@\S+:.*#',
             index = connection.expect([pexpect.EOF,
                                        pexpect.TIMEOUT],
                                       timeout=300)

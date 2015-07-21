@@ -12,7 +12,7 @@
 #              allElements = Default = False.  Will look for 1 element
 #                            if set to True, will look for multiples
 #
-# Returns:     elements - element matching.  If there is no element None is 
+# Returns:     elements - element matching.  If there is no element None is
 #                        returned
 #
 ##PROC-#####################################################################
@@ -25,6 +25,6 @@ def XmlGetElementsByTag(etree, tag, **kwargs):
     else:
        elements = etree.findall(tag)
     #typeTrue = xml.etree.ElementTree.iselement(elements)
-    #print elements 
+    #print elements
     #print typeTrue
     return elements

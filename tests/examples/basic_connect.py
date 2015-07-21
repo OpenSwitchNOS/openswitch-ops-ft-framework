@@ -13,7 +13,7 @@ for switchE in switchElement:
    if devConn is None:
       common.LogOutput('error', "Failed to connect to switch " + switchName)
       continue
-   
+
    # Rebooting switch
    common.LogOutput('info', "Rebooting switch " + switchName)
    retStruct = switch.Reboot(connection=devConn)
@@ -24,10 +24,10 @@ for switchE in switchElement:
       common.LogOutput('info', "Successfully rebooted switch " + switchName)
    # Do vlan create
    retStruct = switch.OVS.OvsBridgeConfig(connection=devConn, bridge="br0", action='config', ports=[1, 2, 3])
-   
+
    vlanList = [1]
    retStruct = switch.OVS.OvsVlanConfig(connection=devConn, bridge="br0", vlans=vlanList)
-   
+
 
    # OvsShow
    mystruct = switch.OVS.OvsShow(connection=devConn)
@@ -44,7 +44,7 @@ for switchE in switchElement:
       rpm = curDict['rpm']
       speed = curDict['speed']
       common.LogOutput('info', "\tCurrent Fan " + curFan + " status:" + str(status) + " speed:" + str(speed) + " rpm:" + str(rpm))
-    
+
    # Temp sensor INformation
    tempInfo = common.ReturnJSONGetData(json=mystruct, dataElement='Temp_Sensors')
    tempKeys = tempInfo.keys()
@@ -55,7 +55,7 @@ for switchE in switchElement:
       max = curDict['max']
       min= curDict['min']
       common.LogOutput('info', "\tCurrent Temp Sensor " + curTemp + " temperature:" + str(temperature) + " max:" + str(max) + " min:" + str(min))
-    
+
    otherConfig = common.ReturnJSONGetData(json=mystruct, dataElement='other_config')
    common.LogOutput('info', "Other Configuration")
    keys_List = otherConfig.keys()

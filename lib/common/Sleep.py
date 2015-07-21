@@ -5,9 +5,9 @@
 #
 # Author:      Vince Mendoza
 #
-# Purpose:     Routine to sleep a number of seconds and show time countdown 
+# Purpose:     Routine to sleep a number of seconds and show time countdown
 #
-# Params:      message 
+# Params:      message
 #              seconds
 #
 # Returns:     None
@@ -20,11 +20,11 @@ import datetime
 import headers
 import sys
 
-#Params ::  Directory Path to be created 
+#Params ::  Directory Path to be created
 def Sleep(**kwargs):
    message = kwargs.get('message')
    seconds = kwargs.get('seconds')
-   
+
    message = message + " - Pausing for " + str(seconds) + " seconds"
    common.LogOutput('info', message)
    rangeUpper = seconds + 1
@@ -32,7 +32,7 @@ def Sleep(**kwargs):
       time.sleep(1)
       #backspacestring = "\r"
       sys.stdout.write("\r")
-      
+
       printstring = "\t\t%-2d of %-2d"%(i, seconds)
       printstringlen = len(printstring)
       sys.stdout.write(printstring)

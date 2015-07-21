@@ -18,8 +18,8 @@
 #
 # Returns:     JSON structure
 #              returnCode - status of command
-#              data: Temp_Sensors: 
-#                     "name": {"max"."temperature". "min"} 
+#              data: Temp_Sensors:
+#                     "name": {"max"."temperature". "min"}
 #                    Bridge
 #                     "name": {Vlans, Ports}
 #                        Vlans
@@ -27,10 +27,10 @@
 #                        Ports
 #                           "name": {Interface, trunk, tag}
 #                    Open_vSwitch_UUID
-#                    other_config: {diag_version, number_of_macs, vendor, base_mac_address, interface_count, 
-#                                   onie_version, part_number, max_bond_member_count,"Product Name", 
-#                                   platform_name, max_bond_count, max_interface_speed, device_version, 
-#                                   country_code, label_revision, serial_number, manufacture_date, 
+#                    other_config: {diag_version, number_of_macs, vendor, base_mac_address, interface_count,
+#                                   onie_version, part_number, max_bond_member_count,"Product Name",
+#                                   platform_name, max_bond_count, max_interface_speed, device_version,
+#                                   country_code, label_revision, serial_number, manufacture_date,
 #                                   manufacturer}
 #                    Fans
 #                      "name": {status, rpm, speed}
@@ -48,15 +48,15 @@ def OvsBridgeConfig(**kwargs):
     vlanMode = kwargs.get('vlanMode', 'access')
     nativeVlan = kwargs.get('nativeVlan', '1')
     trunkVlans = kwargs.get('trunkVlans', None)
-    
+
     if connection is None:
        return False
-    
+
     retStruct = dict()
-    
+
     if action == 'config':
        # Commands to configure bridge
-       
+
        # check to see if the bridge device is defined...
         command = "ovs-vsctl br-exists " + bridge
         devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
@@ -72,7 +72,7 @@ def OvsBridgeConfig(**kwargs):
               return retString
         else:
            common.LogOutput('debug', "Bridge " + bridge + " exists")
-        
+
         # Now add ports to the  bridge
         if ports != None:
            for curPort in ports:
@@ -98,7 +98,7 @@ def OvsBridgeConfig(**kwargs):
                     return retString
                  else:
                     common.LogOutput('debug', "Set port " + str(curPort) + " tag attribute to " + str(nativeVlan))
-                 
+
                  command = "ovs-vsctl set port " + str(curPort) + " vlan_mode=access"
                  devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
                  retCode = devIntRetStruct['returnCode']
@@ -119,12 +119,12 @@ def OvsBridgeConfig(**kwargs):
                        return retString
                     else:
                        common.LogOutput('debug', "Set port " + str(curPort) + " trunks=" + str(trunkVlans))
-                    
-                    
+
+
                  # For each port
     #else:
        # Commands to unconfigure the bridge
-    
-    
+
+
     retString = common.ReturnJSONCreate(returnCode=0, data=retStruct)
     return retString

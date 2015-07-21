@@ -1,5 +1,5 @@
-topoDict = {"topoDevices": "dut01 wrkston01 wrkston02", 
-            "topoLinks": "lnk01:dut01:wrkston01,lnk02:dut01:wrkston02", 
+topoDict = {"topoDevices": "dut01 wrkston01 wrkston02",
+            "topoLinks": "lnk01:dut01:wrkston01,lnk02:dut01:wrkston02",
             "topoFilters": "dut01:system-category:switch,wrkston01:system-category:workstation,wrkston02:system-category:workstation"}
 
 #
@@ -7,7 +7,7 @@ dut01_conn = switch.Connect(headers.topo['dut01'])
 if dut01_conn is None:
    common.LogOutput('error', "Failed to connect to dut01")
    exit(1)
-   
+
 wrkston01_conn = switch.Connect(headers.topo['wrkston01'])
 if wrkston01_conn is None:
    common.LogOutput('error', "Failed to connect to wrkston01")
@@ -19,7 +19,7 @@ if wrkston02_conn is None:
    exit(1)
 
 
-   
+
 common.Sleep(seconds=30, message="Waiting for switch processes to fully come up")
 
 # Grag interfaces

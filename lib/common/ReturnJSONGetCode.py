@@ -16,7 +16,7 @@ import json
 
 def ReturnJSONGetCode(**kwargs):
     returnStruct = kwargs.get('json')
-    
+
     localDict = json.loads(returnStruct)
     returnCode = localDict['returnCode']
     return returnCode
