@@ -54,6 +54,7 @@ def DeviceInteract(**kwargs):
                                   'root@\S+:.*#\s*$',
                                   '[A-Za-z]+[0-9]+#',
                                   '\(config\)#',
+                                  '\(config-if\)#',
                                   'ONIE:/\s+#\s*$',
                                   'bash-\d+.\d+#\s*$',
                                   pexpect.EOF,
@@ -83,22 +84,28 @@ def DeviceInteract(**kwargs):
            bailflag = 1
            connectionBuffer.append(connection.before)
        elif index == 4:
+           # Got config prompts
+           common.LogOutput('debug', "config-if prompt")
+           ErrorFlag = "CLI"
+           bailflag = 1
+           connectionBuffer.append(connection.before)
+       elif index == 5:
            # Got ONIE prompt - reboot and get to where we need to be
            #connection.send("reboot \r")
            ErrorFlag = "Onie"
            bailflag = 1
            connectionBuffer.append(connection.before)
-       elif index == 5:
+       elif index == 6:
           # Got bash prompt - virtual
            bailflag = 1
            connectionBuffer.append(connection.before)
-       elif index == 6:
+       elif index == 7:
           # got EOF
           bailflag = 1
           connectionBuffer.append(connection.before)
           common.LogOutput('error', "connection closed to console")
           returnCode = 1
-       elif index == 7:
+       elif index == 8:
           # got Timeout
           bailflag = 1
           connectionBuffer.append(connection.before)
