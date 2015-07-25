@@ -31,6 +31,7 @@ LIST_INTERFACE_IP_CMD ="ifconfig %s | grep inet"
 ENABLE_ETH_INTERFACE_CMD ="ifconfig %s up"
 ETH_INTERFACE_CFGIP_CMD ="ifconfig %s %s netmask %s broadcast %s"
 ETH_INTERFACE_CFGIP_CLEAR_CMD ="ifconfig %s 0.0.0.0"
+ETH_INTERFACE_CFG_GW_CMD ="route add default gw %s %s"
 
 FAILED = 1
 PASSED = 0
@@ -41,9 +42,9 @@ def ConfigNetwork(**kwargs):
    eth = kwargs.get('eth')
    ipAddr = kwargs.get('ipAddr')
    netMask = kwargs.get('netMask')
+   broadcast = kwargs.get('broadcast')
    gateway = kwargs.get('gateway')
    clear = kwargs.get('clear',False)
-
    # Local variables
    bailflag = 0
    interfaceUpOption = 0
@@ -61,11 +62,15 @@ def ConfigNetwork(**kwargs):
         common.LogOutput('error', "invalid netmask format :"+netMask)
 	returnCode = FAILED
    	retStruct['buffer'] = "Invalid net mask passed"
-   elif ipFormatChk(gateway) == False:
-        common.LogOutput('error', "invalid gateway format :"+gateway)
+   elif ipFormatChk(broadcast) == False:
+        common.LogOutput('error', "invalid broadcast format :"+broadcast)
 	returnCode = FAILED
-   	retStruct['buffer'] = "Invalid gateway passed"
-
+   	retStruct['buffer'] = "Invalid broadcast passed"
+   elif gateway: 
+       if ipFormatChk(gateway) == False:
+           common.LogOutput('error', "invalid gateway format :"+gateway)
+           returnCode = FAILED
+           retStruct['buffer'] = "Invalid gateway passed"
    if returnCode:
         retStruct['returnCode'] = returnCode
 	return retStruct 
@@ -126,7 +131,7 @@ def ConfigNetwork(**kwargs):
 
    else:
 
-   	command = ETH_INTERFACE_CFGIP_CMD %(eth,ipAddr,netMask,gateway)
+   	command = ETH_INTERFACE_CFGIP_CMD %(eth,ipAddr,netMask,broadcast)
    	returnStruct = host.DeviceInteract(connection=connection, command=command)
    	retCode = returnStruct.get('returnCode')
    	retBuff = returnStruct.get('buffer')
@@ -154,6 +159,19 @@ def ConfigNetwork(**kwargs):
    			retStruct['buffer'] = "Failed to execute the command : " + command
   	 	else:
        			common.LogOutput('info', "IP addr %s configured successfully on interface %s : "%(ipAddr,eth))
+
+   if gateway:
+
+   	command = ETH_INTERFACE_CFG_GW_CMD %(gateway,eth)
+   	returnStruct = host.DeviceInteract(connection=connection, command=command)
+   	retCode = returnStruct.get('returnCode')
+   	retBuff = returnStruct.get('buffer')
+   	if retCode != 0:
+       		common.LogOutput('error', "Failed to execute the command : " + command)
+                returnCode = FAILED
+   		retStruct['buffer'] = "Failed to execute the command : " + command
+   	else:
+       		common.LogOutput('info', "Successfully executed the command : " + command)
 
    retStruct['returnCode'] = returnCode
    return retStruct 
