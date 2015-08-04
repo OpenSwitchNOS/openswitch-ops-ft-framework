@@ -8,15 +8,18 @@
 # Purpose:     Run the show lldp commands in vtysh shell
 #
 # Params:      connection - device connection
-#              port  - Ethernet port
+#              port  - Ethernet port (Optional)
 #
 # Returns:     JSON structure
 #              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: (LLDP statistics):
-#                      NeighBour_chasisID:
-#                      NeighbourEntries
-#                      Neighbor_Info
-#                      lldpNeighborBuffer(Device buffer)
+#              data: 
+#                   buffer: - string of buffer of command
+#                   portStats:  - indexed by port (Neighbor_Entries_Deleted, Neighbor_Entries_Dropped,
+#                                                  Neighbor_Entries, Neighbor_portID, TTL, 
+#                                                  Neighbor_chassisID)
+#                   globalStats:  - global statistics all ports
+#                                    (Total_Neighbor_Entries, Total_Neighbor_Entries_Aged-out, 
+#                                     Total_Neighbor_Entries_Deleted, Total_Neighbor_Entries_Dropped)
 #
 ##PROC-###################################################################################
 import common
@@ -26,9 +29,9 @@ import time
 
 def ShowLldpNeighborInfo(**kwargs):
     connection = kwargs.get('connection')
-    port = kwargs.get('port')
+    port = kwargs.get('port', None)
     if connection is None:
-       return False
+        return False
 
     returnDict = dict()
     #Enter the vtysh shell to access LLDP commands
@@ -36,35 +39,113 @@ def ShowLldpNeighborInfo(**kwargs):
     vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
     returnCode = common.ReturnJSONGetCode(json = returnStructure)
     if returnCode != 0:
-       common.LogOutput('error', "Failed to get vtysh prompt")
-       returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-       return returnJson
-    else :
-       common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
+        common.LogOutput('error', "Failed to get vtysh prompt")
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
+        return returnJson
+    else:
+        common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
 
     #Pass LLDP commands here
-    command = "show lldp neighbor-info %d"%(port)
+    command = "show lldp neighbor-info"
+    if port != None:
+        command += " " + str(port)
+    
     common.LogOutput("info","Show LLDP command ***"+command)
     devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
     returnCode = devIntRetStruct.get('returnCode')
     if returnCode != 0:
-       common.LogOutput('error', "Failed to get show lldp neighbor-info command")
-       returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=devIntRetStruct)
-       return returnJson
-    else :
-       rawBuffer = devIntRetStruct.get('buffer')
-       bufferSplit  = rawBuffer.split("\r\n")
-       for line in bufferSplit:
-         Neighbor_Info = re.match( r'.*neighbor-info\s+(\d+)',line)
-         if Neighbor_Info :
-           returnDict['Neighbor_Info'] = Neighbor_Info.group(1)
-         NeighbourEntries = re.match(r'Neighbor entries :(\d+)',line)
-         if NeighbourEntries :
-           returnDict['NeighbourEntries'] = NeighbourEntries.group(1)
-         NeighBour_chasisID = re.match(r'Neighbor Chassis-ID :()',line)
-         if NeighBour_chasisID:
-           returnDict['NeighBour_chasisID'] = NeighBour_chasisID.group(1)
-       returnDict['lldpNeighborBuffer'] = rawBuffer
+        common.LogOutput('error', "Failed to get show lldp neighbor-info command")
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=devIntRetStruct)
+        return returnJson
+    else:
+        rawBuffer = devIntRetStruct.get('buffer')
+        bufferSplit  = rawBuffer.split("\r\n")
+        globalStatsDict = dict()
+        portDict = dict()
+        if port != None:
+            globalStatsDict['Total_Neighbor_Entries'] = ""
+            globalStatsDict['Total_Neighbor_Entries_Deleted'] = ""
+            globalStatsDict['Total_Neighbor_Entries_Dropped'] = ""
+            globalStatsDict['Total_Neighbor_Entries_Aged-out'] = ""
+            for line in bufferSplit:
+                portLine = re.match("^Port:\s*(\d+)\s*$", line)
+                if portLine:
+                    curPort = portLine.group(1)
+                    portDict[curPort] = dict()
+                    continue
+                NeighborEntries = re.match("^Neighbor\s+entries\s+:\s*(\d+)\s*$",line)
+                if NeighborEntries :
+                    portDict[curPort]['Neighbor_Entries'] = NeighborEntries.group(1)
+                    continue
+                NeighborEntriesDeleted = re.match("^Neighbor\s+entries\s+deleted\s+:\s*(\d+)\s*$",line)
+                if NeighborEntriesDeleted :
+                    portDict[curPort]['Neighbor_Entries_Deleted'] = NeighborEntriesDeleted.group(1)
+                    continue
+                NeighborEntriesDropped = re.match("^Neighbor\s+entries\s+dropped\s+:\s*(\d+)\s*$",line)
+                if NeighborEntriesDropped :
+                    portDict[curPort]['Neighbor_Entries_Dropped'] = NeighborEntriesDropped.group(1)
+                    continue
+                NeighborEntriesAgedOut = re.match("^Neighbor\s+entries\s+aged-out\s+:\s*(\d+)\s*$",line)
+                if NeighborEntriesAgedOut :
+                    portDict[curPort]['Neighbor_Entries_Aged-out'] = NeighborEntriesAgedOut.group(1)
+                    continue
+                Neighbor_chasisID = re.match(r'Neighbor Chassis-ID :([0-9a-f:]+|\s*)$',line)
+                if Neighbor_chasisID:
+                    portDict[curPort]['Neighbor_chasisID'] = Neighbor_chasisID.group(1)
+                Neighbor_portID = re.match(r'Neighbor Port-ID :(\d+|\s*)$',line)
+                if Neighbor_portID:
+                    portDict[curPort]['Neighbor_portID'] = Neighbor_portID.group(1)
+                ttl = re.match(r'TTL :(\d+|\s*)$',line)
+                if ttl:
+                    portDict[curPort]['TTL'] = ttl.group(1)
+            returnDict['globalStats'] = globalStatsDict
+            returnDict['portStats'] = portDict
+            returnDict['buffer'] = rawBuffer
+            #returnDict['lldpNeighborBuffer'] = rawBuffer
+        else:
+            # This means we are parsing out output w/out ports
+            for line in bufferSplit:
+                # Pull out Totals
+                totalNeighEntries = re.match("^Total\s+neighbor\s+entries\s+:\s+(\d+)\s*$", line)
+                if totalNeighEntries:
+                    globalStatsDict['Total_Neighbor_Entries'] = totalNeighEntries.group(1)
+                    continue
+                totalNeighEntriesDeleted = re.match("^Total\s+neighbor\s+entries\s+deleted\s+:\s+(\d+)\s*$", line)
+                if totalNeighEntriesDeleted:
+                    globalStatsDict['Total_Neighbor_Entries_Deleted'] = totalNeighEntriesDeleted.group(1)
+                    continue
+                totalNeighEntriesDropped = re.match("^Total\s+neighbor\s+entries\s+dropped\s+:\s+(\d+)\s*$", line)
+                if totalNeighEntriesDropped:
+                    globalStatsDict['Total_Neighbor_Entries_Dropped'] = totalNeighEntriesDropped.group(1)
+                    continue
+                totalNeighEntriesAgedOut = re.match("^Total\s+neighbor\s+entries\s+aged-out\s+:\s+(\d+)\s*$", line)
+                if totalNeighEntriesAgedOut:
+                    globalStatsDict['Total_Neighbor_Entries_Aged-out'] = totalNeighEntriesAgedOut.group(1)
+                    continue
+                
+                # Now lets go through each line
+                blankPortEntry = re.match("^(\d+)\s*$", line)
+                if blankPortEntry:
+                    curPort = blankPortEntry.group(1)
+                    portDict[curPort] = dict()
+                    portDict[curPort]['Neighbor_Entries_Deleted'] = ""
+                    portDict[curPort]['Neighbor_Entries_Dropped'] = ""
+                    portDict[curPort]['Neighbor_Entries'] = ""
+                    portDict[curPort]['Neighbor_Chassis-ID'] = ""
+                    portDict[curPort]['Neighbor_Port-ID'] = ""
+                    portDict[curPort]['TTL'] = ""
+                    continue
+                populatedPortEntry = re.match("^(d\+)\s+(S+)\s+(\d+)\s+(\d+)\s*$", line)
+                if populatedPortEntry:
+                    curPort = populatedPortEntry.group(1)
+                    portDict[curPort] = dict()
+                    portDict[curPort]['Neighbor_Chassis-ID'] = populatedPortEntry.group(2) 
+                    portDict[curPort]['Neighbor_Port-ID'] = populatedPortEntry.group(3)
+                    portDict[curPort]['TTL'] = populatedPortEntry.group(4)
+            returnDict['globalStats'] = globalStatsDict
+            returnDict['portStats'] = portDict
+            returnDict['buffer'] = rawBuffer
+            
 
     #Exit the vtysh shell
     returnStructure = switch.CLI.VtyshShell(connection = connection,configOption="unconfig")
@@ -72,9 +153,9 @@ def ShowLldpNeighborInfo(**kwargs):
     common.LogOutput("debug","vtysh shell buffer: \n"+vtyshExitInfo)
     returnCode = common.ReturnJSONGetCode(json = returnStructure)
     if returnCode != 0:
-       common.LogOutput('error', "Failed to exit vtysh prompt")
-       returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-       return returnJson
+        common.LogOutput('error', "Failed to exit vtysh prompt")
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
+        return returnJson
 
     #Return results
     returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
