@@ -15,7 +15,7 @@ import headers
 parser = argparse.ArgumentParser(description='OpenHalon environment test shell')
 parser.add_argument('--testCase', help="testcase name to run", required=True, dest='testCaseName')
 parser.add_argument('--physicalTopology', help="physical topology filename", required=False, dest='phystopo', default='virtual')
-parser.add_argument('--image', help="Valid tftp image for physical Halon switch", required=False, dest='image', default=None)
+parser.add_argument('--imageURL',help="Valid tftp image download URL for physical openswitch", required=False, dest='imageURL', default=None)
 args = parser.parse_args()
 
 # For Python3 since it is vastly different than 2, we need to provision in the PYTHONPATh all of our directory structure for libraries
@@ -78,7 +78,7 @@ headers.ResultsDirectory['rtlDir'] = baseResultsDir + "/" + timeStamp + "/RTL"
 headers.ResultsDirectory['summaryLog'] = headers.ResultsDirectory['resultsDir'] + "summary.log"
 headers.ResultsDirectory['detailLog'] = headers.ResultsDirectory['resultsDir'] + "detail.log"
 headers.ResultsDirectory['testcaseName'] = testCaseName
-# headers.TftpImage['Image'] = args.image
+headers.TftpImage['ImageURL'] = args.imageURL
 
 if args.phystopo != "virtual" :
     TopologyXMLPath = args.phystopo
