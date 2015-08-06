@@ -7,7 +7,6 @@ import time
 import datetime
 import shutil
 
-
 # Halon Specific Global Variable
 import headers
 
@@ -15,7 +14,7 @@ import headers
 parser = argparse.ArgumentParser(description='OpenHalon environment test shell')
 parser.add_argument('--testCase', help="testcase name to run", required=True, dest='testCaseName')
 parser.add_argument('--physicalTopology', help="physical topology filename", required=False, dest='phystopo', default='virtual')
-parser.add_argument('--imageURL',help="Valid tftp image download URL for physical openswitch", required=False, dest='imageURL', default=None)
+parser.add_argument('--imageurl',help="Valid tftp image download URL for physical openswitch", required=False, dest='ImageURL', default=None)
 args = parser.parse_args()
 
 # For Python3 since it is vastly different than 2, we need to provision in the PYTHONPATh all of our directory structure for libraries
@@ -48,7 +47,6 @@ import switch.OVS
 import topology
 import switch.CLI
 import host
-import pdb
 try:
     import RTL
 except ImportError:
@@ -72,13 +70,14 @@ ts = time.time()
 timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%b-%d_%H:%M:%S')
 baseResultsDir = os.environ['FT_FRAMEWORK_BASE'] + "/results"
 
+
 # Setting the global variable headers.ResultsDirectory
 headers.ResultsDirectory['resultsDir'] = baseResultsDir + "/" + timeStamp + "/"
 headers.ResultsDirectory['rtlDir'] = baseResultsDir + "/" + timeStamp + "/RTL"
 headers.ResultsDirectory['summaryLog'] = headers.ResultsDirectory['resultsDir'] + "summary.log"
 headers.ResultsDirectory['detailLog'] = headers.ResultsDirectory['resultsDir'] + "detail.log"
 headers.ResultsDirectory['testcaseName'] = testCaseName
-headers.TftpImage['ImageURL'] = args.imageURL
+headers.TftpImage['ImageURL'] = args.ImageURL
 
 if args.phystopo != "virtual" :
     TopologyXMLPath = args.phystopo

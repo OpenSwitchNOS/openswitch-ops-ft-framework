@@ -25,6 +25,7 @@ import common
 import time
 import switch
 import topology
+import RTL
 import os
 import re
 
@@ -36,7 +37,7 @@ class TftpImageOnieDownload() :
       #Add the Tftp uplink port to  device(DUT)
       #The constructor returns AddUplink = 1 if no uplink gets added to the DUT
       common.LogOutput("info","Dynamically add the Tftp uplink port to  device(DUT)")
-      returnJson = topology.RTL.UplinkPortAdd(device=device)
+      returnJson = RTL.UplinkPortAdd(device=device)
       returnCode = common.ReturnJSONGetCode(json=returnJson) 
       TftpUplinkIP = common.ReturnJSONGetData(json=returnJson,dataElement="IP")
       if TftpUplinkIP is None :
@@ -102,7 +103,6 @@ class TftpImageOnieDownload() :
       if self.returnCode != 0:
        common.LogOutput('error', "Failed to  run the image executable file")
        ExitFlag4 = 1
-     
      #Reboot the switch again to install the image 
      common.LogOutput("info","Reboot the switch again to install the image::")
      connection = switch.Reboot(connection=connection)
@@ -127,5 +127,5 @@ class TftpImageOnieDownload() :
      
   def RemoveUplink(self,device): 
      common.LogOutput('info',"Removing the TFTP uplink")
-     returnCode = topology.RTL.UplinkPortRemove(device=device) 
+     returnCode = RTL.UplinkPortRemove(device=device) 
      return returnCode
