@@ -26,7 +26,7 @@ import time
 import xml.etree.ElementTree
 
 def DeviceInteract(**kwargs):
-
+  
    connection = kwargs.get('connection')
    command = kwargs.get('command')
    errorCheck = kwargs.get('errorCheck', True)
@@ -37,9 +37,8 @@ def DeviceInteract(**kwargs):
    retStruct = dict()
    retStruct['returnCode'] = 1
    retStruct['buffer'] = []
-
+   
    # Send the command
-
    connection.send(command)
    connection.send('\r')
    time.sleep(1)
@@ -47,13 +46,10 @@ def DeviceInteract(**kwargs):
    connectionBuffer = []
    #if errorCheck is True:
    #   common.LogOutput('debug', "Sending command {" + command + "} to device")
-
+   
    while bailflag == 0:
        #DEBUG print connection
-       index = connection.expect(['login:', 'Password:', 'root@\S+\d+\d+.*#', pexpect.EOF,pexpect.TIMEOUT], timeout=200)
-
-#       index = connection.expect(['login:', 'root@\S+:.*#', 'ONIE:/\s+#', 'bash-\d+.\d+#\s*$',pexpect.EOF,pexpect.TIMEOUT], timeout=30)
-       #print "Index I got was ", index
+       index = connection.expect(['login:', 'Password:', 'root@\S+\d+\d+.*#','Capturing on eth1',pexpect.EOF,pexpect.TIMEOUT], timeout=200)
        if index == 0:
            # Need to send login string
            connection.sendline("root")
@@ -66,6 +62,10 @@ def DeviceInteract(**kwargs):
            # Got prompt.  We should be good
            #print "Got prompt, we should be good"
            #print('Got prompt, we should be good')
+           bailflag = 1
+           connectionBuffer.append(connection.before)
+       elif index ==3:
+           common.LogOutput('info',"Started packet capture**")
            bailflag = 1
            connectionBuffer.append(connection.before)
        elif index == 3:
@@ -84,23 +84,23 @@ def DeviceInteract(**kwargs):
            connectionBuffer.append(connection.before)
    #time.sleep(3)
    connectionBuffer.append(connection.after)
-   #connection.expect(['$'], timeout=2)
+   connection.expect(['$'], timeout=2)
    #time.sleep(1)
    # Now lets put in the topology the expect handle
    #print "command: " + command + "\nconn buffer:\n" + str(connectionBuffer)
    santString = ""
    for curLine in connectionBuffer:#
      santString += str(curLine)
-
+   
    returnCode = 0
    if errorCheck is True and returnCode == 0:
       errorCheckRetStruct = host.ErrorCheck(connection=connection, buffer=santString)
       returnCode = errorCheckRetStruct['returnCode']
       # Dump the buffer the the debug log
       common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
-
+   
    # Return dictionary
    retStruct['returnCode'] = returnCode
    retStruct['buffer'] = santString
-
+   
    return retStruct
