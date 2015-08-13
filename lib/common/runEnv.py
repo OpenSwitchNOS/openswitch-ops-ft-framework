@@ -153,7 +153,7 @@ class testEnv ():
             self.topoType = "virtual"
             common.LogOutput('info', "Topology is virtual - creating environment specified in the test case topoDict structure")
             # Create a topology object
-            self.topoObj = lib.Topology(topoDict=self.topoDict,runEnv=self)
+            self.topoObj = lib.Topology(topoDict=self.topoDict, runEnv=self)
         elif str.isdigit(args.phystopo) is True:
             self.topoType = "physical"
             # This means we have passed a reservation in

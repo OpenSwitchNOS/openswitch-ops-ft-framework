@@ -557,17 +557,18 @@ class Topology (HalonTest):
                 attributeTag = ET.SubElement(deviceTag, 'attribute', attrib={'name': cAttr, 'value': cVal})
         
         # Now parse through topoLinkFilter statements
-        for curTopoLinkFilter in str.split(self.topoLinkFilter, ','):
-            #print curTopoLinkFilter
-            (cLink, cDev, cFType, CAttr) = str.split(curTopoLinkFilter, ':')
-            # Search for Device in logical Topology 
-            xpath = ".//device[@name='"+cDev+"']"
-            deviceTag = common.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath)
-            if deviceTag != None:
-                # Create new subElement for port
-                portTag = ET.SubElement(deviceTag, 'port', attrib={'link': cLink})
-                # Create Attribute tag now
-                attributeTag = ET.SubElement(portTag, 'attribute', attrib={'name': 'portName', 'value': CAttr})
+        if self.topoLinkFilter != "":
+            for curTopoLinkFilter in str.split(self.topoLinkFilter, ','):
+                #print curTopoLinkFilter
+                (cLink, cDev, cFType, CAttr) = str.split(curTopoLinkFilter, ':')
+                # Search for Device in logical Topology 
+                xpath = ".//device[@name='"+cDev+"']"
+                deviceTag = common.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath)
+                if deviceTag != None:
+                    # Create new subElement for port
+                    portTag = ET.SubElement(deviceTag, 'port', attrib={'link': cLink})
+                    # Create Attribute tag now
+                    attributeTag = ET.SubElement(portTag, 'attribute', attrib={'name': 'portName', 'value': CAttr})
                 
         # Need to inspect ETREE to see if profile is specific.  If not, lets assume auto-ubuntu-12-04 for workstations
         xpath = ".//device/attribute[@value='workstation']/.."

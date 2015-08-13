@@ -9,10 +9,8 @@ import shutil
 
 import lib
 import common
-#import console
 import switch
 import switch.OVS
-#import topology
 import switch.CLI
 import host
 import pdb

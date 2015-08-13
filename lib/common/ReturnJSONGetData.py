@@ -30,7 +30,7 @@ def ReturnJSONGetData(**kwargs):
         if type(returnData) == dict:
             if dataElement in returnData.keys():
                 dataToReturn = returnData[dataElement]
-                dataToReturn = dataToReturn.encode('utf-8')
+                #dataToReturn = dataToReturn.encode('utf-8')
             else :
                 dataToReturn = None
         else :
