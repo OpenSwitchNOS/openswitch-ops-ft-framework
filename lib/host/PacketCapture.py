@@ -28,7 +28,7 @@ import headers
 import common
 import time
 import switch
-import topology
+#import topology
 import host
 import re
 import os

@@ -21,7 +21,7 @@ import pexpect
 import headers
 import common
 import switch
-import console
+#import console
 import xml.etree.ElementTree
 import os
 import socket

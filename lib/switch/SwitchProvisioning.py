@@ -22,7 +22,7 @@ import headers
 import common
 import time
 import switch
-import topology
+#import topology
 import os
 import re
 
