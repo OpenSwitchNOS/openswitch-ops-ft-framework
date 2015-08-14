@@ -25,13 +25,15 @@ class VSwitch ( Device ):
         self.expectHndl = None
         self.connectStringBase = "docker exec -ti "
         self.expectList = ['login:\s*$',
-                                  'root@\S+:.*#\s*$',
-                                  '[A-Za-z]+[0-9]+#',
-                                  '\(config\)#',
-                                  'ONIE:/\s+#\s*$',
-                                  'bash-\d+.\d+#\s*$',
-                                  pexpect.EOF,
-                                  pexpect.TIMEOUT]
+                           'root@\S+:.*#\s*$',
+                           '[A-Za-z0-9]+#',
+                            '\(config\)#',
+                            '\(config-if\)#\s*$',
+                            'ONIE:/\s+#\s*$',
+                            'bash-d+.\d+#\s*$',
+                            'telnet: Unable to connect to remote host: Connection refused',
+                            pexpect.EOF,
+                            pexpect.TIMEOUT]
         
     def cmdVtysh(self, **kwargs):
         # Get into the VTYsh
@@ -115,33 +117,40 @@ class VSwitch ( Device ):
                 self.expectHndl.sendline("root")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
-                # Got prompt.  We should be good
-                # print('Got prompt, we should be good')
+                # logged-in in prompt
                 bailflag = 1
                 common.LogOutput("debug", "Root prompt detected:")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
-                common.LogOutput("debug", "vtysh config prompt detected: Revert to root")
-                self.expectHndl.send ('end \r')
+                common.LogOutput("debug", "vtysh prompt detected: Revert to root")
+                self.expectHndl.send ('exit\r')
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
-                common.LogOutput("debug", "vtysh prompt detected: Revert to root")
-                self.expectHndl.send ('exit \n')
+                common.LogOutput("debug", "vtysh config prompt detected: Revert to root")
+                self.expectHndl.send ('exit\r')
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
+                common.LogOutput("debug", "vtysh config interface prompt detected: Revert to root")
+                self.expectHndl.send ('exit \r')
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 5:
                 # Got ONIE prompt - reboot and get to where we need to be
                 self.expectHndl.sendline("reboot")
                 connectionBuffer.append(self.expectHndl.before)
-            elif index == 5:
+            elif index == 6:
                 # Got prompt.  We should be good
                 bailflag = 1
                 common.LogOutput("debug", "Root prompt detected: Virtual")
                 connectionBuffer.append(self.expectHndl.before)
-            elif index == 6:
+            elif index == 7:
                 # Got EOF
                 common.LogOutput('error', "Telnet to switch failed")
                 return None
-            elif index == 7:
+            elif index == 8:
+                # Got EOF
+                common.LogOutput('error', "Telnet to switch failed")
+                return None
+            elif index == 9:
                 # Got a Timeout
                 common.LogOutput('error', "Connection timed out")
                 return None
@@ -152,7 +161,7 @@ class VSwitch ( Device ):
         self.expectHndl.expect(['$'], timeout=2)
         # Now lets put in the topology the expect handle
         for curLine in connectionBuffer:
-            sanitizedBuffer += curLine
+            sanitizedBuffer += str(curLine)
         common.LogOutput('debug', sanitizedBuffer)
         return self.expectHndl
         
@@ -185,9 +194,7 @@ class VSwitch ( Device ):
                 self.expectHndl.send("root \r")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
-                # Got prompt.  We should be good
-                #print "Got prompt, we should be good"
-                #print('Got prompt, we should be good')
+                # root prompt
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
@@ -197,28 +204,40 @@ class VSwitch ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
                 #$time.sleep(2)
             elif index == 3:
-                # Got config prompts
+                # Got vtysh config prompts
                 common.LogOutput('debug', "config prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
+                # Got vtysh config interface prompts
+                common.LogOutput('debug', "config interface prompt")
+                ErrorFlag = "CLI"
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 5:
                 # Got ONIE prompt - reboot and get to where we need to be
                 #connection.send("reboot \r")
                 ErrorFlag = "Onie"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-            elif index == 5:
+            elif index == 6:
                 # Got bash prompt - virtual
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-            elif index == 6:
+            elif index == 7:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 common.LogOutput('error', "connection closed to console")
                 returnCode = 1
-            elif index == 7:
+            elif index == 8:
+                # got EOF
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+                common.LogOutput('error', "connection closed to console")
+                returnCode = 1
+            elif index == 9:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
@@ -227,9 +246,9 @@ class VSwitch ( Device ):
             else :
                 connectionBuffer.append(self.expectHndl.before)
                 #time.sleep(3)
-                connectionBuffer.append(self.expectHndl.after)
+        connectionBuffer.append(self.expectHndl.after)
         self.expectHndl.expect(['$'], timeout=1)
-                    
+
         santString = ""
         for curLine in connectionBuffer:#
             santString += str(curLine)
