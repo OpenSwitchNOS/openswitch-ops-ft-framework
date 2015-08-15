@@ -26,11 +26,11 @@ class VSwitch ( Device ):
         self.connectStringBase = "docker exec -ti "
         self.expectList = ['login:\s*$',
                            'root@\S+:.*#\s*$',
+                           'bash-[0-9.]+#',
                            '[A-Za-z0-9]+#',
                             '\(config\)#',
                             '\(config-if\)#\s*$',
                             'ONIE:/\s+#\s*$',
-                            'bash-d+.\d+#\s*$',
                             'telnet: Unable to connect to remote host: Connection refused',
                             pexpect.EOF,
                             pexpect.TIMEOUT]
@@ -122,25 +122,25 @@ class VSwitch ( Device ):
                 common.LogOutput("debug", "Root prompt detected:")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
-                common.LogOutput("debug", "vtysh prompt detected: Revert to root")
-                self.expectHndl.send ('exit\r')
-                connectionBuffer.append(self.expectHndl.before)
-            elif index == 3:
-                common.LogOutput("debug", "vtysh config prompt detected: Revert to root")
-                self.expectHndl.send ('exit\r')
-                connectionBuffer.append(self.expectHndl.before)
-            elif index == 4:
-                common.LogOutput("debug", "vtysh config interface prompt detected: Revert to root")
-                self.expectHndl.send ('exit \r')
-                connectionBuffer.append(self.expectHndl.before)
-            elif index == 5:
-                # Got ONIE prompt - reboot and get to where we need to be
-                self.expectHndl.sendline("reboot")
-                connectionBuffer.append(self.expectHndl.before)
-            elif index == 6:
                 # Got prompt.  We should be good
                 bailflag = 1
                 common.LogOutput("debug", "Root prompt detected: Virtual")
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 3:
+                common.LogOutput("debug", "vtysh prompt detected: Revert to root")
+                self.expectHndl.send ('exit\r')
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 4:
+                common.LogOutput("debug", "vtysh config prompt detected: Revert to root")
+                self.expectHndl.send ('exit\r')
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 5:
+                common.LogOutput("debug", "vtysh config interface prompt detected: Revert to root")
+                self.expectHndl.send ('exit \r')
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 6:
+                # Got ONIE prompt - reboot and get to where we need to be
+                self.expectHndl.sendline("reboot")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 7:
                 # Got EOF
@@ -204,25 +204,25 @@ class VSwitch ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
                 #$time.sleep(2)
             elif index == 3:
+                # Got bash prompt - virtual
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 4:
                 # Got vtysh config prompts
                 common.LogOutput('debug', "config prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-            elif index == 4:
+            elif index == 5:
                 # Got vtysh config interface prompts
                 common.LogOutput('debug', "config interface prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-            elif index == 5:
+            elif index == 6:
                 # Got ONIE prompt - reboot and get to where we need to be
                 #connection.send("reboot \r")
                 ErrorFlag = "Onie"
-                bailflag = 1
-                connectionBuffer.append(self.expectHndl.before)
-            elif index == 6:
-                # Got bash prompt - virtual
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 7:
