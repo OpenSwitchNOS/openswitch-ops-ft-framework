@@ -4,9 +4,9 @@
 #from ErrorCheck import *
 #from Reboot import *
 from ExpectLog import *
-from ErrorCheckOnie import *
-from TftpImageOnieDownload import *
-from SwitchProvisioning import *
+#from ErrorCheckOnie import *
+#from TftpImageOnieDownload import *
+#from SwitchProvisioning import *
 
 
 # Submodules
