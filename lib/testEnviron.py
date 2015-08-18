@@ -10,7 +10,7 @@ import headers
 
 
 
-class testEnv ():
+class testEnviron ():
     def __init__(self, **kwargs):
         self.topoDict = kwargs.get('topoDict')
         
@@ -34,24 +34,10 @@ class testEnv ():
         parser.add_argument('--targetBuild', help="List of logical DUTs and coorsponding builds to provision", required=False, dest='targetBuild', default=None)
         parser.add_argument('--resultDir', help="Result directory for the test case to put results in", required=False, dest='resultDir', default=None)
         parser.add_argument('-s', help="pytest option", required=False, dest='ptest', default=None)
-        print sys.argv
         args = parser.parse_args()
         self.rsvnId = 'virtual'
-        if args.phystopo is None:
-            # Check to see if we have an RSVNID variable
-            envKeys = os.environ.keys()
-            for curKey in envKeys:
-                if curKey == "RSVNID":
-                    tmpRsvn = os.environ['RSVNID']
-                    if str.isdigit(tmpRsvn):
-                        common.LogOutput('info', "Detected RSVNID in environment")
-                        self.rsvnId = tmpRsvn
-                    break
-        else:
-            self.rsvnId = args.phystopo
         self.targetBuild = args.targetBuild
         self.resultDir = args.resultDir
-        #self.image = args.image
         
         
         pythonPathString = ""
@@ -125,6 +111,21 @@ class testEnv ():
             #retCode = common.CreateDirectory(baseResultsDir + "/" + timeStamp + "/.")
             retCode = common.CreateDirectory(self.ResultsDirectory['resultsDir'])
 
+        # Now settle on topology
+        if args.phystopo is None:
+            # Check to see if we have an RSVNID variable
+            envKeys = os.environ.keys()
+            for curKey in envKeys:
+                if curKey == "RSVNID":
+                    tmpRsvn = os.environ['RSVNID']
+                    if str.isdigit(tmpRsvn):
+                        common.LogOutput('info', "Detected RSVNID in environment")
+                        self.rsvnId = tmpRsvn
+                    break
+        else:
+            self.rsvnId = args.phystopo
+            
+        
         if retCode['returnCode'] == 0:
             #common.ChangeDirectory(self.ResultsDirectory['resultsDir'])
             # Create RTL directory
