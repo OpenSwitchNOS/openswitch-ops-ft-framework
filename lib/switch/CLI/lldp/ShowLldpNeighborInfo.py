@@ -117,7 +117,7 @@ def ShowLldpNeighborInfo(**kwargs):
                 if Chassis_CapEnabled:
                     portDict[curPort]['Chassis_Capabilities_Enabled'] = Chassis_CapEnabled.group(1)
                     continue
-                Neighbor_portID = re.match(r'Neighbor Port-ID :(\d+|\s*)$',line)
+                Neighbor_portID = re.match(r'Neighbor Port-ID\s*:\s*(.*)$',line)
                 if Neighbor_portID:
                     portDict[curPort]['Neighbor_portID'] = Neighbor_portID.group(1)
                 ttl = re.match(r'TTL :(\d+|\s*)$',line)

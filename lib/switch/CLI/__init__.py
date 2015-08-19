@@ -1,4 +1,4 @@
-from ShowLldpNeighborInfo import *
+#from ShowLldpNeighborInfo import *
 #from VtyshShell import *
 from ErrorCheck import *
 from ConfigMode import *
