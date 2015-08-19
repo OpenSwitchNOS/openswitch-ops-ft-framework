@@ -1,6 +1,7 @@
 import common
 import switch
 import switch.CLI.lldp
+#from switch.CLI.lldp import *
 from lib import testEnviron
 #import switch
 topoDict = {"topoExecution": 3000,

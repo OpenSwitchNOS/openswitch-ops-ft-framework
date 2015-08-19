@@ -6,7 +6,6 @@ from XmlElementSubElementAppend import *
 from XmlFileLoad import *
 from XmlGetElementsByTag import *
 from ResultDirectoryCreate import *
-#from runEnv import *
 from Sleep import *
 from tcAction import *
 from LogLib import *
