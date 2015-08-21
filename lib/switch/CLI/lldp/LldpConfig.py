@@ -9,7 +9,6 @@
 #
 # Params:      deviceObj - device object
 #              enable    - flag to enable True / Faluse
-#              disable   = flag to disable - True / False
 #
 # Returns:     JSON structure
 #              returnCode - status of command(0 for pass , gets errorcodes for failure)
@@ -23,8 +22,7 @@ import time
 
 def LldpConfig(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
-    enable = kwargs.get('enable', False)
-    disable = kwargs.get('disable', False)
+    enable = kwargs.get('enable', True)
     
     # If Device object is not passed, we need to error out
     if deviceObj is None:
@@ -32,15 +30,15 @@ def LldpConfig(**kwargs):
         returnJson = common.ReturnJSONCreate(returnCode=1)
         return returnJson
     
-    if enable is False and disable is False:
-        common.LogOutput('error', "Need to pass either enable=True to enable lldp or disable=True to disable lldp")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+    #if enable is False and disable is False:
+    #    common.LogOutput('error', "Need to pass either enable=True to enable lldp or disable=True to disable lldp")
+    #    returnJson = common.ReturnJSONCreate(returnCode=1)
+    #    return returnJson
     
-    if enable is True and disable is True:
-        common.LogOutput('error', "Need to pass either enable=True to enable lldp or disable=True to disable lldp")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+    #if enable is True and disable is True:
+    #    common.LogOutput('error', "Need to pass either enable=True to enable lldp or disable=True to disable lldp")
+    #    returnJson = common.ReturnJSONCreate(returnCode=1)
+    #    return returnJson
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell()
     vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
@@ -66,8 +64,7 @@ def LldpConfig(**kwargs):
             common.LogOutput('error', "Failed to enable lldp on device " + deviceObj.device)
         else:
             common.LogOutput('debug', "Enabled lldp on device " + deviceObj.device)
-    
-    if disable is True:
+    else:
         command = "no feature lldp\r"
         returnStructure = deviceObj.DeviceInteract(command=command)
         retCode = returnStructure['returnCode']
