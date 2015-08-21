@@ -43,14 +43,14 @@ def ShowLldpNeighborInfo(**kwargs):
     #returnCode = common.ReturnJSONGetCode(json = returnStructure)
     
     returnStructure = deviceObj.VtyshShell()
-    vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
+    #vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
     returnCode = common.ReturnJSONGetCode(json = returnStructure)
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh prompt")
         returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
         return returnJson
-    else:
-        common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
+    #else:
+    #    common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
 
     #Pass LLDP commands here
     command = "show lldp neighbor-info"
@@ -186,8 +186,8 @@ def ShowLldpNeighborInfo(**kwargs):
     #Exit the vtysh shell
     #returnStructure = switch.CLI.VtyshShell(connection = connection,configOption="unconfig")
     returnStructure = deviceObj.VtyshShell(configOption="unconfig")
-    vtyshExitInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    common.LogOutput("debug","vtysh shell buffer: \n"+vtyshExitInfo)
+    #vtyshExitInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
+    #common.LogOutput("debug","vtysh shell buffer: \n"+vtyshExitInfo)
     returnCode = common.ReturnJSONGetCode(json = returnStructure)
     if returnCode != 0:
         common.LogOutput('error', "Failed to exit vtysh prompt")
