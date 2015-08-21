@@ -34,7 +34,12 @@ class VSwitch ( Device ):
                             'telnet: Unable to connect to remote host: Connection refused',
                             pexpect.EOF,
                             pexpect.TIMEOUT]
-        
+        # Device Contexts
+        # linux - assumed root
+        # vtyShell
+        # vtyShellConfig
+        self.deviceContext = ""
+
     def cmdVtysh(self, **kwargs):
         # Get into the VTYsh
         cmd = kwargs.get('command', None)
@@ -163,6 +168,7 @@ class VSwitch ( Device ):
         for curLine in connectionBuffer:
             sanitizedBuffer += str(curLine)
         common.LogOutput('debug', sanitizedBuffer)
+        self.deviceContext = "linux"
         return self.expectHndl
         
     # Routine allows the user to interact with a device and get appropriate output
@@ -325,34 +331,41 @@ class VSwitch ( Device ):
     def VtyshShell (self, **kwargs):
         #Parameters
         configOption = kwargs.get('configOption',"config")
+        option = kwargs.get('enter', True)
 
         returnDict = dict()
-        if configOption == "config":
-            #Enter vtysh shell when configOption is config
-            command = "vtysh\r"
-            common.LogOutput("info","Enter vtysh Shell***")
-            #Get the device response buffer as json return structure here
-            devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
-            returnCode = devIntRetStruct.get('returnCode')
-            returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
-            if returnCode != 0:
-                common.LogOutput('error', "Failed to get into the vtysh shell")
-                returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnDict)
+        if configOption == "config" or option is True:
+            if self.deviceContext == "vtyShell":
+                common.LogOutput('debug', "Already in vtysh context")
+                returnJson = common.ReturnJSONCreate(returnCode=0)
                 return returnJson
 
-            #Enter paging command for  switch (terminal length)
-            command = "terminal length 0\r"
-            devIntRetStruct = self.DeviceInteract(command=command)
-            returnCode = devIntRetStruct.get('returnCode')
-            if returnCode != 0:
-                common.LogOutput('error', "Failed to get into the vtysh shell")
-                returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=devIntRetStruct)
-                return returnJson
-            else :
-                returnDict['vtyshPrompt'] += devIntRetStruct.get('buffer')
+            if self.deviceContext == "linux":
+                #Enter vtysh shell when configOption is config
+                command = "vtysh\r"
+                common.LogOutput("debug","Enter vtysh Shell***")
+                #Get the device response buffer as json return structure here
+                devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
+                returnCode = devIntRetStruct.get('returnCode')
+                returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
+                if returnCode != 0:
+                    common.LogOutput('error', "Failed to get into the vtysh shell")
+                    returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnDict)
+                    return returnJson
 
-                returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
-                return returnJson
+                #Enter paging command for  switch (terminal length)
+                command = "terminal length 0\r"
+                devIntRetStruct = self.DeviceInteract(command=command)
+                returnCode = devIntRetStruct.get('returnCode')
+                if returnCode != 0:
+                    common.LogOutput('error', "Failed to get into the vtysh shell")
+                    returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=devIntRetStruct)
+                    return returnJson
+                else :
+                    returnDict['vtyshPrompt'] += devIntRetStruct.get('buffer')
+                    self.deviceContext = "vtyShell"
+                    returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
+                    return returnJson
         else :
             #Exit vtysh shell
             common.LogOutput("debug","Vtysh shell Exit")
@@ -365,7 +378,66 @@ class VSwitch ( Device ):
                 common.LogOutput('error', "Failed to exit the vtysh shell")
                 returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnDict)
                 return returnJson
+            self.deviceContext = "linux"
             returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
             return returnJson
 
+    def ConfigVtyShell(self, **kwargs):
+            #Parameters
+            option = kwargs.get('enter', True)
 
+            returnDict = dict()
+
+            if option is True:
+                if self.deviceContext == "vtyShellConfig":
+                    common.LogOutput('debug', "Already in vtysh config context")
+                    returnJson = common.ReturnJSONCreate(returnCode=0)
+                    return returnJson
+
+                if self.deviceContext == "linux":
+                    # Get into vtyshell
+                    returnStruct = self.VtyshShell(enter=True)
+                    retCode = common.ReturnJSONGetCode(json=returnStruct)
+                    if retCode != 0:
+                        common.LogOutput('error', "Failed to get into the vtyshell context")
+                        returnJson = common.ReturnJSONCreate(returnCode=1)
+                        return returnJson
+
+                # Validate we are in the vtyShell context
+                if self.deviceContext == "vtyShell":
+
+                    #Enter vtysh shell when configOption is config
+                    command = "config terminal\r"
+                    common.LogOutput("debug","Enter vtysh shell config context***")
+                    #Get the device response buffer as json return structure here
+                    devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
+                    returnCode = devIntRetStruct.get('returnCode')
+                    returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
+                    if returnCode != 0:
+                        common.LogOutput('error', "Failed to get into the vtysh shell")
+                        returnJson = common.ReturnJSONCreate(returnCode=1)
+                        return returnJson
+                    else:
+                        self.deviceContext = "vtyShellConfig"
+                        returnJson = common.ReturnJSONCreate(returnCode=0)
+                        return returnJson
+            else :
+                if self.deviceContext == "vtyShellConfig":
+                    #Exit vtysh shell
+                    common.LogOutput("debug","vtysh config context exit")
+                    command = "exit\r"
+                    #Get the device response buffer as json return structure here
+                    devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
+                    returnCode = devIntRetStruct.get('returnCode')
+                    returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
+                    if returnCode != 0:
+                        common.LogOutput('error', "Failed to exit the vtysh shell")
+                        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnDict)
+                        return returnJson
+                    self.deviceContext = "vtyShell"
+                    returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
+                    return returnJson
+                else:
+                    if self.deviceContext == "vtyShell":
+                        returnJson = common.ReturnJSONCreate(returnCode=0)
+                        return returnJson
