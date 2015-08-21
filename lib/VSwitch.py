@@ -46,7 +46,7 @@ class VSwitch ( Device ):
         #config = kwargs.get('config', Fa)
         
         # Get into the VTY Shell
-        vtyEnterRet = self.VtyshShell()
+        vtyEnterRet = self.VtyshShell(enter=True)
         retCode = common.ReturnJSONGetCode(json=vtyEnterRet)
         if retCode != 0:
             common.LogOutput('error', "Unable to enter vtysh")
@@ -61,7 +61,7 @@ class VSwitch ( Device ):
             return None
         returnBuffer = retStruct.get('buffer')
         # Exit vtysh
-        vtyExitRet = self.VtyshShell(configOption="exit")
+        vtyExitRet = self.VtyshShell(enter=False)
         retCode = common.ReturnJSONGetCode(json=vtyExitRet)
         if retCode != 0:
             common.LogOutput('error', "Unable to exit vtysh")
@@ -333,6 +333,11 @@ class VSwitch ( Device ):
         configOption = kwargs.get('configOption',"config")
         option = kwargs.get('enter', True)
 
+        # Transitioning away from configOption, so option will always override
+        if option is True:
+            configOption = "config"
+        else:
+            configOption = "unconfig"
         returnDict = dict()
         if configOption == "config" or option is True:
             if self.deviceContext == "vtyShell":
@@ -373,7 +378,7 @@ class VSwitch ( Device ):
             #Get the device response buffer as json return structure here
             devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
             returnCode = devIntRetStruct.get('returnCode')
-            returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
+            #returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
             if returnCode != 0:
                 common.LogOutput('error', "Failed to exit the vtysh shell")
                 returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnDict)
