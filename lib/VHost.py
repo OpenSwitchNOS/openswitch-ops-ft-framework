@@ -615,14 +615,14 @@ class VHost ( Device ):
                                                               packetCount, 
                                                               packetSize)
             except socket.error:
-                returnCode = FAILED
+                returnCode = 1
         else:
             try:
                 socket.inet_pton(socket.AF_INET, ipAddr)
                 command = 'ping %s -c %d -s %d' % (ipAddr, packetCount,
                                                    packetSize)
             except socket.error:
-                returnCode = FAILED
+                returnCode = 1
 
         if returnCode == 0:
             # Send the command
