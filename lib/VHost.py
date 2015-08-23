@@ -11,9 +11,6 @@ from Topology import Topology
 from Device import Device
 import socket
 
-PASSED=0
-FAILED=1
-
 # This is the base class for any device - This gives the test case developer the ability to connect to the device
 # along with interacting with the device
 class VHost ( Device ):
@@ -34,14 +31,15 @@ class VHost ( Device ):
                                'root@\S+#',
                                pexpect.EOF,
                                pexpect.TIMEOUT]
+        
     def initExtMembers(self):
-	self.LIST_ETH_INTERFACES_CMD = 'ifconfig -a | grep Ethernet'
-	self.LIST_INTERFACE_IP_CMD = 'ifconfig %s | grep inet'
-	self.ENABLE_ETH_INTERFACE_CMD = 'ifconfig %s up'
-	self.ETH_INTERFACE_CFGIP_CMD = 'ip addr add %s/%d dev %s'
-	self.ETH_INTERFACE_CFGIP_IFCFG_CMD = 'ifconfig %s %s netmask %s broadcast %s'
-	self.ETH_INTERFACE_CFGIP_CLEAR_CMD = 'ip addr del %s/%d dev %s'
-	self.ETH_INTERFACE_CFGIP_IFCFG_CLEAR_CMD = 'ifconfig %s 0.0.0.0'
+        self.LIST_ETH_INTERFACES_CMD = 'ifconfig -a | grep Ethernet'
+        self.LIST_INTERFACE_IP_CMD = 'ifconfig %s | grep inet'
+        self.ENABLE_ETH_INTERFACE_CMD = 'ifconfig %s up'
+        self.ETH_INTERFACE_CFGIP_CMD = 'ip addr add %s/%d dev %s'
+        self.ETH_INTERFACE_CFGIP_IFCFG_CMD = 'ifconfig %s %s netmask %s broadcast %s'
+        self.ETH_INTERFACE_CFGIP_CLEAR_CMD = 'ip addr del %s/%d dev %s'
+        self.ETH_INTERFACE_CFGIP_IFCFG_CLEAR_CMD = 'ifconfig %s 0.0.0.0'
 
     def Connect(self):
         # Look up the device name in the topology - grab connectivity information
@@ -151,7 +149,6 @@ class VHost ( Device ):
         retStruct['buffer'] = []
 
         # Send the command
-
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
         time.sleep(1)
@@ -160,8 +157,6 @@ class VHost ( Device ):
         while bailflag == 0:
             #DEBUG print connection
             index = self.expectHndl.expect(self.expectDefaultPrompts, timeout=30)
-
-            #print "Index I got was ", index
             if index == 0:
                 # Need to send login string
                 self.expectHndl.send("root")
@@ -261,170 +256,163 @@ class VHost ( Device ):
                 returnCode = exitValue
             else:
                 returnCode = 0
-
         retStruct['returnCode'] = returnCode
         return retStruct
 
-
     def NetworkConfig(self, **kwargs):
-
-        eth = kwargs.get('eth')
+        eth = kwargs.get('interface')
         ipAddr = kwargs.get('ipAddr')
         netMask = kwargs.get('netMask')
         broadcast = kwargs.get('broadcast')
-        clear = kwargs.get('clear', False)
-
-        # Local variables
-        connection = self.expectHndl
+        config = kwargs.get('config', True)
 
         bailflag = 0
         interfaceUpOption = 0
-        returnCode = PASSED
+        returnCode = 0
 
         retStruct = dict()
-        retStruct['returnCode'] = FAILED
-        retStruct['buffer'] = []
+        #retStruct['returnCode'] = 1
+        retStruct['buffer'] = ""
 
         if self.ipFormatChk(ipAddr) == False:
             common.LogOutput('error', 'invalid ipaddress format :' + ipAddr)
-            returnCode = FAILED
+            returnCode = 1
             retStruct['buffer'] = 'Invalid ip address passed'
         elif self.ipFormatChk(netMask) == False:
             common.LogOutput('error', 'invalid netmask format :' + netMask)
-            returnCode = FAILED
+            returnCode = 1
             retStruct['buffer'] = 'Invalid net mask passed'
         elif self.ipFormatChk(broadcast) == False:
             common.LogOutput('error', 'invalid broadcast format :'
-                         + broadcast)
-            returnCode = FAILED
+                             + broadcast)
+            returnCode = 1
             retStruct['buffer'] = 'Invalid broadcast passed'
 
         if returnCode:
-            retStruct['returnCode'] = returnCode
-            return retStruct
+            #retStruct['returnCode'] = returnCode
+            returnJson = common.ReturnJSONCreate(returnCode=1, data=retStruct)
+            return returnJson
 
+        overallBuffer = []
+        # Validate that the interface exists
         while bailflag == 0:
-
             # Send the command
-
-            retStruct = self.DeviceInteract(command=self.LIST_ETH_INTERFACES_CMD)
-            retCode = retStruct.get('returnCode')
-            retBuff = retStruct.get('buffer')
+            retDeviceInt = self.DeviceInteract(command=self.LIST_ETH_INTERFACES_CMD)
+            retCode = retDeviceInt.get('returnCode')
+            retBuff = retDeviceInt.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
-                              + self.LIST_ETH_INTERFACES_CMD)
+                                  + self.LIST_ETH_INTERFACES_CMD)
                 bailflag = 1
-                returnCode = FAILED
-                retStruct['buffer'] = 'Failed to execute the command : ' \
-                + self.LIST_ETH_INTERFACES_CMD
+                returnCode = 1
             else:
-
-                common.LogOutput('info',
-                             'Successfully executed the command : '
-                             + self.LIST_ETH_INTERFACES_CMD)
+                common.LogOutput('debug',
+                                 'Successfully executed the command : '
+                                 + self.LIST_ETH_INTERFACES_CMD)
                 if retBuff.find(eth) != -1:
-                    common.LogOutput('info',
-                                 'eth interface is validated for : '
-                                 + eth)
+                    common.LogOutput('debug','eth interface is validated for : '
+                                    + eth)
                     bailflag = 1
                 else:
-                    common.LogOutput('info',
-                                 'eth interface failed to validate for : '
-                                  + eth)
-                    retStruct['buffer'] = \
-                    'eth interface failed to validate for : ' + eth
+                    common.LogOutput('debug', 'eth interface failed to validate for : '
+                                        + eth)
+                    #retStruct['buffer'] = \
+                    #        'eth interface failed to validate for : ' + eth
                     if interfaceUpOption:
                         bailflag = 1
-                        returnCode = FAILED
+                        returnCode = 1
                         break
                     interfaceUpOption = 1
                     command = self.ENABLE_ETH_INTERFACE_CMD % eth
-                    retStruct = self.DeviceInteract(command=command)
-                    retCode = retStruct.get('returnCode')
-                    retBuff = retStruct.get('buffer')
+                    retDevInt = self.DeviceInteract(command=command)
+                    retCode = retDevInt.get('returnCode')
+                    retBuff = retDevInt.get('buffer')
+                    overallBuffer.append(retBuff)
                     if retCode != 0:
                         common.LogOutput('error',
-                            'Failed to execute the command : '
-                            + command)
+                                        'Failed to execute the command : '
+                                        + command)
                         bailflag = 1
-                        returnCode = FAILED
-                        retStruct['buffer'] = \
-                        'Failed to execute the command : ' + command
+                        returnCode = 1
+                        #retStruct['buffer'] = \
+                        #        'Failed to execute the command : ' + command
                     else:
-                        common.LogOutput('info',
-                            'Successfully executed the command : '
-                            + command)
+                        common.LogOutput('debug',
+                                         'Successfully executed the command : '
+                                         + command)
 
-        if returnCode:
-            retStruct['returnCode'] = returnCode
-            return retStruct
+                    if returnCode:
+                        
+                        returnJson = common.ReturnJSONCreate(returnCode=1, data=retStruct)
+                        return returnJson
 
-        if clear:
-
+        if config is False:
             command = self.ETH_INTERFACE_CFGIP_IFCFG_CLEAR_CMD % eth
-            returnStruct = self.DeviceInteract(connection=connection,
-                command=command)
+            returnStruct = self.DeviceInteract(command=command)
             retCode = returnStruct.get('returnCode')
             retBuff = returnStruct.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
                               + command)
-                returnCode = FAILED
-                retStruct['buffer'] = 'Failed to execute the command : ' + command
+                returnCode = 1
+                #retStruct['buffer'] = 'Failed to execute the command : ' + command
             else:
-                common.LogOutput('info',
-                             'Successfully executed the command : '
-                             + command)
+                common.LogOutput('info','Successfully executed the command : '
+                                 + command)
         else:
-
+            # Here we are configuring the interface
             command = self.ETH_INTERFACE_CFGIP_IFCFG_CMD % (eth, ipAddr, netMask,
                 broadcast)
-            returnStruct = self.DeviceInteract(connection=connection,
-                command=command)
-            retCode = returnStruct.get('returnCode')
-            retBuff = returnStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=command)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
                             + command)
-                returnCode = FAILED
-                retStruct['buffer'] = 'Failed to execute the command : ' \
-                + command
+                returnCode = 1
+                #retStruct['buffer'] = 'Failed to execute the command : ' \
+                #+ command
             else:
-                common.LogOutput('info',
-                             'Successfully executed the command : '
-                             + command)
-
-            if returnCode != FAILED:
+                common.LogOutput('debug','Successfully executed the command : '+ command)
+            
+            if returnCode != 1: 
                 command = self.LIST_INTERFACE_IP_CMD % eth
-                retStruct = self.DeviceInteract(connection=connection,
-                    command=command)
-                retCode = retStruct.get('returnCode')
-                retBuff = retStruct.get('buffer')
+                retDevInt = self.DeviceInteract(command=command)
+                retCode = retDevInt.get('returnCode')
+                retBuff = retDevInt.get('buffer')
+                overallBuffer.append(retBuff)
                 if retCode != 0:
                     common.LogOutput('error',
                                  'Failed to execute the command : '
                                  + command)
-                    returnCode = FAILED
-                    retStruct['buffer'] = \
-                       'Failed to execute the command : ' + command
+                    returnCode = 1
+                    #retStruct['buffer'] = 'Failed to execute the command : ' + command
                 else:
-                    common.LogOutput('info',
-                                 'Successfully executed the command : '
-                                 + command)
-
+                    common.LogOutput('debug','Successfully executed the command : '
+                                     + command)
+ 
             if retBuff.find(ipAddr) == -1:
                 common.LogOutput('error',
                                  'IP addr %s is not configured successfully on interface %s : '
                                   % (ipAddr, eth))
-                retStruct['buffer'] = \
-                       'Failed to execute the command : ' + command
+                #retStruct['buffer'] = 'Failed to execute the command : ' + command
             else:
-                common.LogOutput('info',
-                                 'IP addr %s configured successfully on interface %s : '
-                                  % (ipAddr, eth))
+                common.LogOutput('info','IP addr %s configured successfully on interface %s : '
+                                 % (ipAddr, eth))
 
-        retStruct['returnCode'] = returnCode
-        return retStruct
+        #retStruct['returnCode'] = returnCode
+        # Fill out buffer
+        bufferString = ""
+        for curLin in overallBuffer:
+            bufferString += str(curLin)
+            #print curLin
+        retStruct['buffer'] = bufferString
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
+        return returnJson
+        #return retStruct
 
     def ipFormatChk(self, ip_str):
         pattern = \
@@ -433,56 +421,52 @@ class VHost ( Device ):
             return True
         else:
             return False
-   
-    def Network6Config(self,**kwargs):
 
-        eth = kwargs.get('eth')
+    def Network6Config(self,**kwargs):
+        eth = kwargs.get('interface')
         ipAddr = kwargs.get('ipAddr')
         netMask = kwargs.get('netMask')
-        clear = kwargs.get('clear', False)
+        config = kwargs.get('config', True)
 
         # Local variables
-        connection = self.expectHndl
         bailflag = 0
         interfaceUpOption = 0
-        returnCode = PASSED
-
+        returnCode = 0
         retStruct = dict()
-        retStruct['returnCode'] = FAILED
+        overallBuffer = []
         retStruct['buffer'] = []
 
         try:
             socket.inet_pton(socket.AF_INET6, ipAddr)
         except socket.error:
-            returnCode = FAILED
+            returnCode = 1
 
         if netMask > 128 and netMask < 1:
-            returnCode = FAILED
+            returnCode = 1
 
         if returnCode:
-            retStruct['returnCode'] = returnCode
+            #retStruct['returnCode'] = returnCode
             common.LogOutput('error',
                          'Invalid ipv6 address or netMask passed ')
-            retStruct['buffer'] = 'Invalid ipv6 address or netMask passed '
-            return retStruct
+            #retStruct['buffer'] = 'Invalid ipv6 address or netMask passed '
+            returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
+            return returnJson
 
         while bailflag == 0:
-
             # Send the command
-
-            retStruct = self.DeviceInteract(command=self.LIST_ETH_INTERFACES_CMD)
-            retCode = retStruct.get('returnCode')
-            retBuff = retStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=self.LIST_ETH_INTERFACES_CMD)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
                               + self.LIST_ETH_INTERFACES_CMD)
                 bailflag = 1
-                returnCode = FAILED
-                retStruct['buffer'] = 'Failed to execute the command : ' \
-                 + self.LIST_ETH_INTERFACES_CMD
+                returnCode = 1
+                #retStruct['buffer'] = 'Failed to execute the command : ' \
+                # + self.LIST_ETH_INTERFACES_CMD
             else:
-
-                common.LogOutput('info',
+                common.LogOutput('debug',
                              'Successfully executed the command : '
                              + self.LIST_ETH_INTERFACES_CMD)
                 if retBuff.find(eth) != -1:
@@ -491,88 +475,91 @@ class VHost ( Device ):
                                  + eth)
                     bailflag = 1
                 else:
-                    common.LogOutput('info',
+                    common.LogOutput('error',
                                  'eth interface failed to validate for : '
                                   + eth)
-                    retStruct['buffer'] = \
-                    'eth interface failed to validate for : ' + eth
+                    #retStruct['buffer'] = \
+                    #'eth interface failed to validate for : ' + eth
                     if interfaceUpOption:
                         bailflag = 1
-                        returnCode = FAILED
+                        returnCode = 1
                         break
                     interfaceUpOption = 1
                     command = self.ENABLE_ETH_INTERFACE_CMD % eth
-                    retStruct = self.DeviceInteract(connection=connection,
-                        command=command)
-                    retCode = retStruct.get('returnCode')
-                    retBuff = retStruct.get('buffer')
+                    retDevInt = self.DeviceInteract(command=command)
+                    retCode = retDevInt.get('returnCode')
+                    retBuff = retDevInt.get('buffer')
+                    overallBuffer.append(retBuff)
                     if retCode != 0:
                         common.LogOutput('error',
                             'Failed to execute the command : '
                             + command)
                         bailflag = 1
-                        returnCode = FAILED
-                        retStruct['buffer'] = \
-                        'Failed to execute the command : ' + command
+                        returnCode = 1
+                        #retStruct['buffer'] = \
+                        #'Failed to execute the command : ' + command
                     else:
-                        common.LogOutput('info',
+                        common.LogOutput('debug',
                             'Successfully executed the command : '
                             + command)
 
         if returnCode:
-            retStruct['returnCode'] = returnCode
-            return retStruct
+            bufferString = ""
+            for curLin in overallBuffer:
+                bufferString += str(curLin)
 
-        if clear:
+            retStruct['buffer'] = bufferString
+            returnJson = common.ReturnJSONCreate(returnCode=1, data=retStruct)
+            return returnJson
 
+        if config is False:
             command = self.ETH_INTERFACE_CFGIP_CLEAR_CMD % (ipAddr, netMask, eth)
-            returnStruct = self.DeviceInteract(connection=connection,
-                command=command)
-            retCode = returnStruct.get('returnCode')
-            retBuff = returnStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=command)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
                               + command)
-                returnCode = FAILED
-                retStruct['buffer'] = 'Failed to execute the command : ' \
-                + command
+                returnCode = 1
+                #retStruct['buffer'] = 'Failed to execute the command : ' \
+                #+ command
             else:
-                common.LogOutput('info',
+                common.LogOutput('debug',
                              'Successfully executed the command : '
                              + command)
         else:
-
             command = self.ETH_INTERFACE_CFGIP_CMD % (ipAddr, netMask, eth)
-            returnStruct = self.DeviceInteract(connection=connection,
-                command=command)
-            retCode = returnStruct.get('returnCode')
-            retBuff = returnStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=command)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
                               + command)
-                returnCode = FAILED
-                retStruct['buffer'] = 'Failed to execute the command : ' \
-                + command
+                returnCode = 1
+                #retStruct['buffer'] = 'Failed to execute the command : ' \
+                #+ command
             else:
-                common.LogOutput('info',
+                common.LogOutput('debug',
                              'Successfully executed the command : '
                              + command)
 
-            if returnCode != FAILED:
+            if returnCode != 1:
                 command = self.LIST_INTERFACE_IP_CMD % eth
-                retStruct = self.DeviceInteract(connection=connection,
-                    command=command)
-                retCode = retStruct.get('returnCode')
-                retBuff = retStruct.get('buffer')
+                retDevInt = self.DeviceInteract(command=command)
+                retCode = retDevInt.get('returnCode')
+                retBuff = retDevInt.get('buffer')
+                overallBuffer.append(retBuff)
                 if retCode != 0:
                     common.LogOutput('error',
                                  'Failed to execute the command : '
                                  + command)
-                    returnCode = FAILED
-                    retStruct['buffer'] = \
-                    'Failed to execute the command : ' + command
+                    returnCode = 1
+                    #retStruct['buffer'] = \
+                    #'Failed to execute the command : ' + command
                 else:
-                    common.LogOutput('info',
+                    common.LogOutput('debug',
                                  'Successfully executed the command : '
                                  + command)
 
@@ -580,104 +567,148 @@ class VHost ( Device ):
                 common.LogOutput('error',
                                  'IP addr %s is not configured successfully on interface %s : '
                                   % (ipAddr, eth))
-                retStruct['buffer'] = \
-                    'Failed to execute the command : ' + command
+                #retStruct['buffer'] = \
+                #    'Failed to execute the command : ' + command
             else:
                 common.LogOutput('info',
                                  'IP addr %s configured successfully on interface %s : '
                                   % (ipAddr, eth))
 
-        retStruct['returnCode'] = returnCode
-        return retStruct
+        bufferString = ""
+        for curLin in overallBuffer:
+            bufferString += str(curLin)
+            #print curLin
+        retStruct['buffer'] = bufferString
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
+        return returnJson
 
-    def DevicePing(self, **kwargs):
+    def Ping(self, **kwargs):
 
         ipAddr = kwargs.get('ipAddr')
         ipv6Flag = kwargs.get('ipv6Flag', False)
         packetCount = kwargs.get('packetCount', 10)
         packetSize = kwargs.get('packetSize', 128)
-        eth = kwargs.get('eth', 'eth1')
+        eth = kwargs.get('interface', 'eth1')
 
         retStruct = dict()
-        retStruct['returnCode'] = 1
-        retStruct['buffer'] = []
-
-        # Local variables
-        connection = self.expectHndl
-
-        returnCode = PASSED
+        #retStruct['returnCode'] = 1
+        retStruct['buffer'] = ""
+        retStruct['packets_transmitted'] = 0
+        retStruct['packets_received'] = 0
+        retStruct['packet_loss'] = 0
+        retStruct['time'] = 0
+        retStruct['rtt_min'] = 0
+        retStruct['rtt_avg'] = 0
+        retStruct['rtt_max'] = 0
+        retStruct['rtt_mdev'] = 0
+        overallBuffer = []
+        returnCode = 0
         command = ''
         if ipv6Flag:
             try:
                 socket.inet_pton(socket.AF_INET6, ipAddr)
                 if ipAddr.find('fe80') == -1:
-                    command = 'ping6 %s -c %d -s %d' % (ipAddr,
-                        packetCount, packetSize)
+                    command = 'ping6 %s -c %d -s %d' % (ipAddr, packetCount, 
+                                                        packetSize)
                 else:
                     command = 'ping6 -I %s %s -c %d -s %d' % (eth, ipAddr,
-                        packetCount, packetSize)
+                                                              packetCount, 
+                                                              packetSize)
             except socket.error:
                 returnCode = FAILED
         else:
             try:
                 socket.inet_pton(socket.AF_INET, ipAddr)
                 command = 'ping %s -c %d -s %d' % (ipAddr, packetCount,
-                    packetSize)
+                                                   packetSize)
             except socket.error:
                 returnCode = FAILED
 
-        if returnCode == PASSED:
-
+        if returnCode == 0:
             # Send the command
-
-            returnStruct = self.DeviceInteract(connection=connection,
-                command=command)
-            retCode = returnStruct.get('returnCode')
-            retBuff = returnStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=command)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
-                              + command)
+                                 + command)
             else:
-                common.LogOutput('info',
-                             'Successfully executed the command : '
-                             + command)
+                common.LogOutput('info', 'Successfully executed the command : '
+                                 + command)
 
             if retBuff.find('bytes from') == -1:
-                returnCode = FAILED
+                returnCode = 1
             else:
-                returnCode = PASSED
-                retStruct['buffer'] = retBuff
+                returnCode = 0
+                #retStruct['buffer'] = retBuff
         else:
-            retStruct['buffer'] = 'Invalid ip address'
+            returnCode = 1
+            #retStruct['buffer'] = 'Invalid ip address'
 
-        retStruct['returnCode'] = returnCode
-        return retStruct
+        # Fill out buffer
+        bufferString = ""
+        for curLin in overallBuffer:
+            bufferString += str(curLin)
+            #print curLin
+        retStruct['buffer'] = bufferString
+
+        # Carve the buffer up to get statistics
+        #10 packets transmitted, 10 received, 0% packet loss, time 8997ms
+        #rtt min/avg/max/mdev = 0.342/0.456/0.693/0.096 ms
+
+        for curLine in bufferString.split('\r\n'):
+            print curLine
+            statsLine1 = re.match(r'(\d+) packets transmitted, (\d+) received, (\d+)% packet loss, time (\d+)ms', curLine)
+            if statsLine1:
+                retStruct['packets_transmitted'] = int(statsLine1.group(1))
+                retStruct['packets_received'] = int(statsLine1.group(2))
+                retStruct['packet_loss'] = int(statsLine1.group(3))
+                retStruct['time'] = int(statsLine1.group(4))
+                continue
+                
+            statsLine2 = re.match(r'rtt min/avg/max/mdev = ([0-9]+\.[0-9]+)/([0-9]\.[0-9]+)/([0-9]+\.[0-9]+)/([0-9]+\.[0-9]+) ms', curLine)
+            if statsLine2:
+                retStruct['rtt_min'] = float(statsLine2.group(1))
+                retStruct['rtt_avg'] = float(statsLine2.group(2))
+                retStruct['rtt_max'] = float(statsLine2.group(3))
+                retStruct['rtt_mdev'] = float(statsLine2.group(4))
+                continue
+                
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
+        return returnJson
 
     def IPRoutesConfig(self, **kwargs):
-
-        routeOperation = kwargs.get('routeOperation')
+        config = kwargs.get('config', True)
         destNetwork = kwargs.get('destNetwork')
         netMask = kwargs.get('netMask')
-        via = kwargs.get('via')
-        eth = kwargs.get('eth', 'eth1')
-        metric = kwargs.get('metric', 1024)
+        #via = kwargs.get('via')
+        gateway = kwargs.get('gateway', None)
+        eth = kwargs.get('interface', 'eth1')
+        metric = kwargs.get('metric', None)
         ipv6Flag = kwargs.get('ipv6Flag', False)
 
         defaultRoute = 0
 
         retStruct = dict()
-        retStruct['returnCode'] = 1
+        #retStruct['returnCode'] = 1
         retStruct['buffer'] = []
-
+        overallBuffer = []
         # Local variables
         connection = self.expectHndl
 
-        returnCode = PASSED
+        returnCode = 0
 
-        if routeOperation != 'add' and routeOperation != 'delete':
-            retStruct['buffer'] = 'Invalid routeOperation : %s' \
-            % routeOperation
-            returnCode = FAILED
+        if config is True:
+            routeOperation = "add"
+        else:
+            routeOperation = "del"
+
+        if routeOperation != 'add' and routeOperation != 'del':
+            #retStruct['buffer'] = 'Invalid routeOperation : %s' \
+            #% routeOperation
+            common.LogOutput('error', "Invalid route operation : " + routeOperation)
+            returnCode = 1
 
         if ipv6Flag:
             try:
@@ -685,61 +716,67 @@ class VHost ( Device ):
                 if destNetwork == '::':
                     defaultRoute = 1
                     route_command = \
-                    'ip -6 route %s %s via %s dev %s metric %d' \
-                    % (routeOperation, 'default', via, eth, metric)
+                    'ip -6 route %s %s via %s dev %s' % (routeOperation, 'default', gateway, eth)
                 else:
                     route_command = \
-                    'ip -6 route %s %s/%d via %s dev %s metric %d' % (
+                    'ip -6 route %s %s/%d via %s dev %s' % (
                     routeOperation,
                     destNetwork,
                     netMask,
-                    via,
-                    eth,
-                    metric,
-                    )
+                    gateway,
+                    eth)
+                if metric is not None:
+                    route_command += " metric "+ metric
             except socket.error:
-                retStruct['buffer'] = 'Invalid destination : %s' \
-                % destNetwork
-                returnCode = FAILED
+                #retStruct['buffer'] = 'Invalid destination : %s' \
+                #% destNetwork
+                common.LogOutput('error', "Invalid destination " + destNetwork)
+                returnCode = 1
         else:
             try:
                 socket.inet_pton(socket.AF_INET, destNetwork)
                 if destNetwork == '0.0.0.0':
                     defaultRoute = 1
                     route_command = 'route %s %s gw %s dev %s metric %d' \
-                    % (routeOperation, 'default', via, eth, metric)
+                    % (routeOperation, 'default', gateway, eth, metric)
                 else:
-                    route_command = 'route %s -net %s/%d gw %s metric %d' \
-                    % (routeOperation, destNetwork, netMask, via,
-                       metric)
+                    route_command = 'route %s -net %s/%d gw %s' \
+                    % (routeOperation, destNetwork, netMask, gateway)
+                if metric is not None:
+                    route_command += ' metric ' + metric
             except socket.error:
-                retStruct['buffer'] = 'Invalid destination : %s' \
-                % destNetwork
-                returnCode = FAILED
+                #retStruct['buffer'] = 'Invalid destination : %s' \
+                #% destNetwork
+                common.LogOutput('error', "Invalid destination : " + destNetwork)
+                returnCode = 1
 
-        if returnCode == PASSED:
-
+        if returnCode == 0:
             # Send the command
-
-            returnStruct = self.DeviceInteract(connection=connection,
-                command=route_command)
+            returnStruct = self.DeviceInteract(command=route_command)
             retCode = returnStruct.get('returnCode')
             retBuff = returnStruct.get('buffer')
+            overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
                               + route_command)
-                returnCode = FAILED
+                returnCode = 1
             else:
-                common.LogOutput('info',
-                             'Successfully executed the command : '
-                             + route_command)
-                retStruct['buffer'] = retBuff
+                common.LogOutput('info','Successfully executed the command : '
+                                 + route_command)
+                #retStruct['buffer'] = retBuff
         else:
-            retStruct['buffer'] = 'Invalid ip address'
+            #retStruct['buffer'] = 'Invalid ip address'
+            common.LogOutput('error', "Invalid IP address")
 
-        retStruct['returnCode'] = returnCode
-        return retStruct
-
+        #retStruct['returnCode'] = returnCode
+        #return retStruct
+        bufferString = ""
+        for curLin in overallBuffer:
+            bufferString += str(curLin)
+            #print curLin
+        retStruct['buffer'] = bufferString
+        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
+        return returnJson
 
     def GetDirectLocalLinkAddresses(self):
 
@@ -749,10 +786,7 @@ class VHost ( Device ):
 
         # Send the command
         # Local variables
-        connection = self.expectHndl
-
-        returnStruct = self.DeviceInteract(connection=connection,
-            command=command)
+        returnStruct = self.DeviceInteract(command=command)
         retCode = returnStruct.get('returnCode')
         retBuff = returnStruct.get('buffer')
         if retCode != 0:
