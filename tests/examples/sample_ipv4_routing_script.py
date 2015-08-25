@@ -80,11 +80,11 @@ common.LogOutput('info', "IPv4 Ping from workstation 1 to workstation 2 return J
 
 common.LogOutput('info', "Unonfiguring workstations")
 retStruct = wrkston01Obj.IPRoutesConfig(config=False, destNetwork="140.1.2.0", netMask=24, gateway="140.1.1.1")
-cmdOut = wrkston02Obj.cmd("netstat -rn")
+cmdOut = wrkston01Obj.cmd("netstat -rn")
 common.LogOutput('info', "IPv4 Route table for workstation 2:\n" + cmdOut)
 
 retStruct = wrkston02Obj.IPRoutesConfig(config=False, destNetwork="140.1.1.0", netMask=24, gateway="140.1.2.1")
-cmdOut = wrkston01Obj.cmd("netstat -rn")
+cmdOut = wrkston02Obj.cmd("netstat -rn")
 common.LogOutput('info', "IPv4 Route table for workstation 1:\n" + cmdOut)
 
 retStruct = wrkston01Obj.NetworkConfig(ipAddr="140.1.1.10", netMask="255.255.255.0", broadcast="140.1.1.255", 
