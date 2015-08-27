@@ -1,5 +1,5 @@
 import pexpect
-import headers
+from lib import gbldata
 import common
 import switch
 import time
@@ -10,6 +10,7 @@ import re
 from Topology import Topology
 from Device import Device
 import socket
+from lib import *
 
 # This is the base class for any device - This gives the test case developer the ability to connect to the device
 # along with interacting with the device
@@ -62,14 +63,14 @@ class VHost ( Device ):
         expectFileString  = self.device + ".log"
         
         # VINCE TODO - Move ExpectLog to Common Class
-        ExpectInstance = switch.ExpectLog.DeviceLogger(expectFileString)
+        ExpectInstance = DeviceLogger(expectFileString)
         expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
         if expectLogFile == 1 :
             common.LogOutput('error', "Unable to create expect log file")
             exit(1)
         #Opening an expect connection to the device with the specified log file
         common.LogOutput('debug', "Opening an expect connection to the device with the specified log file"+expectFileString)
-        self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=switch.ExpectLog.DeviceLogger(expectLogFile))
+        self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=DeviceLogger(expectLogFile))
         self.expectHndl.delaybeforesend = 1
         
         # Lets go and detect our connection - this will get us to a context we know about
@@ -271,27 +272,25 @@ class VHost ( Device ):
         returnCode = 0
 
         retStruct = dict()
-        #retStruct['returnCode'] = 1
-        retStruct['buffer'] = ""
 
         if self.ipFormatChk(ipAddr) == False:
             common.LogOutput('error', 'invalid ipaddress format :' + ipAddr)
             returnCode = 1
-            retStruct['buffer'] = 'Invalid ip address passed'
+            #retStruct['buffer'] = 'Invalid ip address passed'
         elif self.ipFormatChk(netMask) == False:
             common.LogOutput('error', 'invalid netmask format :' + netMask)
             returnCode = 1
-            retStruct['buffer'] = 'Invalid net mask passed'
+            #retStruct['buffer'] = 'Invalid net mask passed'
         elif self.ipFormatChk(broadcast) == False:
             common.LogOutput('error', 'invalid broadcast format :'
                              + broadcast)
             returnCode = 1
-            retStruct['buffer'] = 'Invalid broadcast passed'
+            #retStruct['buffer'] = 'Invalid broadcast passed'
 
         if returnCode:
             #retStruct['returnCode'] = returnCode
-            returnJson = common.ReturnJSONCreate(returnCode=1, data=retStruct)
-            return returnJson
+            returnCls = returnStruct(returnCode=1)
+            return returnCls
 
         overallBuffer = []
         # Validate that the interface exists
@@ -343,15 +342,17 @@ class VHost ( Device ):
                                          + command)
 
                     if returnCode:
-                        
-                        returnJson = common.ReturnJSONCreate(returnCode=1, data=retStruct)
-                        return returnJson
+                        bufferString = ""
+                        for curLine in overallBuffer:
+                            bufferString += str(curLine)
+                        returnCls = returnStruct(returnCode=1, buffer=bufferString)
+                        return returnCls
 
         if config is False:
             command = self.ETH_INTERFACE_CFGIP_IFCFG_CLEAR_CMD % eth
-            returnStruct = self.DeviceInteract(command=command)
-            retCode = returnStruct.get('returnCode')
-            retBuff = returnStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=command)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
@@ -409,10 +410,10 @@ class VHost ( Device ):
         for curLin in overallBuffer:
             bufferString += str(curLin)
             #print curLin
-        retStruct['buffer'] = bufferString
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
-        return returnJson
-        #return retStruct
+        #retStruct['buffer'] = bufferString
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
+
 
     def ipFormatChk(self, ip_str):
         pattern = \
@@ -434,7 +435,7 @@ class VHost ( Device ):
         returnCode = 0
         retStruct = dict()
         overallBuffer = []
-        retStruct['buffer'] = []
+        #retStruct['buffer'] = []
 
         try:
             socket.inet_pton(socket.AF_INET6, ipAddr)
@@ -449,8 +450,8 @@ class VHost ( Device ):
             common.LogOutput('error',
                          'Invalid ipv6 address or netMask passed ')
             #retStruct['buffer'] = 'Invalid ipv6 address or netMask passed '
-            returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
-            return returnJson
+            returnCls = returnStruct(returnCode=returnCode)
+            return returnCls
 
         while bailflag == 0:
             # Send the command
@@ -508,9 +509,9 @@ class VHost ( Device ):
             for curLin in overallBuffer:
                 bufferString += str(curLin)
 
-            retStruct['buffer'] = bufferString
-            returnJson = common.ReturnJSONCreate(returnCode=1, data=retStruct)
-            return returnJson
+            #retStruct['buffer'] = bufferString
+            returnCls = returnStruct(returnCode=1, buffer=bufferString)
+            return returnCls
 
         if config is False:
             command = self.ETH_INTERFACE_CFGIP_CLEAR_CMD % (ipAddr, netMask, eth)
@@ -578,9 +579,9 @@ class VHost ( Device ):
         for curLin in overallBuffer:
             bufferString += str(curLin)
             #print curLin
-        retStruct['buffer'] = bufferString
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
-        return returnJson
+        #retStruct['buffer'] = bufferString
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
 
     def Ping(self, **kwargs):
 
@@ -592,7 +593,7 @@ class VHost ( Device ):
 
         retStruct = dict()
         #retStruct['returnCode'] = 1
-        retStruct['buffer'] = ""
+        #retStruct['buffer'] = ""
         retStruct['packets_transmitted'] = 0
         retStruct['packets_received'] = 0
         retStruct['packet_loss'] = 0
@@ -651,7 +652,7 @@ class VHost ( Device ):
         for curLin in overallBuffer:
             bufferString += str(curLin)
             #print curLin
-        retStruct['buffer'] = bufferString
+        #retStruct['buffer'] = bufferString
 
         # Carve the buffer up to get statistics
         #10 packets transmitted, 10 received, 0% packet loss, time 8997ms
@@ -675,8 +676,8 @@ class VHost ( Device ):
                 retStruct['rtt_mdev'] = float(statsLine2.group(4))
                 continue
                 
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
-        return returnJson
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
+        return returnCls
 
     def IPRoutesConfig(self, **kwargs):
         config = kwargs.get('config', True)
@@ -691,11 +692,9 @@ class VHost ( Device ):
         defaultRoute = 0
 
         retStruct = dict()
-        #retStruct['returnCode'] = 1
-        retStruct['buffer'] = []
         overallBuffer = []
         # Local variables
-        connection = self.expectHndl
+        #connection = self.expectHndl
 
         returnCode = 0
 
@@ -752,9 +751,9 @@ class VHost ( Device ):
 
         if returnCode == 0:
             # Send the command
-            returnStruct = self.DeviceInteract(command=route_command)
-            retCode = returnStruct.get('returnCode')
-            retBuff = returnStruct.get('buffer')
+            retDevInt = self.DeviceInteract(command=route_command)
+            retCode = retDevInt.get('returnCode')
+            retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
                 common.LogOutput('error', 'Failed to execute the command : '
@@ -774,9 +773,9 @@ class VHost ( Device ):
         for curLin in overallBuffer:
             bufferString += str(curLin)
             #print curLin
-        retStruct['buffer'] = bufferString
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=retStruct)
-        return returnJson
+        #retStruct['buffer'] = bufferString
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
 
     def GetDirectLocalLinkAddresses(self):
 
@@ -786,9 +785,9 @@ class VHost ( Device ):
 
         # Send the command
         # Local variables
-        returnStruct = self.DeviceInteract(command=command)
-        retCode = returnStruct.get('returnCode')
-        retBuff = returnStruct.get('buffer')
+        retDevInt = self.DeviceInteract(command=command)
+        retCode = retDevInt.get('returnCode')
+        retBuff = retDevInt.get('buffer')
         if retCode != 0:
             common.LogOutput('error', 'Failed to execute the command : '
                          + command)

@@ -34,28 +34,36 @@ def IpRouteConfig(**kwargs):
     nexthop = kwargs.get('nexthop', None)
     metric = kwargs.get('metric', None)
     
+    overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None or route is None or mask is None or nexthop is None:
         common.LogOutput('error', "Need to pass switch device object deviceObj, route, mask, and nexthop to this routine")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
-    
-    
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
+
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
 
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=True)
-    returnCode = common.ReturnJSONGetCode(json=returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh config prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
     
     # Build route command
     command = ""
@@ -71,8 +79,9 @@ def IpRouteConfig(**kwargs):
         command += " " + str(metric)
         
     command += "\r"
-    returnStructure = deviceObj.DeviceInteract(command=command)
-    retCode = returnStructure['returnCode']
+    returnDevInt = deviceObj.DeviceInteract(command=command)
+    retCode = returnDevInt['returnCode']
+    overallBuffer.append(returnDevInt['buffer'])
     if retCode != 0:
         common.LogOutput('error', "Failed to configure route command "+ command)
     else:
@@ -80,21 +89,33 @@ def IpRouteConfig(**kwargs):
     
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to exit vtysh config prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
     
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to exit vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
 
     #Return results
-    returnJson = common.ReturnJSONCreate(returnCode=0)
-    return returnJson
+    bufferString = ""
+    for curLine in overallBuffer:
+        bufferString += str(curLine)
+    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    return returnCls
+    
 

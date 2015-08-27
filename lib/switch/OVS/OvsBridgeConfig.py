@@ -41,9 +41,9 @@ import switch
 import re
 
 def OvsBridgeConfig(**kwargs):
-    connection = kwargs.get('connection')
+    device = kwargs.get('device')
     action = kwargs.get('action', 'config')
-    bridge = kwargs.get('bridge', 'br0')
+    bridge = kwargs.get('bridge', 'bridge_normal')
     ports = kwargs.get('ports', None)
     vlanMode = kwargs.get('vlanMode', 'access')
     nativeVlan = kwargs.get('nativeVlan', '1')

@@ -28,44 +28,58 @@ import time
 def InterfaceIpConfig(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('interface', None)
+    vlan = kwargs.get('vlan', None)
+    lag = kwargs.get('lag', None)
     ipv6flag = kwargs.get('ipv6flag', False)
     addr = kwargs.get('addr', None)
     mask = kwargs.get('mask', None)
     secondary = kwargs.get('secondary', False)
     config = kwargs.get('config', True)
     
-    
+    overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None or interface is None:
         common.LogOutput('error', "Need to pass switch device object deviceObj and interface to this routine")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
     # Make sure type is ipv4 or ipv6
     
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
 
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=True)
-    returnCode = common.ReturnJSONGetCode(json=returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh config prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
     
     # Get into the interface context
     command = "interface " + str(interface)
     returnStructure = deviceObj.DeviceInteract(command=command)
     retCode = returnStructure['returnCode']
+    overallBuffer.append(returnStructure['buffer'])
     if retCode != 0:
         common.LogOutput('error', "Failed to enter interface context for interface " + str(interface))
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
 
     # Need to get into the Interface context
     if addr is not None and mask is not None:
@@ -83,6 +97,7 @@ def InterfaceIpConfig(**kwargs):
         command += "\r"
         returnStructure = deviceObj.DeviceInteract(command=command)
         retCode = returnStructure['returnCode']
+        overallBuffer.append(returnStructure['buffer'])
         if retCode != 0:
             common.LogOutput('error', "Failed to configure address command "+ command + " on interface " + str(interface))
         else:
@@ -92,27 +107,39 @@ def InterfaceIpConfig(**kwargs):
     command = "exit \r"
     returnStructure = deviceObj.DeviceInteract(command=command)
     retCode = returnStructure['returnCode']
+    overallBuffer.append(returnStructure['buffer'])
     if retCode != 0:
         common.LogOutput('error', "Failed to exit the interface context")
         
     
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to exit vtysh config prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
     
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to exit vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
 
     #Return results
-    returnJson = common.ReturnJSONCreate(returnCode=0)
-    return returnJson
+    bufferString = ""
+    for curLine in overallBuffer:
+        bufferString += str(curLine)
+    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    return returnCls
 

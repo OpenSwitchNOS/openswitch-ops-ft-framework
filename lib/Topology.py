@@ -14,7 +14,7 @@ from halonvsi.halon import *
 import xml.etree.ElementTree as ET
 import re
 import select
-import headers
+from lib import gbldata
 import common
 import shutil
 import lib
@@ -192,18 +192,18 @@ class Topology (HalonTest):
         for curLink in str.split(self.topoLinks, ','):
             (link, dev1, dev2) = str.split(curLink, ':')
             dev1LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev1], link=link)
-            if common.ReturnJSONGetCode(json=dev1LportStruct) != 0:
+            if dev1LportStruct.returnCode() != 0:
                 # didn't get link info
                 common.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev1)
                 continue
-            dev1Lport = common.ReturnJSONGetData(json=dev1LportStruct)
+            dev1Lport = dev1LportStruct.valueGet()
 
             dev2LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev2], link=link)
-            if common.ReturnJSONGetCode(json=dev2LportStruct) != 0:
+            if dev2LportStruct.returnCode() != 0:
                 # didn't get link info
                 common.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev2)
                 continue
-            dev2Lport = common.ReturnJSONGetData(json=dev2LportStruct)
+            dev2Lport = dev2LportStruct.valueGet()
 
             outstring = link + "  =  " + self.topo[dev1] + ":" + str(dev1Lport) + " <==> " + self.topo[dev2] + ":" + str(dev2Lport)
             common.LogOutput('info', outstring)
@@ -226,8 +226,8 @@ class Topology (HalonTest):
         device2 = linkAttrs['device2']
 
         self.net.configLinkStatus(device1, device2, status)
-        retString = common.ReturnJSONCreate(returnCode=0)
-        return(retString)
+        retCls = lib.returnStruct(returnCode=0)
+        return retCls
 
     # Restart Switch
     def RestartSwitch(self, **kwargs):
@@ -330,8 +330,8 @@ class Topology (HalonTest):
         # device tag block
         deviceTag = ET.SubElement(self.TOPOLOGY, 'device')
         if name is None:
-            retStruct = common.ReturnJSONCreate(returnCode=1)
-            return(retStruct)
+            retCls = lib.returnStruct(returnCode=1)
+            return retCls
 
         deviceNameTag = ET.SubElement(deviceTag, 'name').text = name
 
@@ -402,8 +402,8 @@ class Topology (HalonTest):
         connectionProtocolTag = ET.SubElement(connectionTag, "protocol").text = "docker"
         connectionPriorityTag = ET.SubElement(connectionTag, "priority").text = "0"
 
-        retStruct = common.ReturnJSONCreate(returnCode=0)
-        return(retStruct)
+        retCls = lib.returnStruct(returnCode=0)
+        return retCls
     
     
     def VirtualXMLLinkAdd(self,**kwargs):
@@ -483,8 +483,8 @@ class Topology (HalonTest):
         type = ET.SubElement(dev2LinkTag, "type").text = "auto"
         asicVersion = ET.SubElement(dev2LinkTag, "asicVersion")
 
-        retStruct = common.ReturnJSONCreate(returnCode=0)
-        return(retStruct)
+        retCls = lib.returnStruct(returnCode=0)
+        return retCls
     
         # InterfaceGetByDeviceLink(self)
     def InterfaceGetByDeviceLink(self, **kwargs):
@@ -494,8 +494,8 @@ class Topology (HalonTest):
 
         xpath = ".//device[name='" + device + "']/link[name='" + link + "']/localInterface"
         retStruct = common.XmlGetElementsByTag(self.TOPOLOGY, xpath)
-        retString = common.ReturnJSONCreate(returnCode=0, data=retStruct.text)
-        return(retString)
+        retCls = lib.returnStruct(returnCode=0, data=retStruct.text)
+        return retCls
     
     # List Links associated with device.
     def Links(self, **kwargs):
@@ -634,7 +634,7 @@ class Topology (HalonTest):
                         switchObj.linkPortMapping = dict()
                         for curLink in deviceLinks:
                             portStruct = self.InterfaceGetByDeviceLink(link=self.topo[curLink], device=self.topo[deviceName])
-                            port = common.ReturnJSONGetData(json=portStruct)
+                            port = portStruct.valueGet()
                             switchObj.linkPortMapping[curLink] = port
                     
                     if categoryValue == "workstation":
@@ -648,7 +648,7 @@ class Topology (HalonTest):
                         hostObj.linkPortMapping = dict()
                         for curLink in deviceLinks:
                             portStruct = self.InterfaceGetByDeviceLink(link=self.topo[curLink], device=self.topo[deviceName])
-                            port = common.ReturnJSONGetData(json=portStruct)
+                            port =portStruct.valueGet()
                             hostObj.linkPortMapping[curLink] = port
 
     def deviceObjGet(self, **kwargs):
@@ -677,211 +677,3 @@ class Topology (HalonTest):
         topologyXMLFile.write(pretty_xml_as_string)
         topologyXMLFile.close()
 
-
-
-
-# class Topology ( VirtualTopo ):
-#     def __init__(self, **kwargs):
-#         
-#         self.topoDict = kwargs.get('topoDict', None)
-#         self.topoType = kwargs.get('topoType', None)
-#         self.rsvnId = kwargs.get('rsvnId', None)
-#         # Initialize Structures
-#         self.LOGICAL_TOPOLOGY = ""
-#         self.TOPOLOGY = ""
-#         
-#         self.topo = dict()
-#         self.deviceObj = dict()
-#         
-#         if self.topoType == 'virtual':
-#             # Do stuff for virtual topology
-#             self.id = str(os.getpid())
-#             self.testdir = "/tmp/halonnet/" + str(self.id)
-# 
-#             os.makedirs(self.testdir)
-#             self.setLogLevel('info')
-#             self.hostmounts = []
-#             self.switchmounts = []
-#             self.mininetGlobal = ""
-#             self.VirtualXMLCreate()
-#             self.setupNet(topoDictionary=self.topoDict)
-#             self.TopologyXMLWrite()
-#             self.LogicalTopologyCreate()
-#         else:
-#             # do stuff for physical topology
-#             self.LogicalTopologyCreate()
-#             RTL.TCLShellCreate()
-#             RTL.TopologyCreate(rsvnId=self.rsvnId)
-#     
-#     # InterfaceGetByDeviceLink(self)
-#     def InterfaceGetByDeviceLink(self, **kwargs):
-# 
-#         device = kwargs.get('device', None)
-#         link = kwargs.get('link', None)
-# 
-#         xpath = ".//device[name='" + device + "']/link[name='" + link + "']/localInterface"
-#         retStruct = common.XmlGetElementsByTag(self.TOPOLOGY, xpath)
-#         retString = common.ReturnJSONCreate(returnCode=0, data=retStruct.text)
-#         return(retString)
-#     
-#     # List Links associated with device.
-#     def Links(self, **kwargs):
-#         device = kwargs.get('device', None)
-#         
-#         xpath = ".//link"
-#         linksList = []
-#         linkElements = common.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath, allElements=True)
-#         #print linkElements
-#         for curElement in linkElements:
-#             linkName = curElement.attrib['name']
-#             device1 = curElement.attrib['device1']
-#             device2 = curElement.attrib['device2']
-#             if device == device1 or device == device2:
-#                 linksList.append(linkName)
-#         return linksList
-#     
-#     # Logical Topology Create
-#     def LogicalTopologyCreate(self):
-#         self.LOGICAL_TOPOLOGY = ET.Element("topology", attrib={'version': "3"})
-# 
-#         # Get target if there
-#         self.targets = str(self.topoDict.get('topoTarget', None))
-# 
-#         # create the links
-#         if "topoLinks" in  self.topoDict :
-#             mytopoLinks = str(self.topoDict['topoLinks'])
-#             self.topoLinks = re.sub('\s+', '', mytopoLinks)
-#             for curLink in str.split(self.topoLinks,','):
-#                 (link, dev1, dev2) = str.split(curLink, ':')
-#                 linkTag = ET.SubElement(self.LOGICAL_TOPOLOGY, 'link', attrib={'name': link, 'device1': dev1, 'device2': dev2, 'rate': "any"})
-# 
-#         # Create TopoDevices
-#         self.topoDevices = str(self.topoDict['topoDevices'])
-#         for curDev in str.split(self.topoDevices):
-#             # Search for device in target
-#             curDevTarget = "false"
-#             for curTarget in str.split(self.targets):
-#                 if curTarget == curDev:
-#                     curDevTarget = "true"
-#                     break
-#     
-#             deviceTag = ET.SubElement(self.LOGICAL_TOPOLOGY, 'device', attrib={'name': curDev, 'target': curDevTarget, 'group': "NULL"})
-# 
-#         mytopoFilters = str(self.topoDict['topoFilters'])
-#         self.topoFilters = re.sub('\s+', '', mytopoFilters) 
-#         print self.topoFilters
-#         for curFilter in str.split(self.topoFilters, ','):
-#             #print curFilter
-#             (cDev, cAttr, cVal) = str.split(curFilter, ':')
-#             # Search for the tag in logical topology
-#             xpath = ".//device[@name='"+cDev+"']"
-#             deviceTag = common.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath)
-#             if deviceTag != None:
-#                 attributeTag = ET.SubElement(deviceTag, 'attribute', attrib={'name': cAttr, 'value': cVal})
-#     
-#         # Need to inspect ETREE to see if profile is specific.  If not, lets assume auto-ubuntu-12-04 for workstations
-#         xpath = ".//device/attribute[@value='workstation']/.."
-#         wrkstonDevsTag = common.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath, allElements=True)
-#         for curTag in wrkstonDevsTag:
-#             #print curTag
-#             attribute_list = curTag.iter('attribute')
-#             #print "attrList "
-#             #print attribute_list
-#             found_profile = 0
-#             for curAttr in attribute_list:
-#                 #print "curAttr"
-#                 attrName = curAttr.get('name')
-#                 #print attrName
-#                 if attrName == "system-profile":
-#                     found_profile = 1
-#                     common.LogOutput('debug', "Found system-profile attribute stated for device - not assuming auto-ubuntu-12-04")
-#             if found_profile == 0:
-#                 # Need to add subelements
-#                 common.LogOutput('debug', "No system-profile attribute found, defaulting to auto-ubuntu-12-04")
-#                 deviceTag = ET.SubElement(curTag, 'attribute', attrib={'name': "system-profile", 'value': "auto-ubuntu-12-04"})
-#     
-# 
-# 
-#         dumpString = ET.tostring(self.LOGICAL_TOPOLOGY)
-#         
-#         # Write the topology out
-#         myxml = xml.dom.minidom.parseString(dumpString)
-#         pretty_xml_as_string = myxml.toprettyxml()
-#         topoFileName = headers.ResultsDirectory['resultsDir'] + "/logicalTopology.xml"
-#         topologyXMLFile = open(topoFileName, 'w+')
-#         topologyXMLFile.write(pretty_xml_as_string)
-#         topologyXMLFile.close()
-#     
-#     # Routine to go and create device objects and establish connections
-#     def CreateDeviceObjects (self):
-#         # Look to the logical topology to 
-#         xpathString = ".//device"
-#         deviceEtreeElements = common.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpathString, allElements=True)
-#         
-#         if deviceEtreeElements is None:
-#             common.LogOutput('error', "Did not find devices to spawn off device connections")
-#             return None
-#         
-#         for curEtree in deviceEtreeElements:
-#             deviceName = curEtree.get('name')
-#             attribute_list = curEtree.iter('attribute')
-#             
-#             for curAttr in attribute_list:
-#                 #print "curAttr"
-#                 attrName = curAttr.get('name')
-#                 #print attrName
-#                 if attrName == "system-category":
-#                     categoryValue = curAttr.get('value')
-#                     
-#                     if categoryValue == "switch":
-#                         # Do logic to spawn switch off
-#                         common.LogOutput('info', "Connecting to switch " + deviceName + " (" + self.topo[deviceName] + ")")
-#                         switchObj = self.StartSwitch(device=self.topo[deviceName])
-#                         self.deviceObj[deviceName] = switchObj
-#                         deviceLinks = self.Links(device=deviceName)
-#                         # Populate Link dictionary for each device str
-#                         switchObj.linkPortMapping = dict()
-#                         for curLink in deviceLinks:
-#                             portStruct = self.InterfaceGetByDeviceLink(link=self.topo[curLink], device=self.topo[deviceName])
-#                             port = common.ReturnJSONGetData(json=portStruct)
-#                             switchObj.linkPortMapping[curLink] = port
-#                     
-#                     if categoryValue == "workstation":
-#                         # Do logic to spawn host off
-#                         common.LogOutput('info', "Connecting to host " + deviceName + " (" + self.topo[deviceName] + ")")
-#                         hostObj = self.StartMHost(device=self.topo[deviceName])
-#                         self.deviceObj[deviceName] = hostObj
-#                         
-#                         deviceLinks = self.Links(device=deviceName)
-#                         # Populate Link dictionary for each device str
-#                         hostObj.linkPortMapping = dict()
-#                         for curLink in deviceLinks:
-#                             portStruct = self.InterfaceGetByDeviceLink(link=self.topo[curLink], device=self.topo[deviceName])
-#                             port = common.ReturnJSONGetData(json=portStruct)
-#                             hostObj.linkPortMapping[curLink] = port
-# 
-#     def deviceObjGet(self, **kwargs):
-#         device = kwargs.get('device', None)
-#         return(self.deviceObj[device])
-#     
-#     def StartSwitch (self,  **kwargs):
-#         device = kwargs.get('device')
-#         switchObj = lib.Switch(topology=self, device=device)
-#         return switchObj
-#         
-#     def StartMHost (self, **kwargs):
-#         device = kwargs.get('device')
-#         hostObj = lib.MHost(topology=self, device=device)
-#         return hostObj
-#         
-#     # Write out Topology File Physical
-#     def TopologyXMLWrite(self):
-#         dumpString = ET.tostring(self.TOPOLOGY)
-#         #print "topologyDump" + str(dumpString)
-#         myxml = xml.dom.minidom.parseString(dumpString)
-#         pretty_xml_as_string = myxml.toprettyxml()
-#         topoFileName = headers.ResultsDirectory['resultsDir'] + "/physicalTopology.xml"
-#         topologyXMLFile = open(topoFileName, 'w+')
-# 
-#         topologyXMLFile.write(pretty_xml_as_string)
-#         topologyXMLFile.close()

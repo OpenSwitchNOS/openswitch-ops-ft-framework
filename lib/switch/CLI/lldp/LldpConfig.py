@@ -27,47 +27,47 @@ def LldpConfig(**kwargs):
     # If Device object is not passed, we need to error out
     if deviceObj is None:
         common.LogOutput('error', "Need to pass switch device object deviceObj")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
-    
-    #if enable is False and disable is False:
-    #    common.LogOutput('error', "Need to pass either enable=True to enable lldp or disable=True to disable lldp")
-    #    returnJson = common.ReturnJSONCreate(returnCode=1)
-    #    return returnJson
-    
-    #if enable is True and disable is True:
-    #    common.LogOutput('error', "Need to pass either enable=True to enable lldp or disable=True to disable lldp")
-    #    returnJson = common.ReturnJSONCreate(returnCode=1)
-    #    return returnJson
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
+    overallBuffer = []
     # Get into vtyshelll
-    returnStructure = deviceObj.VtyshShell()
-    vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnStructure = deviceObj.VtyshShell(enter=True)
+    overallBuffer.append(returnStructure.buffer())
+    returnCode = returnStructure.returnCode()
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
     
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=True)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh config prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
     
     if enable is True:
         command = "feature lldp\r"
-        returnStructure = deviceObj.DeviceInteract(command=command)
-        retCode = returnStructure['returnCode']
+        returnDevInt = deviceObj.DeviceInteract(command=command)
+        retCode = returnDevInt['returnCode']
+        overallBuffer.append(returnDevInt['buffer'])
         if retCode != 0:
             common.LogOutput('error', "Failed to enable lldp on device " + deviceObj.device)
         else:
             common.LogOutput('debug', "Enabled lldp on device " + deviceObj.device)
     else:
         command = "no feature lldp\r"
-        returnStructure = deviceObj.DeviceInteract(command=command)
-        retCode = returnStructure['returnCode']
+        returnDevInt = deviceObj.DeviceInteract(command=command)
+        retCode = returnDevInt['returnCode']
+        overallBuffer.append(returnDevInt['buffer'])
         if retCode != 0:
             common.LogOutput('error', "Failed to disable lldp on device " + deviceObj.device)
         else:
@@ -75,20 +75,31 @@ def LldpConfig(**kwargs):
     
     # Get out of  config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get out of vtysh config context")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
     
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
-    retCode = common.ReturnJSONGetCode(json=returnStructure)
+    retCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if retCode != 0:
         common.LogOutput('error', "Failed to exit vty shell")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
 
-    returnJson = common.ReturnJSONCreate(returnCode=0)
-    return returnJson
+    bufferString = ""
+    for curLine in overallBuffer:
+            bufferString += str(curLine)
+    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    return returnCls
 

@@ -37,21 +37,18 @@ def ShowLldpNeighborInfo(**kwargs):
     #    return False
 
     returnDict = dict()
-    #Enter the vtysh shell to access LLDP commands
-    #returnStructure = switch.CLI.VtyshShell(connection = connection)
-    #vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    #returnCode = common.ReturnJSONGetCode(json = returnStructure)
-    
+    overallBuffer = []
     returnStructure = deviceObj.VtyshShell()
-    #vtyshInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
+    overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
         common.LogOutput('error', "Failed to get vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
-    #else:
-    #    common.LogOutput("debug","vtysh shell buffer: \n"+vtyshInfo)
-
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
+    
     #Pass LLDP commands here
     command = "show lldp neighbor-info"
     if port != None:
@@ -61,10 +58,14 @@ def ShowLldpNeighborInfo(**kwargs):
     #devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
     devIntRetStruct = deviceObj.DeviceInteract(command=command)
     returnCode = devIntRetStruct.get('returnCode')
+    overallBuffer.append(devIntRetStruct.get('buffer'))
     if returnCode != 0:
         common.LogOutput('error', "Failed to get show lldp neighbor-info command")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=devIntRetStruct)
-        return returnJson
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
     else:
         rawBuffer = devIntRetStruct.get('buffer')
         bufferSplit  = rawBuffer.split("\r\n")
@@ -125,7 +126,7 @@ def ShowLldpNeighborInfo(**kwargs):
                     portDict[curPort]['TTL'] = ttl.group(1)
             returnDict['globalStats'] = globalStatsDict
             returnDict['portStats'] = portDict
-            returnDict['buffer'] = rawBuffer
+            #returnDict['buffer'] = rawBuffer
             #returnDict['lldpNeighborBuffer'] = rawBuffer
         else:
             # This means we are parsing out output w/out ports
@@ -180,21 +181,23 @@ def ShowLldpNeighborInfo(**kwargs):
                     portDict[curPort]['TTL'] = populatedPortEntry.group(4)
             returnDict['globalStats'] = globalStatsDict
             returnDict['portStats'] = portDict
-            returnDict['buffer'] = rawBuffer
+            #returnDict['buffer'] = rawBuffer
             
 
     #Exit the vtysh shell
     #returnStructure = switch.CLI.VtyshShell(connection = connection,configOption="unconfig")
     returnStructure = deviceObj.VtyshShell(configOption="unconfig")
-    #vtyshExitInfo = common.ReturnJSONGetData(json=returnStructure, dataElement='vtyshPrompt')
-    #common.LogOutput("debug","vtysh shell buffer: \n"+vtyshExitInfo)
-    returnCode = common.ReturnJSONGetCode(json = returnStructure)
+    returnCode = returnStructure.returnCode()
     if returnCode != 0:
         common.LogOutput('error', "Failed to exit vtysh prompt")
-        returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=returnStructure)
-        return returnJson
+        returnCls = lib.returnStruct(returnCode=returnCode,)
+        return returnCls
 
     #Return results
-    returnJson = common.ReturnJSONCreate(returnCode=0, data=returnDict)
-    return returnJson
+    bufferString = ""
+    for curLine in overallBuffer:
+        bufferString += str(curLine)
+    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString, data=returnDict)
+    return returnCls
+    
 

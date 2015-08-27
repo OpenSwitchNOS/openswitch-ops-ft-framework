@@ -18,7 +18,8 @@ __doc__ = "LogOutput documentation string"
 import time
 import datetime
 import sys
-import headers
+#import headers
+import lib.gbldata
 import inspect
 import common
 
@@ -82,4 +83,5 @@ def LogOutput(dest, message, **kwargs):
        message = "%s"%(message)
     else:
        message = "::%s"%(message)
-   common.LogLib.LogOutputToFile(headers.ResultsDirectory['resultsDir'], dest, message)
+   #common.LogLib.LogOutputToFile(headers.ResultsDirectory['resultsDir'], dest, message)
+   common.LogLib.LogOutputToFile(lib.gbldata.ResultsDirectory, dest, message)

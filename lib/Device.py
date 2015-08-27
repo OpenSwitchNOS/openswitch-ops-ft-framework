@@ -1,5 +1,5 @@
 import pexpect
-import headers
+from lib import gbldata
 import common
 import switch
 import time
