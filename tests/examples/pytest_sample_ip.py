@@ -1,5 +1,5 @@
 from common import *
-import switch
+#import switch
 import pytest
 from switch.CLI import *
 from switch.CLI.lldp import *
@@ -8,7 +8,8 @@ from lib import *
 
 topoDict = {"topoExecution": 3000,
             "topoDevices": "dut01 wrkston01 wrkston02",
-            "topoLinks": "lnk01:dut01:wrkston01,lnk02:dut01:wrkston02",
+            "topoLinks": "lnk01:dut01:wrkston01,\
+                          lnk02:dut01:wrkston02",
             "topoFilters": "dut01:system-category:switch,\
                             wrkston01:system-category:workstation,\
                             wrkston02:system-category:workstation"}
@@ -21,10 +22,11 @@ def switch_reboot(dut01):
     return rebootRetStruct
 
 def ping_to_switch(dut01, wrkston01):
-    # Switch config
+    # Switch configuration 
     LogOutput('info', "Configuring Switch to be an IPv4 router")
-    retStruct = InterfaceEnable(deviceObj=dut01, enable=True,
-                             interface=dut01.linkPortMapping['lnk01'])
+    retStruct = InterfaceEnable(deviceObj=dut01, 
+                                enable=True,
+                                interface=dut01.linkPortMapping['lnk01'])
     if retStruct.returnCode() != 0:
         assert("Failed to enable port on switch")
     else:
@@ -32,10 +34,15 @@ def ping_to_switch(dut01, wrkston01):
 
     retStruct = InterfaceIpConfig(deviceObj=dut01,
                                   interface=dut01.linkPortMapping['lnk01'],
-                                  addr="140.1.1.1", mask=24, config=True)
-    # Workstation config
+                                  addr="140.1.1.1", 
+                                  mask=24, 
+                                  config=True)
+
+    # Workstation configuration
     LogOutput('info', "Configuring workstations")
-    retStruct = wrkston01.NetworkConfig(ipAddr="140.1.1.10", netMask="255.255.255.0", broadcast="140.1.1.255", 
+    retStruct = wrkston01.NetworkConfig(ipAddr="140.1.1.10",
+                                        netMask="255.255.255.0",
+                                        broadcast="140.1.1.255",
                                         interface=wrkston01.linkPortMapping['lnk01'], config=True)
     if retStruct.returnCode() != 0:
         assert("Failed to configure IP on workstation")
