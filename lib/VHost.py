@@ -59,7 +59,7 @@ class VHost ( Device ):
             return None
         telnetString = self.connectStringBase + self.device + " /bin/bash"
         self.expectHndl = pexpect.spawn(telnetString,echo=False)
-        self.expectHndl.delaybeforesend = .5
+        #self.expectHndl.delaybeforesend = .5
         expectFileString  = self.device + ".log"
         
         # VINCE TODO - Move ExpectLog to Common Class

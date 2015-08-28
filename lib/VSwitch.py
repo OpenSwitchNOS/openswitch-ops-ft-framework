@@ -30,7 +30,7 @@ class VSwitch ( Device ):
                            'bash-[0-9.]+#',
                            '[A-Za-z0-9]+#',
                             '\(config\)#',
-                            '\(config-if\)#\s*$',
+                            '\(config-\S+\)#\s*$',
                             'ONIE:/\s+#\s*$',
                             'telnet: Unable to connect to remote host: Connection refused',
                             pexpect.EOF,
@@ -100,7 +100,7 @@ class VSwitch ( Device ):
         # Opening an expect connection to the device with the specified log file
         common.LogOutput('debug', "Opening an expect connection to the device with the specified log file" + expectFileString)
         self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=DeviceLogger(expectLogFile))
-        self.expectHndl.delaybeforesend = 1
+        #self.expectHndl.delaybeforesend = 1
         
         # Lets go and detect our connection - this will get us to a context we know about
         retVal = self.DetectConnection()
