@@ -1,5 +1,5 @@
 import pytest
-import common
+
 from lib import testEnviron
 # Topology definition
 topoDict = {"topoType" : "all",
@@ -20,7 +20,7 @@ class Test_template:
         # Create Topology object and connect to devices
         Test_template.testObj = testEnviron(topoDict=topoDict)
         Test_template.topoObj =Test_template.testObj.topoObjGet()
-        Test_template.tcInstance = common.tcAction()
+        Test_template.tcInstance = tcAction()
         TEST_DESCRIPTION = "Virtual Topology / Physical Topology Sample Test"
         Test_template.testObj.ResultsDirectory['testcaseName'] = "pytestInc.py"
         Test_template.tcInstance.tcInfo(tcName = Test_template.testObj.ResultsDirectory['testcaseName'], tcDesc = TEST_DESCRIPTION)
@@ -32,27 +32,27 @@ class Test_template:
     def teardown_class(cls):
         # Terminate all nodes
         Test_template.topoObj.terminate_nodes()
-        #common.LogOutput('info', "Tearing Down Topology")
+        #LogOutput('info', "Tearing Down Topology")
         
     def test_showSystem(self):
         # show system test
         self.tcInstance.startStep()
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
         cmdOut = dut01Obj.cmdVtysh(command="show system")
-        common.LogOutput('info', "output from dut01\n" + cmdOut)
+        LogOutput('info', "output from dut01\n" + cmdOut)
         self.tcInstance.endStep()
     
     def test_wrkston01Uname(self):
         self.tcInstance.startStep()
         wrkston01Obj = Test_template.topoObj.deviceObjGet(device="wrkston01")
         cmdOut = wrkston01Obj.cmd("uname -a")
-        common.LogOutput('info', "output from wrkston01\n" + cmdOut)
+        LogOutput('info', "output from wrkston01\n" + cmdOut)
         self.tcInstance.endStep()
         
     def test_wrkston02IfCOnfig(self):
         self.tcInstance.startStep()
         wrkston02Obj = Test_template.topoObj.deviceObjGet(device="wrkston02")
         cmdOut = wrkston02Obj.cmd("ifconfig -a")
-        common.LogOutput('info', "output from wrkston02\n" + cmdOut)
+        LogOutput('info', "output from wrkston02\n" + cmdOut)
         self.tcInstance.endStep()
 

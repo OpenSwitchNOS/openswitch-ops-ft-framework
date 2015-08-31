@@ -1,6 +1,6 @@
 import pexpect
 from lib import gbldata
-import common
+from lib import *
 import switch
 import time
 #import console
@@ -28,7 +28,7 @@ class Device ():
         retStruct = self.DeviceInteract(command=cmd)
         returnCode = retStruct.get('returnCode')
         if returnCode != 0:
-            common.LogOutput('error', "Failed to send command " + cmd +" to device " + self.device)
+            LogOutput('error', "Failed to send command " + cmd +" to device " + self.device)
             return None
         returnBuffer = retStruct.get('buffer')
         return returnBuffer
@@ -37,28 +37,28 @@ class Device ():
     def Connect(self):
         # Look up and see if we are physical or virtual
         xpathString = ".//reservation/id"
-        rsvnEtreeElement = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        rsvnEtreeElement = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
         if rsvnEtreeElement == None:
             # We are not in a good situation, we need to bail
-            common.LogOutput('error', "Could not find reservation id tag in topology")
+            LogOutput('error', "Could not find reservation id tag in topology")
             return None
 
         rsvnType = rsvnEtreeElement.text
 
         # Look up the device name in the topology - grab connectivity information
         xpathString = ".//device[name='" + self.device + "']"
-        etreeElement = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        etreeElement = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
         if etreeElement == None:
             # We are not in a good situation, we need to bail
-            common.LogOutput('error', "Could not find device " + self.device + " in topology")
+            LogOutput('error', "Could not find device " + self.device + " in topology")
             return None
         if rsvnType == 'virtual':
             # Code for virtual
             # Go and grab the connection name
             xpathString = ".//device[name='" + self.device + "']/connection/name"
-            virtualConn = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            virtualConn = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
             if virtualConn == None:
-                common.LogOutput('error', "Failed to virtual connection for " + self.device)
+                LogOutput('error', "Failed to virtual connection for " + self.device)
                 return None
             telnetString = "docker exec -ti " + self.device + " /bin/bash"
             #self.expectHndl = pexpect.spawn(telnetString, echo=False)
@@ -68,33 +68,33 @@ class Device ():
             # Code for physical
             # Grab IP from etree
             xpathString = ".//device[name='" + self.device + "']/connection/ipAddr"
-            ipNode = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            ipNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
             if ipNode == None:
-                common.LogOutput('error', "Failed to obtain IP address for device " + self.device)
+                LogOutput('error', "Failed to obtain IP address for device " + self.device)
                 return None
 
             self.ipAddress = ipNode.text
-            common.LogOutput ('debug', self.device + " connection IP address:  " + self.ipAddress)
+            LogOutput ('debug', self.device + " connection IP address:  " + self.ipAddress)
 
             # Grab Port from etree
             xpathString = ".//device[name='" + self.device + "']/connection/port"
-            portNode = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            portNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
             if portNode == None:
-                common.LogOutput('error', "Failed to obtain Port for device " + self.device)
+                LogOutput('error', "Failed to obtain Port for device " + self.device)
                 return None
 
             self.port = portNode.text
-            common.LogOutput ('debug', self.device + " connection port:  " + self.port)
+            LogOutput ('debug', self.device + " connection port:  " + self.port)
 
             # Grab a connetion element - not testing this since this should exist since we obtained
             # things before us
             xpathString = ".//device[name='" + self.device + "']/connection"
-            connectionElement = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            connectionElement = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
 
             # Grab a connetion element - not testing this since this should exist since we obtained
             # things before us
             xpathString = ".//device[name='" + self.device + "']/connection"
-            connectionElement = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            connectionElement = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
             # Create Telnet handle
             # Enable expect device Logging for every connection
             # Single Log file exists for logging device exchange using pexpect logger .
@@ -107,10 +107,10 @@ class Device ():
             ExpectInstance = switch.ExpectLog.DeviceLogger(expectFileString)
             expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
             if expectLogFile == 1 :
-                common.LogOutput('error', "Unable to create expect log file")
+                LogOutput('error', "Unable to create expect log file")
                 exit(1)
             # Opening an expect connection to the device with the specified log file
-            common.LogOutput('debug', "Opening an expect connection to the device with the specified log file" + expectFileString)
+            LogOutput('debug', "Opening an expect connection to the device with the specified log file" + expectFileString)
             if rsvnType == 'virtual':
                 self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=switch.ExpectLog.DeviceLogger(expectLogFile))
                 self.expectHndl.delaybeforesend = 1
@@ -120,7 +120,7 @@ class Device ():
             # Lets go and detect our connection - this will get us to a context we know about
             retVal = self.DetectConnection()
             if retVal is None:
-                common.LogOutput('error', "Failed to detect connection for device - looking to reset console")
+                LogOutput('error', "Failed to detect connection for device - looking to reset console")
                 # Connect to the console
                 conDevConn = console.Connect(self.ipAddress)
                 # now lets logout the port we are trying to connect to
@@ -150,25 +150,25 @@ class Device ():
                                            timeout=200)
             if index == 0:
                 # Need to send login string
-                common.LogOutput("debug", "Login required::")
+                LogOutput("debug", "Login required::")
                 self.expectHndl.sendline("root")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
                 bailflag = 1
-                common.LogOutput("debug", "Root prompt detected:")
+                LogOutput("debug", "Root prompt detected:")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
                 # Got prompt.  We should be good
                 bailflag = 1
-                common.LogOutput("debug", "Root prompt detected: Virtual")
+                LogOutput("debug", "Root prompt detected: Virtual")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
                 # Got EOF
-                common.LogOutput('error', "Telnet to switch failed")
+                LogOutput('error', "Telnet to switch failed")
                 return None
             elif index == 4:
                 # Got a Timeout
-                common.LogOutput('error', "Connection timed out")
+                LogOutput('error', "Connection timed out")
                 return None
             else :
                 # print "Got index ", index, " wainting again"
@@ -180,7 +180,7 @@ class Device ():
         # Now lets put in the topology the expect handle
         for curLine in connectionBuffer:
             sanitizedBuffer += curLine
-        common.LogOutput('debug', sanitizedBuffer)
+        LogOutput('debug', sanitizedBuffer)
         return self.expectHndl
         
     # Routine allows the user to interact with a device and get appropriate output
@@ -224,13 +224,13 @@ class Device ():
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                common.LogOutput('error', "connection closed to console")
+                LogOutput('error', "connection closed to console")
                 returnCode = 1
             elif index == 4:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                common.LogOutput('error', "command timeout")
+                LogOutput('error', "command timeout")
                 returnCode = 1
             else :
                 connectionBuffer.append(self.expectHndl.before)
@@ -249,21 +249,21 @@ class Device ():
             #errorCheckRetStruct = switch.ErrorCheck(connection=connection, buffer=santString)
             #returnCode = errorCheckRetStruct['returnCode']
             # Dump the buffer the the debug log
-            common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+            LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
 
         #The following portion checks for Errors in CLI commands
         if ErrorFlag == 'CLI' :
             #errorCheckRetStruct = switch.CLI.ErrorCheck(connection=connection, buffer=santString)
             #returnCode = errorCheckRetStruct['returnCode']
-            common.LogOutput('debug', "NEED TO FIX")
+            LogOutput('debug', "NEED TO FIX")
             #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
         if ErrorFlag == 'Onie' :
             #errorCheckRetStruct = switch.ErrorCheckOnie(connection=connection, buffer=santString)
             #returnCode = errorCheckRetStruct['returnCode']
-            common.LogOutput('debug', "NEED TO FIX")
+            LogOutput('debug', "NEED TO FIX")
 
         # Return dictionary
-        common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+        LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
         retStruct['returnCode'] = returnCode
         retStruct['buffer'] = santString
         return retStruct
@@ -288,7 +288,7 @@ class Device ():
             buffer += self.expectHndl.before
             buffer += self.expectHndl.after
         else:
-            common.LogOutput('error', "Received timeout in switch.ErrorCheck")
+            LogOutput('error', "Received timeout in switch.ErrorCheck")
             retStruct['returnCode'] = 1
             return retStruct
 

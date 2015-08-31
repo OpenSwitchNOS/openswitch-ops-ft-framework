@@ -19,7 +19,7 @@
 #
 ##PROC-###################################################################################
 #import required packages 
-import common
+
 import switch
 import re
 import time

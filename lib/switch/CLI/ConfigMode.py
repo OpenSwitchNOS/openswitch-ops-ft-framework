@@ -19,7 +19,7 @@
 #                     "configPrompt": {"Device Buffer"}
 #
 ##PROC-#####################################################################
-import common
+
 import switch
 import re
 import pexpect

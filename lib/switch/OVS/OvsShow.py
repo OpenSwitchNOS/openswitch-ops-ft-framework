@@ -29,7 +29,8 @@
 #                      "name": {status, rpm, speed}
 #
 ##PROC-#####################################################################
-import common
+
+from lib import *
 import switch
 import re
 
@@ -42,16 +43,16 @@ def OvsShow(**kwargs):
     retStruct = dict()
     command = "ovs-vsctl show"
 
-    common.LogOutput("info","Doing an OVS show command and parse output***")
+    LogOutput("info","Doing an OVS show command and parse output***")
     devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
     retCode = devIntRetStruct.get('returnCode')
     if retCode != 0:
-       common.LogOutput('error', "Failed to get ovs-vsctl show command")
-       retString = common.ReturnJSONCreate(returnCode=1, data=retStruct)
+       LogOutput('error', "Failed to get ovs-vsctl show command")
+       retString = returnStruct(returnCode=1, data=retStruct)
        return retString
 
     buffer = devIntRetStruct.get('buffer')
-    #common.LogOutput('debug', buffer)
+    #LogOutput('debug', buffer)
     curBridgeName = ""
     bridgeDict = dict()
     curVlanName = ""
@@ -167,5 +168,5 @@ def OvsShow(**kwargs):
     retStruct['Bridge'] = bridgeDict
     retStruct['Fans'] = fanDict
     retStruct['Temp_Sensors'] = tempSensorDict
-    retString = common.ReturnJSONCreate(returnCode=0, data=retStruct)
+    retString = returnStruct(returnCode=0, data=retStruct)
     return retString

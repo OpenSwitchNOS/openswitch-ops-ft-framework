@@ -6,11 +6,11 @@ topoDict = {"topoExecution": 1000,
             "topoLinks": "lnk01:workstn01:dut01,lnk02:dut01:dut02",
             "topoFilters": "dut01:system-category:switch,dut02:system-category:switch"}
 
-common.LogOutput('info', 'Sample test case code.')
+LogOutput('info', 'Sample test case code.')
 
 # Grab the name of the switch from the eTree
 
-hostElement = common.XmlGetElementsByTag(headers.TOPOLOGY,
+hostElement = XmlGetElementsByTag(headers.TOPOLOGY,
         ".//device/system[category='workstation']/name",
         allElements=True)
 numHosts = len(hostElement)
@@ -19,30 +19,30 @@ for hostE in hostElement:
 
    # Connect to the device
 
-    common.LogOutput('info', '########################################')
-    common.LogOutput('info', 'Connecting to host ' + hName)
-    common.LogOutput('info', '########################################')
+    LogOutput('info', '########################################')
+    LogOutput('info', 'Connecting to host ' + hName)
+    LogOutput('info', '########################################')
     devConn = host.Connect(hName)
     if devConn is None:
-        common.LogOutput('error', 'Failed to connect to host ' + hName)
+        LogOutput('error', 'Failed to connect to host ' + hName)
         continue
 
     linkList = [headers.topo['lnk01']]
     returnStruct = topology.LinkStatusConfig(links=linkList, enable=1)
-    returnCode = common.ReturnJSONGetCode(json=returnStruct)
+    returnCode = ReturnJSONGetCode(json=returnStruct)
     if returnCode != 0:
-        common.LogOutput('error', 'Failed to enable link01')
+        LogOutput('error', 'Failed to enable link01')
 
     linkList = [headers.topo['lnk02']]
     returnStruct = topology.LinkStatusConfig(links=linkList, enable=1)
-    returnCode = common.ReturnJSONGetCode(json=returnStruct)
+    returnCode = ReturnJSONGetCode(json=returnStruct)
     if returnCode != 0:
-        common.LogOutput('error', 'Failed to enable link02')
+        LogOutput('error', 'Failed to enable link02')
 
    # Configuring IPv4 on the host ethernet interface
 
     ipAddr = '20.20.20.2'
-    common.LogOutput('info', 'Configuring host IP' + hName)
+    LogOutput('info', 'Configuring host IP' + hName)
     retStruct = host.NetworkConfig(
         connection=devConn,
         eth='eth1',
@@ -54,11 +54,11 @@ for hostE in hostElement:
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error',
+        LogOutput('error',
                          'Failed to configure IP %s on  host %s '
                          % (ipAddr, hName))
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in configuring IP  %s on host %s '
                          % (ipAddr, hName))
 
@@ -70,7 +70,7 @@ for hostE in hostElement:
     netMask = 24
     gateway = '20.20.20.5'
 
-    common.LogOutput('info', 'Add ipv4 routes to host %s' % hName)
+    LogOutput('info', 'Add ipv4 routes to host %s' % hName)
     retStruct = host.IPRoutesConfig(
         connection=devConn,
         routeOperation='add',
@@ -84,27 +84,27 @@ for hostE in hostElement:
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error', 'Failed to add ipv4 route to host %s '
+        LogOutput('error', 'Failed to add ipv4 route to host %s '
                           % hName)
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in adding ipv4 route to host %s '
                          % hName)
 
     ipAddr = '30.30.30.5'
-    common.LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
+    LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
                      hName))
     retStruct = host.DevicePing(connection=devConn, ipAddr=ipAddr)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error', 'Failed to ping %s from host %s '
+        LogOutput('error', 'Failed to ping %s from host %s '
                          % (ipAddr, hName))
     else:
-        common.LogOutput('info', 'Succeeded to ping %s from host %s '
+        LogOutput('info', 'Succeeded to ping %s from host %s '
                          % (ipAddr, hName))
 
-    common.LogOutput('info', 'Delete ipv4 routes to host %s' % hName)
+    LogOutput('info', 'Delete ipv4 routes to host %s' % hName)
     retStruct = host.IPRoutesConfig(
         connection=devConn,
         routeOperation='delete',
@@ -118,18 +118,18 @@ for hostE in hostElement:
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error',
+        LogOutput('error',
                          'Failed to delete ipv4 route to host %s '
                          % hName)
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in deleting ipv4 route to host %s '
                          % hName)
 
    # Clearing IPv4 on the host ethernet interface
 
     ipAddr = '20.20.20.2'
-    common.LogOutput('info', 'Clearing host IP' + hName)
+    LogOutput('info', 'Clearing host IP' + hName)
     retStruct = host.NetworkConfig(
         connection=devConn,
         eth='eth1',
@@ -141,38 +141,38 @@ for hostE in hostElement:
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error',
+        LogOutput('error',
                          'Failed to configure IP %s on  host %s '
                          % (ipAddr, hName))
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in configuring IP  %s on host %s '
                          % (ipAddr, hName))
 
    # Configuring IPv6 on the host ethernet interface
 
     ipAddr = '2001::1'
-    common.LogOutput('info', 'Configuring host IP' + hName)
+    LogOutput('info', 'Configuring host IP' + hName)
     retStruct = host.Network6Config(connection=devConn, eth='eth1',
                                     ipAddr=ipAddr, netMask=64, clear=0)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error',
+        LogOutput('error',
                          'Failed to configure IPv6 %s on  host %s '
                          % (ipAddr, hName))
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in configuring IPv6  %s on host %s '
                           % (ipAddr, hName))
 
-    common.LogOutput('info', 'Get Local link addresses from host %s'
+    LogOutput('info', 'Get Local link addresses from host %s'
                      % hName)
     interfaceList = \
         host.GetDirectLocalLinkAddresses(connection=devConn, ipv6Flag=1)
     localLinkAddress = interfaceList[0]['address']
     eth = interfaceList[0]['eth']
-    common.LogOutput('info', 'Add routes to host %s' % hName)
+    LogOutput('info', 'Add routes to host %s' % hName)
     retStruct = host.IPRoutesConfig(
         connection=devConn,
         routeOperation='add',
@@ -186,10 +186,10 @@ for hostE in hostElement:
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error', 'Failed to add ipv6 route to host %s '
+        LogOutput('error', 'Failed to add ipv6 route to host %s '
                           % hName)
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in adding ipv6 route to host %s '
                          % hName)
 
@@ -198,17 +198,17 @@ for hostE in hostElement:
 #   print retBuff
 
     ipAddr = '2002::2'
-    common.LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
+    LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
                      hName))
     retStruct = host.DevicePing(connection=devConn, ipAddr=ipAddr,
                                 ipv6Flag=1)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error', 'Failed to ping %s from host %s '
+        LogOutput('error', 'Failed to ping %s from host %s '
                          % (ipAddr, hName))
     else:
-        common.LogOutput('info', 'Succeeded to ping %s from host %s '
+        LogOutput('info', 'Succeeded to ping %s from host %s '
                          % (ipAddr, hName))
     print retBuff
 
@@ -216,20 +216,20 @@ for hostE in hostElement:
 
 #   ipAddr = "fe80::250:56ff:febd:e5"
 
-    common.LogOutput('info', 'Configuring host IP' + hName)
+    LogOutput('info', 'Configuring host IP' + hName)
     retStruct = host.Network6Config(connection=devConn, eth='eth1',
                                     ipAddr=ipAddr, netMask=64, clear=1)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error', 'Failed to clear IPv6 %s on  host %s '
+        LogOutput('error', 'Failed to clear IPv6 %s on  host %s '
                           % (ipAddr, hName))
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in clearing IPv6  %s on host %s '
                          % (ipAddr, hName))
 
-    common.LogOutput('info', 'Delete ipv6 routes to host %s' % hName)
+    LogOutput('info', 'Delete ipv6 routes to host %s' % hName)
     retStruct = host.IPRoutesConfig(
         connection=devConn,
         routeOperation='delete',
@@ -243,11 +243,11 @@ for hostE in hostElement:
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
-        common.LogOutput('error',
+        LogOutput('error',
                          'Failed to delete ipv6 route to host %s '
                          % hName)
     else:
-        common.LogOutput('info',
+        LogOutput('info',
                          'Succeeded in deleting ipv6 route to host %s '
                          % hName)
     print retBuff

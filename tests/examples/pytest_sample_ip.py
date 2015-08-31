@@ -1,4 +1,4 @@
-from common import *
+#from common import *
 #import switch
 import pytest
 from switch.CLI import *

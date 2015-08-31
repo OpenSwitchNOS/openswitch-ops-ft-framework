@@ -8,11 +8,11 @@ topoDict = {
     "topoFilters": "dut01:system-category:switch"
     }
 
-common.LogOutput('info', 'Sample test case code.')
+LogOutput('info', 'Sample test case code.')
 
 # Grab the name of the switch from the eTree
 
-switchElement = common.XmlGetElementsByTag(headers.TOPOLOGY,
+switchElement = XmlGetElementsByTag(headers.TOPOLOGY,
         ".//device/system[vendor='Edgecore']/name", allElements=True)
 numSwitches = len(switchElement)
 for switchE in switchElement:
@@ -20,25 +20,25 @@ for switchE in switchElement:
 
 # Connect to the switch via console
 
-common.LogOutput('info', '########################################')
-common.LogOutput('info', 'Connecting to switch via console'
+LogOutput('info', '########################################')
+LogOutput('info', 'Connecting to switch via console'
                  + switchName)
-common.LogOutput('info', '########################################')
+LogOutput('info', '########################################')
 switchConsoleConn = switch.Connect(switchName)
 if switchConsoleConn is None:
-    common.LogOutput('error', 'Failed to connect to switch console'
+    LogOutput('error', 'Failed to connect to switch console'
                      + switchName)
     exit(1)
 
 # Configure management IP on eth0 interface of the switch so that later we can connect to the switch via mgmt interface via host
 
-common.LogOutput('info',
+LogOutput('info',
                  '################################################################################'
                  )
-common.LogOutput('info',
+LogOutput('info',
                  'Configuring management IP on management interface eth0 to switch via console'
                   + switchName)
-common.LogOutput('info',
+LogOutput('info',
                  '################################################################################'
                  )
 
@@ -51,7 +51,7 @@ retStruct = switch.DeviceInteract(connection=switchConsoleConn,
                                   command=command)
 
 if retStruct['returnCode']:
-    common.LogOutput('error',
+    LogOutput('error',
                      'Failed to configure mgmt interface on the switch '
                       + switchName)
 
@@ -59,7 +59,7 @@ if retStruct['returnCode']:
 
 # Grab the name of the host from the topology xml eTree
 
-hostElement = common.XmlGetElementsByTag(headers.TOPOLOGY,
+hostElement = XmlGetElementsByTag(headers.TOPOLOGY,
         ".//device/system[category='workstation']/name",
         allElements=True)
 numHosts = len(hostElement)
@@ -71,9 +71,9 @@ for hostE in hostElement:
 
 linkList = [headers.topo['lnk01']]
 returnStruct = topology.LinkStatusConfig(links=linkList, enable=1)
-returnCode = common.ReturnJSONGetCode(json=returnStruct)
+returnCode = ReturnJSONGetCode(json=returnStruct)
 if returnCode != 0:
-    common.LogOutput('error', 'Failed to enable link01')
+    LogOutput('error', 'Failed to enable link01')
     exit(1)
 
 # Initiate 3 host telnet sessions to connect to switch via management interface SSH sessions
@@ -86,13 +86,13 @@ for i in range(0, 3):
 
    # Connect to the device
 
-    common.LogOutput('info', '########################################')
-    common.LogOutput('info', 'Connecting to host ' + hName)
-    common.LogOutput('info', '########################################')
+    LogOutput('info', '########################################')
+    LogOutput('info', 'Connecting to host ' + hName)
+    LogOutput('info', '########################################')
     if i == 0:
         hostTelnetSessionForSwitchVtyshShell = host.Connect(hName)
         if hostTelnetSessionForSwitchVtyshShell is None:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to connect to host for switch vtysh shell'
                               + hName)
             exit(1)
@@ -100,14 +100,14 @@ for i in range(0, 3):
         hostTelnetSessionForSwitchBroadcomDriverShell = \
             host.Connect(hName)
         if hostTelnetSessionForSwitchBroadcomDriverShell is None:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to connect to host for switch broadcom driver shell'
                               + hName)
             exit(1)
     elif i == 2:
         hostTelnetSessionForSwitchBashShell = host.Connect(hName)
         if hostTelnetSessionForSwitchBashShell is None:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to connect to host for switch bash shell'
                               + hName)
             exit(1)
@@ -115,7 +115,7 @@ for i in range(0, 3):
 # Configuring IPv4 on the host ethernet eth1 interface with bash host connection handle
 
 ipAddr = '20.20.20.2'
-common.LogOutput('info', 'Configuring host IP' + hName)
+LogOutput('info', 'Configuring host IP' + hName)
 retStruct = host.NetworkConfig(
     connection=hostTelnetSessionForSwitchBashShell,
     eth='eth1',
@@ -127,10 +127,10 @@ retStruct = host.NetworkConfig(
 retCode = retStruct.get('returnCode')
 retBuff = retStruct.get('buffer')
 if retCode:
-    common.LogOutput('error', 'Failed to configure IP %s on  host %s '
+    LogOutput('error', 'Failed to configure IP %s on  host %s '
                      % (ipAddr, hName))
 else:
-    common.LogOutput('info',
+    LogOutput('info',
                      'Succeeded in configuring IP  %s on host %s '
                      % (ipAddr, hName))
 
@@ -141,30 +141,30 @@ for i in range(0, 3):
 
    # Connect to the device
 
-    common.LogOutput('info', '########################################')
-    common.LogOutput('info', 'Connecting to switch ' + switchName)
-    common.LogOutput('info', '########################################')
+    LogOutput('info', '########################################')
+    LogOutput('info', 'Connecting to switch ' + switchName)
+    LogOutput('info', '########################################')
 
     if i == 0:
         result = host.DeviceConnect(switchName,
                                     hostConnHandle=hostTelnetSessionForSwitchVtyshShell,
                                     mgmtIpAddress=mgmtIpAddress)
         if result is None:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to connect to switch for vtysh shell '
                               + switchName)
             continue
-        common.LogOutput('info', 'Get to vtysh shell ' + switchName)
+        LogOutput('info', 'Get to vtysh shell ' + switchName)
         retStruct = \
             switch.CLI.VtyshShell(connection=hostTelnetSessionForSwitchVtyshShell)
-        retCode = common.ReturnJSONGetCode(json=retStruct)
+        retCode = ReturnJSONGetCode(json=retStruct)
         if retCode != 0:
-            common.LogOutput('error', 'Failed to get vtysh shell '
+            LogOutput('error', 'Failed to get vtysh shell '
                              + switchName)
         else:
-            common.LogOutput('info', 'Success in getting vtysh shell '
+            LogOutput('info', 'Success in getting vtysh shell '
                              + switchName)
-            data = common.ReturnJSONGetData(json=retStruct)
+            data = ReturnJSONGetData(json=retStruct)
             print data
     elif i == 1:
 
@@ -172,39 +172,39 @@ for i in range(0, 3):
                                     hostConnHandle=hostTelnetSessionForSwitchBroadcomDriverShell,
                                     mgmtIpAddress=mgmtIpAddress)
         if result is None:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to connect to switch for broadcom shell '
                               + switchName)
             continue
-        common.LogOutput('info', 'Get to broadcom shell ' + switchName)
+        LogOutput('info', 'Get to broadcom shell ' + switchName)
         retStruct = \
             switch.CLI.BroadcomShell(connection=hostTelnetSessionForSwitchBroadcomDriverShell)
-        retCode = common.ReturnJSONGetCode(json=retStruct)
+        retCode = ReturnJSONGetCode(json=retStruct)
         if retCode != 0:
-            common.LogOutput('error', 'Failed to get broadcom shell '
+            LogOutput('error', 'Failed to get broadcom shell '
                              + switchName)
         else:
-            common.LogOutput('info',
+            LogOutput('info',
                              'Success in getting broadcom shell '
                              + switchName)
-        data = common.ReturnJSONGetData(json=retStruct)
+        data = ReturnJSONGetData(json=retStruct)
         print data
 
         command = 'LS'
-        common.LogOutput('info', 'Execute LS cmd on  broadcom shell '
+        LogOutput('info', 'Execute LS cmd on  broadcom shell '
                          + switchName)
         retStruct = \
             switch.CLI.BroadcomShell(connection=hostTelnetSessionForSwitchBroadcomDriverShell,
                 configOption='execute', cmd=command)
-        retCode = common.ReturnJSONGetCode(json=retStruct)
+        retCode = ReturnJSONGetCode(json=retStruct)
         if retCode != 0:
-            common.LogOutput('error', 'Failed to execute the command : '
+            LogOutput('error', 'Failed to execute the command : '
                               + command)
         else:
-            common.LogOutput('info',
+            LogOutput('info',
                              'Successfully executed the command : '
                              + command)
-        data = common.ReturnJSONGetData(json=retStruct)
+        data = ReturnJSONGetData(json=retStruct)
         print data
     else:
 
@@ -213,11 +213,11 @@ for i in range(0, 3):
                                     hostConnHandle=hostTelnetSessionForSwitchBashShell,
                                     mgmtIpAddress=mgmtIpAddress)
         if result is None:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to connect to switch bash shell '
                              + switchName)
             continue
-        common.LogOutput('info',
+        LogOutput('info',
                          'Get to bash shell and executing bash command pwd '
                           + switchName)
         retStruct = \
@@ -228,13 +228,13 @@ for i in range(0, 3):
 # cleanup
 # Clear management IP on eth0 interface of the switch via console
 
-common.LogOutput('info',
+LogOutput('info',
                  '################################################################################'
                  )
-common.LogOutput('info',
+LogOutput('info',
                  'Clearing management IP on management interface eth0 to switch via console'
                   + switchName)
-common.LogOutput('info',
+LogOutput('info',
                  '################################################################################'
                  )
 
@@ -247,6 +247,6 @@ retStruct = switch.DeviceInteract(connection=switchConsoleConn,
                                   command=command)
 
 if retStruct['returnCode']:
-    common.LogOutput('error',
+    LogOutput('error',
                      'Failed to clear mgmt interface on the switch '
                      + switchName)

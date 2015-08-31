@@ -17,8 +17,8 @@
 #              data: 
 #
 ##PROC-###################################################################################
-import common
-import lib
+
+from lib import *
 import re
 import time
 
@@ -30,8 +30,8 @@ def LldpInterfaceConfig(**kwargs):
     
     # If Device object is not passed, we need to error out
     if deviceObj is None or interface is None:
-        common.LogOutput('error', "Need to pass switch device object deviceObj and interface to this routine")
-        returnCls = lib.returnStruct(returnCode=1)
+        LogOutput('error', "Need to pass switch device object deviceObj and interface to this routine")
+        returnCls = returnStruct(returnCode=1)
         return returnCls
 
     overallBuffer = []
@@ -40,11 +40,11 @@ def LldpInterfaceConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh prompt")
+        LogOutput('error', "Failed to get vtysh prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     # Get into config context
@@ -52,11 +52,11 @@ def LldpInterfaceConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh config prompt")
+        LogOutput('error', "Failed to get vtysh config prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     
     # Get into the interface context
@@ -65,11 +65,11 @@ def LldpInterfaceConfig(**kwargs):
     retCode = returnDict['returnCode']
     overallBuffer.append(returnDict['buffer'])
     if retCode != 0:
-        common.LogOutput('error', "Failed to enter interface context for interface " + str(interface))
+        LogOutput('error', "Failed to enter interface context for interface " + str(interface))
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
     # Need to get into the Interface context
@@ -79,9 +79,9 @@ def LldpInterfaceConfig(**kwargs):
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            common.LogOutput('error', "Failed to enable lldp tranmission on interface " + str(interface))
+            LogOutput('error', "Failed to enable lldp tranmission on interface " + str(interface))
         else:
-            common.LogOutput('debug', "Enabled lldp transmission on interface " + str(interface))
+            LogOutput('debug', "Enabled lldp transmission on interface " + str(interface))
 
     if transmission is False:
         command = "no lldp transmission\r"
@@ -89,9 +89,9 @@ def LldpInterfaceConfig(**kwargs):
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            common.LogOutput('error', "Failed to disable lldp transmission on interface " + str(interface))
+            LogOutput('error', "Failed to disable lldp transmission on interface " + str(interface))
         else:
-            common.LogOutput('debug', "Disabled lldp transmission on interface " + str(interface))
+            LogOutput('debug', "Disabled lldp transmission on interface " + str(interface))
     
     if reception is True:
         command = "lldp reception\r"
@@ -99,9 +99,9 @@ def LldpInterfaceConfig(**kwargs):
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            common.LogOutput('error', "Failed to enable lldp reception on interface  " + str(interface))
+            LogOutput('error', "Failed to enable lldp reception on interface  " + str(interface))
         else:
-            common.LogOutput('debug', "Enabled lldp reception on interface " + str(interface))
+            LogOutput('debug', "Enabled lldp reception on interface " + str(interface))
     
     if reception is False:
         command = "no lldp reception\r"
@@ -109,9 +109,9 @@ def LldpInterfaceConfig(**kwargs):
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            common.LogOutput('error', "Failed to disable lldp reception on interface  " + str(interface))
+            LogOutput('error', "Failed to disable lldp reception on interface  " + str(interface))
         else:
-            common.LogOutput('debug', "Disabled lldp reception on interface " + str(interface))
+            LogOutput('debug', "Disabled lldp reception on interface " + str(interface))
     
     # Get out of the interface context
     command = "exit \r"
@@ -119,7 +119,7 @@ def LldpInterfaceConfig(**kwargs):
     retCode = returnDict['returnCode']
     overallBuffer.append(returnDict['buffer'])
     if retCode != 0:
-        common.LogOutput('error', "Failed to exit the interface context")
+        LogOutput('error', "Failed to exit the interface context")
         
     
     # Get into config context
@@ -127,11 +127,11 @@ def LldpInterfaceConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to exit vtysh config prompt")
+        LogOutput('error', "Failed to exit vtysh config prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     
     # Get out of vtyshell
@@ -139,17 +139,17 @@ def LldpInterfaceConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to exit vtysh prompt")
+        LogOutput('error', "Failed to exit vtysh prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
     #Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
 

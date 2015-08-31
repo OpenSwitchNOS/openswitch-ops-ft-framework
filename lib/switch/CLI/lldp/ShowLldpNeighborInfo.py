@@ -24,9 +24,9 @@
 #                                     Total_Neighbor_Entries_Deleted, Total_Neighbor_Entries_Dropped)
 #
 ##PROC-###################################################################################
-import common
+
 import switch
-import lib
+from lib import *
 import re
 import time
 
@@ -42,11 +42,11 @@ def ShowLldpNeighborInfo(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh prompt")
+        LogOutput('error', "Failed to get vtysh prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     
     #Pass LLDP commands here
@@ -54,17 +54,17 @@ def ShowLldpNeighborInfo(**kwargs):
     if port != None:
         command += " " + str(port)
     
-    common.LogOutput("info","Show LLDP command ***"+command)
+    LogOutput("info","Show LLDP command ***"+command)
     #devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
     devIntRetStruct = deviceObj.DeviceInteract(command=command)
     returnCode = devIntRetStruct.get('returnCode')
     overallBuffer.append(devIntRetStruct.get('buffer'))
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get show lldp neighbor-info command")
+        LogOutput('error', "Failed to get show lldp neighbor-info command")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     else:
         rawBuffer = devIntRetStruct.get('buffer')
@@ -189,15 +189,15 @@ def ShowLldpNeighborInfo(**kwargs):
     returnStructure = deviceObj.VtyshShell(configOption="unconfig")
     returnCode = returnStructure.returnCode()
     if returnCode != 0:
-        common.LogOutput('error', "Failed to exit vtysh prompt")
-        returnCls = lib.returnStruct(returnCode=returnCode,)
+        LogOutput('error', "Failed to exit vtysh prompt")
+        returnCls = returnStruct(returnCode=returnCode,)
         return returnCls
 
     #Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString, data=returnDict)
+    returnCls = returnStruct(returnCode=0, buffer=bufferString, data=returnDict)
     return returnCls
     
 

@@ -19,17 +19,17 @@ tcInstance.defineStep(stepDesc="Capture and parse LLDP packets on the workstatio
 # Step 1 - Port Discovery (Physical)
 tcInstance.startStep()
 dut01LinkStruct = topology.InterfaceGetByDeviceLink(device=headers.topo['dut01'], link=headers.topo['lnk01'])
-dut01Port = common.ReturnJSONGetData(json=dut01LinkStruct)
+dut01Port = ReturnJSONGetData(json=dut01LinkStruct)
 dut02LinkStruct = topology.InterfaceGetByDeviceLink(device=headers.topo['dut01'], link=headers.topo['lnk02'])
-dut02Port = common.ReturnJSONGetData(json=dut02LinkStruct)
+dut02Port = ReturnJSONGetData(json=dut02LinkStruct)
 tcInstance.endStep()
 
 # Step 2 - Connect to the workstation
 tcInstance.startStep()
-common.LogOutput('info', "##Connecting to host "+ headers.topo['wrkston01'])
+LogOutput('info', "##Connecting to host "+ headers.topo['wrkston01'])
 wrkston01Conn = host.Connect(headers.topo['wrkston01'])
 if wrkston01Conn is None :
-   common.LogOutput('error', "Failed to connect to host " + headers.topo['wrkston01'])
+   LogOutput('error', "Failed to connect to host " + headers.topo['wrkston01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 tcInstance.endStep()
  
@@ -37,9 +37,9 @@ tcInstance.endStep()
 tcInstance.startStep()
 linkList = [headers.topo['lnk01'],headers.topo['lnk02']]
 returnStruct = topology.LinkStatusConfig(links=linkList, enable=1)
-returnCode = common.ReturnJSONGetCode(json=returnStruct)
+returnCode = ReturnJSONGetCode(json=returnStruct)
 if returnCode != 0:
-   common.LogOutput('error', "Failed to enable links")
+   LogOutput('error', "Failed to enable links")
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 tcInstance.endStep()
 
@@ -50,13 +50,13 @@ pktInstance = host.PacketCapture(headers.topo['wrkston01'],"capture.pcap")
 #Filter can be passed as an optional argument
 #pktInstance.StartCapture(connection=wrkston01Conn,filter="lldp")
 pktInstance.StartCapture(connection=wrkston01Conn)
-common.Sleep(seconds=40, message="Waiting for LLDP packets to be captured")
+Sleep(seconds=40, message="Waiting for LLDP packets to be captured")
 returnStruct = pktInstance.ParseCapture(wrkston01Conn)
-common.LogOutput("info", "Return Json structure for LLDP packets captures")
-common.LogOutput("info",returnStruct)
-returnCode = common.ReturnJSONGetCode(json=returnStruct)
+LogOutput("info", "Return Json structure for LLDP packets captures")
+LogOutput("info",returnStruct)
+returnCode = ReturnJSONGetCode(json=returnStruct)
 if returnCode != 0 :
-   common.LogOutput('error', "Failed to parse packets on the host " + headers.topo['wrkston01'])
+   LogOutput('error', "Failed to parse packets on the host " + headers.topo['wrkston01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 tcInstance.endStep()
  

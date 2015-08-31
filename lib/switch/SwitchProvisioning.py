@@ -18,23 +18,24 @@
 ##PROC-#####################################################################
 
 import pexpect
-import headers
-import common
+
+
 import time
 import switch
 #import topology
 import os
 import re
+from lib import *
 
 def SwitchProvisioning(**kwargs):
-     returnDict = dict()
-     common.LogOutput("info","PROVISIONING HALON Physical device")
-     common.LogOutput("info","Enter the Onie rescue mode for provisioning the physical device")
+     #returnDict = dict()
+     LogOutput("info","PROVISIONING HALON Physical device")
+     LogOutput("info","Enter the Onie rescue mode for provisioning the physical device")
      connection = kwargs.get('connection')
      if headers.TftpImage['ImageURL'] is None :
-       common.LogOutput("error","TFTP image URL not specified **Exiting the provisioning module")
-       returnJson = common.ReturnJSONCreate(returnCode=1, data=None)
-       return returnJson
+       LogOutput("error","TFTP image URL not specified **Exiting the provisioning module")
+       returnCls = returnStruct(returnCode=1)
+       return returnCls
 
      #Wget the tftp file to /warp/pub (if the file does not exist in the repository)
      #Getting the image name from the archive specified
@@ -47,29 +48,29 @@ def SwitchProvisioning(**kwargs):
       if not os.path.exists("/warp/pub/"+headers.TftpImage['Image']):
         returnCode = os.system('wget '+remote+' -P /warp/pub')
         if returnCode != 0:
-         common.LogOutput("error","Wget the tftp file --> "+headers.TftpImage['Image']+" to /warp/pub unsuccessful.Image not downloaded")
-         returnJson = common.ReturnJSONCreate(returnCode=1, data=returnDict)
+         LogOutput("error","Wget the tftp file --> "+headers.TftpImage['Image']+" to /warp/pub unsuccessful.Image not downloaded")
+         returnCls = returnStruct(returnCode=1, data=returnDict)
         else :
-         common.LogOutput("debug","Wget the tftp file --> "+headers.TftpImage['Image']+" to /warp/pub successful")
+         LogOutput("debug","Wget the tftp file --> "+headers.TftpImage['Image']+" to /warp/pub successful")
       else :
-        common.LogOutput("info",headers.TftpImage['Image']+"-->Image exists in /warp/pub")
+        LogOutput("info",headers.TftpImage['Image']+"-->Image exists in /warp/pub")
      else :
-      common.LogOutput("error","Cannot find any image file in the archive specified")
-      returnJson = common.ReturnJSONCreate(returnCode=1, data=returnDict)
+      LogOutput("error","Cannot find any image file in the archive specified")
+      returnCls = returnStruct(returnCode=1)
        
      #Instantiate the class TftpImageOnieDownload to initiate TFTP transfer of image from RTL uplink
      #This code can be extended to upload multiple targets with images from TFTP
 
      TftpInstance = switch.TftpImageOnieDownload(headers.topo['dut01']) 
      if TftpInstance.AddUplink != 1:
-       common.LogOutput("info","Starting TFTP upload**")
-       returnJson = TftpInstance.TftpOperation(connection=connection)
+       LogOutput("info","Starting TFTP upload**")
+       returnCls = TftpInstance.TftpOperation(connection=connection)
      else:
-       common.LogOutput("error","Failed to add uplink to topology")
-       returnJson = common.ReturnJSONCreate(returnCode=1, data=returnDict)
+       LogOutput("error","Failed to add uplink to topology")
+       returnCls = returnStruct(returnCode=1)
   
      #Return Results in JSON
-     return returnJson
+     return returnCls
 
 
 

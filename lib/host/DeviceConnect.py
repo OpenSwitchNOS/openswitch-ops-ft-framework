@@ -18,14 +18,12 @@
 ##PROC-#####################################################################
 
 import pexpect
-import headers
-import common
 import switch
-#import console
 import xml.etree.ElementTree
 import os
 import socket
 import time
+from lib import *
 
 
 def DeviceConnect(device, **kwargs):
@@ -35,7 +33,7 @@ def DeviceConnect(device, **kwargs):
     connType = kwargs.get('connType', 'ssh')
 
     if mgmtIpAddress == None or hostConnHandle == None:
-        common.LogOutput('debug', device
+        LogOutput('debug', device
                          + ' Invalid device management IP address or host connection handle'
                          )
         return None
@@ -49,7 +47,7 @@ def DeviceConnect(device, **kwargs):
 
         # We are not in a good situation, we need to bail
 
-        common.LogOutput('error',
+        LogOutput('error',
                          'Could not find reservation id tag in topology'
                          )
         return None
@@ -65,15 +63,15 @@ def DeviceConnect(device, **kwargs):
 
        # We are not in a good situation, we need to bail
 
-        common.LogOutput('error', 'Could not find device ' + device
+        LogOutput('error', 'Could not find device ' + device
                          + ' in topology')
         return None
     try:
         socket.inet_pton(socket.AF_INET, mgmtIpAddress)
-        common.LogOutput('debug', device + ' connection IP address:  '
+        LogOutput('debug', device + ' connection IP address:  '
                          + mgmtIpAddress)
     except socket.error:
-        common.LogOutput('debug', device
+        LogOutput('debug', device
                          + ' Invalid connection IP address:  '
                          + mgmtIpAddress)
         return None
@@ -100,7 +98,7 @@ def DeviceConnect(device, **kwargs):
 
     cmdString = 'ssh ' + mgmtIpAddress
 
-    common.LogOutput('debug', 'Opening an host connection to the device'
+    LogOutput('debug', 'Opening an host connection to the device'
                      )
 
     hostConnHandle.sendline(cmdString)
@@ -135,13 +133,13 @@ def DeviceConnect(device, **kwargs):
 
            # Got EOF
 
-            common.LogOutput('error', 'connection to host failed')
+            LogOutput('error', 'connection to host failed')
             return None
         elif index == 3:
 
            # Got a Timeout
 
-            common.LogOutput('error', 'Connection timed out')
+            LogOutput('error', 'Connection timed out')
             return None
         else:
 
@@ -158,16 +156,16 @@ def DeviceConnect(device, **kwargs):
 
     for curLine in connectionBuffer:
 
-       # common.LogOutput('debug', curLine)
+       # LogOutput('debug', curLine)
 
         sanitizedBuffer += curLine
-    common.LogOutput('debug', sanitizedBuffer)
+    LogOutput('debug', sanitizedBuffer)
 
     # Lets go and detect our connection - this will get us to a context we know about
 
     retVal = switch.DetectConnection(hostConnHandle)
     if retVal is None:
-        common.LogOutput('error',
+        LogOutput('error',
                          'Failed to detect connection for device - looking to reset console'
                          )
         return None

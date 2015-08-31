@@ -18,10 +18,9 @@
 #
 #
 ###########################################################################################################
-import common
 import os
 import paramiko
-import headers 
+from lib import *
 import xml.etree.ElementTree
 
 def SCPFileTransfer(device,filename,filepath,localpath) : 
@@ -32,7 +31,7 @@ def SCPFileTransfer(device,filename,filepath,localpath) :
   rsvnEtreeElement = common.XmlGetElementsByTag(headers.TOPOLOGY, xpathString)
   if rsvnEtreeElement == None:
   # We are not in a good situation, we need to bail
-    common.LogOutput('error', "Could not find reservation id tag in topology")
+    LogOutput('error', "Could not find reservation id tag in topology")
     return None
   rsvnType = rsvnEtreeElement.text
 
@@ -41,10 +40,10 @@ def SCPFileTransfer(device,filename,filepath,localpath) :
    xpathString = ".//device[name='" + device + "']/connection/ipAddr"
    ipNode = common.XmlGetElementsByTag(headers.TOPOLOGY, xpathString)
    if ipNode == None:
-     common.LogOutput('error', "Failed to obtain IP address for device " + device )
+     LogOutput('error', "Failed to obtain IP address for device " + device )
      return None
    hostIP = ipNode.text
-   common.LogOutput ('debug', device + " connection IP address:  " + hostIP)
+   LogOutput ('debug', device + " connection IP address:  " + hostIP)
    port = 22
 
    #Open a ssh connection to the host
@@ -54,13 +53,13 @@ def SCPFileTransfer(device,filename,filepath,localpath) :
    xpathString = ".//device[name='" + device + "']/login/adminPassword"
    password = common.XmlGetElementsByTag(headers.TOPOLOGY, xpathString)
    if password == None:
-     common.LogOutput('error', "Failed to obtain password for device " + device )
+     LogOutput('error', "Failed to obtain password for device " + device )
      return None
    password = password.text
    xpathString = ".//device[name='" + device + "']/login/adminUser"
    username = common.XmlGetElementsByTag(headers.TOPOLOGY, xpathString)
    if username == None:
-     common.LogOutput('error', "Failed to obtain username for device " + device )
+     LogOutput('error', "Failed to obtain username for device " + device )
      return None
    username = username.text
 
@@ -70,21 +69,21 @@ def SCPFileTransfer(device,filename,filepath,localpath) :
    try :
     sftp.get(filepath,localpath)
    except :
-    common.LogOutput("error","Capture file not transferred to results directory")
+    LogOutput("error","Capture file not transferred to results directory")
     returnCode = 1
   #Close a connection
    sftp.close()
    transport.close()
    return returnCode
   else :
-   common.LogOutput("info","Topology is virtual **")
-   common.LogOutput("info","Copy the files from docker container to results directory")
+   LogOutput("info","Topology is virtual **")
+   LogOutput("info","Copy the files from docker container to results directory")
    #Copy the pcap file from docker container to results directory
    command = "docker cp %s:%s %s"%(device,filepath,headers.ResultsDirectory['resultsDir'])
    returnCode = os.system(command)
    os.rename(filename,device+"--"+filename)
    if returnCode != 0:
-      common.LogOutput('error', "Failed to copy pcap file to results directory from device --> "+self.device)
+      LogOutput('error', "Failed to copy pcap file to results directory from device --> "+self.device)
       returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
       return returnJson
 

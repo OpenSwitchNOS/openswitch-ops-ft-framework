@@ -17,8 +17,8 @@
 ##PROC-#####################################################################
 
 import pexpect
-import headers
-import common
+
+
 import switch
 import re
 

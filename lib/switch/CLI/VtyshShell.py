@@ -19,7 +19,7 @@
 #                     "vtyshPrompt": {"buffer"}
 #
 ##PROC-#####################################################################
-import common
+
 import switch
 import re
 import pexpect

@@ -36,7 +36,8 @@
 #                      "name": {status, rpm, speed}
 #
 ##PROC-#####################################################################
-import common
+
+from lib import *
 import switch
 import re
 
@@ -52,8 +53,6 @@ def OvsBridgeConfig(**kwargs):
     if connection is None:
        return False
 
-    retStruct = dict()
-
     if action == 'config':
        # Commands to configure bridge
 
@@ -67,11 +66,11 @@ def OvsBridgeConfig(**kwargs):
            devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
            retCode1 = devIntRetStruct.get('returnCode')
            if retCode1 != 0:
-              common.LogOutput('error', "Failed to create bridge " + bridge)
-              retString = common.ReturnJSONCreate(returnCode=1, data="")
-              return retString
+              LogOutput('error', "Failed to create bridge " + bridge)
+              retCls = returnStruct(returnCode=1)
+              return retCls
         else:
-           common.LogOutput('debug', "Bridge " + bridge + " exists")
+           LogOutput('debug', "Bridge " + bridge + " exists")
 
         # Now add ports to the  bridge
         if ports != None:
@@ -81,11 +80,11 @@ def OvsBridgeConfig(**kwargs):
               retCode = devIntRetStruct['returnCode']
               if retCode != 0:
                  # Failed to add the port to the bridge
-                 common.LogOutput('error', "Failed to add port " + str(curPort) + " to bridge " + bridge)
-                 retString = common.ReturnJSONCreate(returnCode=1, data="")
-                 return retString
+                 LogOutput('error', "Failed to add port " + str(curPort) + " to bridge " + bridge)
+                 retCls = returnStruct(returnCode=1)
+                 return retCls
               else:
-                 common.LogOutput('debug', "Added port " + str(curPort) + " to bridge " + bridge)
+                 LogOutput('debug', "Added port " + str(curPort) + " to bridge " + bridge)
               # Add vlan to port
               if vlanMode == 'access':
                  # configure access mode
@@ -93,32 +92,32 @@ def OvsBridgeConfig(**kwargs):
                  devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
                  retCode = devIntRetStruct['returnCode']
                  if retCode != 0:
-                    common.LogOutput('error', "Failed to set vlan tag " + str(nativeVlan) + " on port " + str(curPort))
-                    retString = common.ReturnJSONCreate(returnCode=1, data="")
+                    LogOutput('error', "Failed to set vlan tag " + str(nativeVlan) + " on port " + str(curPort))
+                    retString = returnStruct(returnCode=1)
                     return retString
                  else:
-                    common.LogOutput('debug', "Set port " + str(curPort) + " tag attribute to " + str(nativeVlan))
+                    LogOutput('debug', "Set port " + str(curPort) + " tag attribute to " + str(nativeVlan))
 
                  command = "ovs-vsctl set port " + str(curPort) + " vlan_mode=access"
                  devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
                  retCode = devIntRetStruct['returnCode']
                  if retCode != 0:
-                    common.LogOutput('error', "Failed to set port " + str(curPort) + " vlan_mode to access")
-                    retString = common.ReturnJSONCreate(returnCode=1, data="")
+                    LogOutput('error', "Failed to set port " + str(curPort) + " vlan_mode to access")
+                    retString = eturnStruct(returnCode=1)
                     return retString
                  else:
-                    common.LogOutput('debug', "Set port " + str(curPort) + " vlan_mode to access")
+                    LogOutput('debug', "Set port " + str(curPort) + " vlan_mode to access")
               elif vlanMode == 'trunk':
                  if trunkVlans != None:
                     command = "ovs-vsctl set port " + str(curPort) + " trunks=" + str(trunkVlans)
                     devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
                     retCode = devIntRetStruct['returnCode']
                     if retCode != 0:
-                       common.LogOutput('error', "Failed to set port "+ str(curPort) + " trunks to " + str(trunkVlans))
-                       retString = common.ReturnJSONCreate(returnCode=1, data="")
+                       LogOutput('error', "Failed to set port "+ str(curPort) + " trunks to " + str(trunkVlans))
+                       retString = returnStruct(returnCode=1)
                        return retString
                     else:
-                       common.LogOutput('debug', "Set port " + str(curPort) + " trunks=" + str(trunkVlans))
+                       LogOutput('debug', "Set port " + str(curPort) + " trunks=" + str(trunkVlans))
 
 
                  # For each port
@@ -126,5 +125,5 @@ def OvsBridgeConfig(**kwargs):
        # Commands to unconfigure the bridge
 
 
-    retString = common.ReturnJSONCreate(returnCode=0, data=retStruct)
+    retCls = returnStruct(returnCode=0)
     return retString

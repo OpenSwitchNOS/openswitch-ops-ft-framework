@@ -1,6 +1,6 @@
 import pexpect
 from lib import gbldata
-import common
+
 import switch
 import time
 #import console
@@ -10,7 +10,8 @@ import re
 from Topology import Topology
 from Device import Device
 import socket
-from lib import *
+#from lib import *
+import lib
 
 # This is the base class for any device - This gives the test case developer the ability to connect to the device
 # along with interacting with the device
@@ -45,17 +46,17 @@ class VHost ( Device ):
     def Connect(self):
         # Look up the device name in the topology - grab connectivity information
         xpathString = ".//device[name='" + self.device + "']"
-        etreeElement = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        etreeElement = lib.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
         if etreeElement == None:
             # We are not in a good situation, we need to bail
-            common.LogOutput('error', "Could not find device " + self.device + " in topology")
+            lib.LogOutput('error', "Could not find device " + self.device + " in topology")
             return None
         # Code for virtual
         # Go and grab the connection name
         xpathString = ".//device[name='" + self.device + "']/connection/name"
-        virtualConn = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        virtualConn = lib.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
         if virtualConn == None:
-            common.LogOutput('error', "Failed to virtual connection for " + self.device )
+            lib.LogOutput('error', "Failed to virtual connection for " + self.device )
             return None
         telnetString = self.connectStringBase + self.device + " /bin/bash"
         self.expectHndl = pexpect.spawn(telnetString,echo=False)
@@ -63,14 +64,14 @@ class VHost ( Device ):
         expectFileString  = self.device + ".log"
         
         # VINCE TODO - Move ExpectLog to Common Class
-        ExpectInstance = DeviceLogger(expectFileString)
+        ExpectInstance = lib.DeviceLogger(expectFileString)
         expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
         if expectLogFile == 1 :
-            common.LogOutput('error', "Unable to create expect log file")
+            lib.LogOutput('error', "Unable to create expect log file")
             exit(1)
         #Opening an expect connection to the device with the specified log file
-        common.LogOutput('debug', "Opening an expect connection to the device with the specified log file"+expectFileString)
-        self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=DeviceLogger(expectLogFile))
+        lib.LogOutput('debug', "Opening an expect connection to the device with the specified log file"+expectFileString)
+        self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=lib.DeviceLogger(expectLogFile))
         self.expectHndl.delaybeforesend = 1
         
         # Lets go and detect our connection - this will get us to a context we know about
@@ -117,11 +118,11 @@ class VHost ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
                 # Got EOF
-                common.LogOutput('error', "Telnet to host failed")
+                lib.LogOutput('error', "Telnet to host failed")
                 return None
             elif index == 5:
                 # Got a Timeout
-                common.LogOutput('error', "Connection timed out")
+                lib.LogOutput('error', "Connection timed out")
                 return None
             else :
                 #print "Got index ", index, " wainting again"
@@ -132,9 +133,9 @@ class VHost ( Device ):
         # Now lets put in the topology the expect handle
         self.expectHndl.expect(['$'], timeout=2)
         for curLine in connectionBuffer:
-            #common.LogOutput('debug', curLine)
+            #lib.LogOutput('debug', curLine)
             sanitizedBuffer += curLine
-        common.LogOutput('debug', sanitizedBuffer)
+        lib.LogOutput('debug', sanitizedBuffer)
 
         return self.expectHndl
     
@@ -184,13 +185,13 @@ class VHost ( Device ):
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                common.LogOutput('error', "reached EOF")
+                lib.LogOutput('error', "reached EOF")
                 returnCode = 1
             elif index == 5:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                common.LogOutput('error', "command timeout")
+                lib.LogOutput('error', "command timeout")
                 returnCode = 1
             else :
                 tmpBuffer = self.expectHndl.before
@@ -209,7 +210,7 @@ class VHost ( Device ):
             errorCheckRetStruct = self.ErrorCheck(buffer=santString)
             returnCode = errorCheckRetStruct['returnCode']
         # Dump the buffer the the debug log
-        common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+        lib.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
 
         # Return dictionary
         retStruct['returnCode'] = returnCode
@@ -242,7 +243,7 @@ class VHost ( Device ):
             buffer += self.expectHndl.before
             buffer += self.expectHndl.after
         else:
-            common.LogOutput('error', "Received timeout in ErrorCheck " + str(index))
+            lib.LogOutput('error', "Received timeout in ErrorCheck " + str(index))
             retStruct['returnCode'] = 1
             return retStruct
 
@@ -274,22 +275,22 @@ class VHost ( Device ):
         retStruct = dict()
 
         if self.ipFormatChk(ipAddr) == False:
-            common.LogOutput('error', 'invalid ipaddress format :' + ipAddr)
+            lib.LogOutput('error', 'invalid ipaddress format :' + ipAddr)
             returnCode = 1
             #retStruct['buffer'] = 'Invalid ip address passed'
         elif self.ipFormatChk(netMask) == False:
-            common.LogOutput('error', 'invalid netmask format :' + netMask)
+            lib.LogOutput('error', 'invalid netmask format :' + netMask)
             returnCode = 1
             #retStruct['buffer'] = 'Invalid net mask passed'
         elif self.ipFormatChk(broadcast) == False:
-            common.LogOutput('error', 'invalid broadcast format :'
+            lib.LogOutput('error', 'invalid broadcast format :'
                              + broadcast)
             returnCode = 1
             #retStruct['buffer'] = 'Invalid broadcast passed'
 
         if returnCode:
             #retStruct['returnCode'] = returnCode
-            returnCls = returnStruct(returnCode=1)
+            returnCls = lib.returnStruct(returnCode=1)
             return returnCls
 
         overallBuffer = []
@@ -301,20 +302,20 @@ class VHost ( Device ):
             retBuff = retDeviceInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                                   + self.LIST_ETH_INTERFACES_CMD)
                 bailflag = 1
                 returnCode = 1
             else:
-                common.LogOutput('debug',
+                lib.LogOutput('debug',
                                  'Successfully executed the command : '
                                  + self.LIST_ETH_INTERFACES_CMD)
                 if retBuff.find(eth) != -1:
-                    common.LogOutput('debug','eth interface is validated for : '
+                    lib.LogOutput('debug','eth interface is validated for : '
                                     + eth)
                     bailflag = 1
                 else:
-                    common.LogOutput('debug', 'eth interface failed to validate for : '
+                    lib.LogOutput('debug', 'eth interface failed to validate for : '
                                         + eth)
                     #retStruct['buffer'] = \
                     #        'eth interface failed to validate for : ' + eth
@@ -329,7 +330,7 @@ class VHost ( Device ):
                     retBuff = retDevInt.get('buffer')
                     overallBuffer.append(retBuff)
                     if retCode != 0:
-                        common.LogOutput('error',
+                        lib.LogOutput('error',
                                         'Failed to execute the command : '
                                         + command)
                         bailflag = 1
@@ -337,7 +338,7 @@ class VHost ( Device ):
                         #retStruct['buffer'] = \
                         #        'Failed to execute the command : ' + command
                     else:
-                        common.LogOutput('debug',
+                        lib.LogOutput('debug',
                                          'Successfully executed the command : '
                                          + command)
 
@@ -345,7 +346,7 @@ class VHost ( Device ):
                         bufferString = ""
                         for curLine in overallBuffer:
                             bufferString += str(curLine)
-                        returnCls = returnStruct(returnCode=1, buffer=bufferString)
+                        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
                         return returnCls
 
         if config is False:
@@ -355,12 +356,12 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                               + command)
                 returnCode = 1
                 #retStruct['buffer'] = 'Failed to execute the command : ' + command
             else:
-                common.LogOutput('info','Successfully executed the command : '
+                lib.LogOutput('info','Successfully executed the command : '
                                  + command)
         else:
             # Here we are configuring the interface
@@ -371,13 +372,13 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                             + command)
                 returnCode = 1
                 #retStruct['buffer'] = 'Failed to execute the command : ' \
                 #+ command
             else:
-                common.LogOutput('debug','Successfully executed the command : '+ command)
+                lib.LogOutput('debug','Successfully executed the command : '+ command)
             
             if returnCode != 1: 
                 command = self.LIST_INTERFACE_IP_CMD % eth
@@ -386,22 +387,22 @@ class VHost ( Device ):
                 retBuff = retDevInt.get('buffer')
                 overallBuffer.append(retBuff)
                 if retCode != 0:
-                    common.LogOutput('error',
+                    lib.LogOutput('error',
                                  'Failed to execute the command : '
                                  + command)
                     returnCode = 1
                     #retStruct['buffer'] = 'Failed to execute the command : ' + command
                 else:
-                    common.LogOutput('debug','Successfully executed the command : '
+                    lib.LogOutput('debug','Successfully executed the command : '
                                      + command)
  
             if retBuff.find(ipAddr) == -1:
-                common.LogOutput('error',
+                lib.LogOutput('error',
                                  'IP addr %s is not configured successfully on interface %s : '
                                   % (ipAddr, eth))
                 #retStruct['buffer'] = 'Failed to execute the command : ' + command
             else:
-                common.LogOutput('info','IP addr %s configured successfully on interface %s : '
+                lib.LogOutput('info','IP addr %s configured successfully on interface %s : '
                                  % (ipAddr, eth))
 
         #retStruct['returnCode'] = returnCode
@@ -411,7 +412,7 @@ class VHost ( Device ):
             bufferString += str(curLin)
             #print curLin
         #retStruct['buffer'] = bufferString
-        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
 
@@ -447,10 +448,10 @@ class VHost ( Device ):
 
         if returnCode:
             #retStruct['returnCode'] = returnCode
-            common.LogOutput('error',
+            lib.LogOutput('error',
                          'Invalid ipv6 address or netMask passed ')
             #retStruct['buffer'] = 'Invalid ipv6 address or netMask passed '
-            returnCls = returnStruct(returnCode=returnCode)
+            returnCls = lib.returnStruct(returnCode=returnCode)
             return returnCls
 
         while bailflag == 0:
@@ -460,23 +461,23 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                               + self.LIST_ETH_INTERFACES_CMD)
                 bailflag = 1
                 returnCode = 1
                 #retStruct['buffer'] = 'Failed to execute the command : ' \
                 # + self.LIST_ETH_INTERFACES_CMD
             else:
-                common.LogOutput('debug',
+                lib.LogOutput('debug',
                              'Successfully executed the command : '
                              + self.LIST_ETH_INTERFACES_CMD)
                 if retBuff.find(eth) != -1:
-                    common.LogOutput('info',
+                    lib.LogOutput('info',
                                  'eth interface is validated for : '
                                  + eth)
                     bailflag = 1
                 else:
-                    common.LogOutput('error',
+                    lib.LogOutput('error',
                                  'eth interface failed to validate for : '
                                   + eth)
                     #retStruct['buffer'] = \
@@ -492,7 +493,7 @@ class VHost ( Device ):
                     retBuff = retDevInt.get('buffer')
                     overallBuffer.append(retBuff)
                     if retCode != 0:
-                        common.LogOutput('error',
+                        lib.LogOutput('error',
                             'Failed to execute the command : '
                             + command)
                         bailflag = 1
@@ -500,7 +501,7 @@ class VHost ( Device ):
                         #retStruct['buffer'] = \
                         #'Failed to execute the command : ' + command
                     else:
-                        common.LogOutput('debug',
+                        lib.LogOutput('debug',
                             'Successfully executed the command : '
                             + command)
 
@@ -510,7 +511,7 @@ class VHost ( Device ):
                 bufferString += str(curLin)
 
             #retStruct['buffer'] = bufferString
-            returnCls = returnStruct(returnCode=1, buffer=bufferString)
+            returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
             return returnCls
 
         if config is False:
@@ -520,13 +521,13 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                               + command)
                 returnCode = 1
                 #retStruct['buffer'] = 'Failed to execute the command : ' \
                 #+ command
             else:
-                common.LogOutput('debug',
+                lib.LogOutput('debug',
                              'Successfully executed the command : '
                              + command)
         else:
@@ -536,13 +537,13 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                               + command)
                 returnCode = 1
                 #retStruct['buffer'] = 'Failed to execute the command : ' \
                 #+ command
             else:
-                common.LogOutput('debug',
+                lib.LogOutput('debug',
                              'Successfully executed the command : '
                              + command)
 
@@ -553,25 +554,25 @@ class VHost ( Device ):
                 retBuff = retDevInt.get('buffer')
                 overallBuffer.append(retBuff)
                 if retCode != 0:
-                    common.LogOutput('error',
+                    lib.LogOutput('error',
                                  'Failed to execute the command : '
                                  + command)
                     returnCode = 1
                     #retStruct['buffer'] = \
                     #'Failed to execute the command : ' + command
                 else:
-                    common.LogOutput('debug',
+                    lib.LogOutput('debug',
                                  'Successfully executed the command : '
                                  + command)
 
             if retBuff.find(ipAddr) == -1:
-                common.LogOutput('error',
+                lib.LogOutput('error',
                                  'IP addr %s is not configured successfully on interface %s : '
                                   % (ipAddr, eth))
                 #retStruct['buffer'] = \
                 #    'Failed to execute the command : ' + command
             else:
-                common.LogOutput('info',
+                lib.LogOutput('info',
                                  'IP addr %s configured successfully on interface %s : '
                                   % (ipAddr, eth))
 
@@ -580,7 +581,7 @@ class VHost ( Device ):
             bufferString += str(curLin)
             #print curLin
         #retStruct['buffer'] = bufferString
-        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     def Ping(self, **kwargs):
@@ -632,10 +633,10 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                                  + command)
             else:
-                common.LogOutput('info', 'Successfully executed the command : '
+                lib.LogOutput('info', 'Successfully executed the command : '
                                  + command)
 
             if retBuff.find('bytes from') == -1:
@@ -676,7 +677,7 @@ class VHost ( Device ):
                 retStruct['rtt_mdev'] = float(statsLine2.group(4))
                 continue
                 
-        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
         return returnCls
 
     def IPRoutesConfig(self, **kwargs):
@@ -706,7 +707,7 @@ class VHost ( Device ):
         if routeOperation != 'add' and routeOperation != 'del':
             #retStruct['buffer'] = 'Invalid routeOperation : %s' \
             #% routeOperation
-            common.LogOutput('error', "Invalid route operation : " + routeOperation)
+            lib.LogOutput('error', "Invalid route operation : " + routeOperation)
             returnCode = 1
 
         if ipv6Flag:
@@ -729,7 +730,7 @@ class VHost ( Device ):
             except socket.error:
                 #retStruct['buffer'] = 'Invalid destination : %s' \
                 #% destNetwork
-                common.LogOutput('error', "Invalid destination " + destNetwork)
+                lib.LogOutput('error', "Invalid destination " + destNetwork)
                 returnCode = 1
         else:
             try:
@@ -746,7 +747,7 @@ class VHost ( Device ):
             except socket.error:
                 #retStruct['buffer'] = 'Invalid destination : %s' \
                 #% destNetwork
-                common.LogOutput('error', "Invalid destination : " + destNetwork)
+                lib.LogOutput('error', "Invalid destination : " + destNetwork)
                 returnCode = 1
 
         if returnCode == 0:
@@ -756,16 +757,16 @@ class VHost ( Device ):
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                common.LogOutput('error', 'Failed to execute the command : '
+                lib.LogOutput('error', 'Failed to execute the command : '
                               + route_command)
                 returnCode = 1
             else:
-                common.LogOutput('info','Successfully executed the command : '
+                lib.LogOutput('info','Successfully executed the command : '
                                  + route_command)
                 #retStruct['buffer'] = retBuff
         else:
             #retStruct['buffer'] = 'Invalid ip address'
-            common.LogOutput('error', "Invalid IP address")
+            lib.LogOutput('error', "Invalid IP address")
 
         #retStruct['returnCode'] = returnCode
         #return retStruct
@@ -774,7 +775,7 @@ class VHost ( Device ):
             bufferString += str(curLin)
             #print curLin
         #retStruct['buffer'] = bufferString
-        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     def GetDirectLocalLinkAddresses(self):
@@ -789,7 +790,7 @@ class VHost ( Device ):
         retCode = retDevInt.get('returnCode')
         retBuff = retDevInt.get('buffer')
         if retCode != 0:
-            common.LogOutput('error', 'Failed to execute the command : '
+            lib.LogOutput('error', 'Failed to execute the command : '
                          + command)
             retBuff = retBuff.split('\n')
         for output in retBuff:

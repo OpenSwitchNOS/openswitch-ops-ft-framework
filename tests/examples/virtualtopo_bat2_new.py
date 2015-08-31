@@ -1,5 +1,5 @@
-import common
-import headers
+
+
 # Topology definition
 topoDict = {"topoExecution": 1000,
             "topoTarget": "dut01",
@@ -8,10 +8,10 @@ topoDict = {"topoExecution": 1000,
             "topoFilters": "dut01:system-category:switch,wrkston01:system-category:workstation"}
 
 # Test object will parse command line and formulate the env
-testObj = common.testEnv(topoDict=topoDict)
+testObj = testEnv(topoDict=topoDict)
 # Temporary - this needs to be moved into the testEnv code
 testObj.ResultsDirectory['testcaseName'] = "virutaltopo_bat2_new.py"
-tcInstance = common.tcAction()
+tcInstance = tcAction()
 
 # Get topology object
 topoObj = testObj.topoObjGet()
@@ -32,29 +32,29 @@ tcInstance.endStep()
 
 tcInstance.startStep()
 # Run a command
-common.LogOutput('info', "Running an ovs-vsctl show on dut01")
+LogOutput('info', "Running an ovs-vsctl show on dut01")
 retStruct = dut01Obj.DeviceInteract(command="ovs-vsctl show")
 retCode = retStruct.get('returnCode')
 if retCode != 0:
-    common.LogOutput('error', "Failed to retrieve ovs-vsctl show output from dut01")
+    LogOutput('error', "Failed to retrieve ovs-vsctl show output from dut01")
     tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_CONTINUE)
 else:
     mybuffer = retStruct.get('buffer')
-    common.LogOutput('info', "ovs-vsctl output for dut01:\n" + mybuffer)
+    LogOutput('info', "ovs-vsctl output for dut01:\n" + mybuffer)
 tcInstance.endStep()
 
 
 # Step 4 - ovs-vsctl show on the second switch
 tcInstance.startStep()
-common.LogOutput('info', "Running ifconfig on wrkston01")
+LogOutput('info', "Running ifconfig on wrkston01")
 retStruct = wrkston01Obj.DeviceInteract(command="ifconfig")
 retCode = retStruct['returnCode']
 ifconfigBuffer = retStruct['buffer']
 if retCode != 0:
-    common.LogOutput('error', "Failed to run ifconfig on wrkston01")
+    LogOutput('error', "Failed to run ifconfig on wrkston01")
     tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_CONTINUE)
 else:
-    common.LogOutput('info', "ifconfig data on wrkston01:\n" + ifconfigBuffer)
+    LogOutput('info', "ifconfig data on wrkston01:\n" + ifconfigBuffer)
 
 tcInstance.endStep()
 

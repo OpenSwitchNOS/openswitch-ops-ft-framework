@@ -24,15 +24,13 @@
 ##PROC-#####################################################################
 
 import pexpect
-import headers
-import common
 import time
 import switch
-#import topology
 import host
 import re
 import os
 import collections
+from lib import *
 
 class PacketCapture() :
   returnDict = dict()
@@ -45,7 +43,7 @@ class PacketCapture() :
     #Start the tshark process to capture packets on eth1 interface of workstation
     connection = kwargs.get('connection')
     filter = kwargs.get('filter',None)
-    common.LogOutput('info', "Start packet capture on the device->"+self.device)
+    LogOutput('info', "Start packet capture on the device->"+self.device)
     if filter is None :
      command = "tshark -l -i eth1 -V > /tmp/%s &"%(self.filename)
      #command = "tshark -l -i eth1 -F libpcap -V -w /tmp/capture.pcap"
@@ -55,7 +53,7 @@ class PacketCapture() :
     returnStruct = host.DeviceInteract(connection=connection, command=command)
     returnCode = returnStruct.get('returnCode')
     if returnCode != 0:
-        common.LogOutput('error', "Failed to start capture on the device->"+self.device)
+        LogOutput('error', "Failed to start capture on the device->"+self.device)
         returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
         return returnJson
 
@@ -65,12 +63,12 @@ class PacketCapture() :
     FrameDetails = collections.defaultdict(dict)
     #Parse the captured output from the pcap files captured using tshark
     #Kill the tshark processes running on VM
-    common.LogOutput('info', "Kill the tshark processes running on the workstation")
+    LogOutput('info', "Kill the tshark processes running on the workstation")
     command = "/usr/bin/killall -w \"tshark\""
     returnStruct = host.DeviceInteract(connection=connection, command=command)
     returnCode = returnStruct.get('returnCode')
     if returnCode != 0:
-        common.LogOutput('error', "Failed to kill tshark processes on the device->"+self.device)
+        LogOutput('error', "Failed to kill tshark processes on the device->"+self.device)
         returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
         return returnJson
 
@@ -80,7 +78,7 @@ class PacketCapture() :
     localpath = headers.ResultsDirectory['resultsDir']+CaptureLog
     returnCode = host.SCPFileTransfer(self.device,self.filename,filepath,localpath)
     if returnCode != 0 :
-        common.LogOutput('error', "Failed to transfer capture file to results directory")
+        LogOutput('error', "Failed to transfer capture file to results directory")
         returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
         return returnJson
         
@@ -106,7 +104,7 @@ class PacketCapture() :
          if Protocol:
           if not FrameDetails.get(frameCount, {}).has_key(Protocol):
            FrameDetails[frameCount]['Protocol'] =Protocol.group(1)
-           common.LogOutput("info","LLDP protocol detected -->" + FrameDetails[frameCount]['Protocol'])
+           LogOutput("info","LLDP protocol detected -->" + FrameDetails[frameCount]['Protocol'])
          #System Name
          LldpSystemName = re.match(r'System Name = ([A-Za-z1-9]+)',line)  
          if LldpSystemName:
@@ -153,7 +151,7 @@ class PacketCapture() :
      returnStruct = host.DeviceInteract(connection=connection, command=command)
      returnCode = returnStruct.get('returnCode')
      if returnCode != 0:
-        common.LogOutput('error', "Failed to remove capture file from workstation ->"+self.device)
+        LogOutput('error', "Failed to remove capture file from workstation ->"+self.device)
         returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
         return returnJson
 
@@ -161,7 +159,7 @@ class PacketCapture() :
      returnJson = common.ReturnJSONCreate(returnCode=0, data=self.returnDict)
      return returnJson
     else :
-     common.LogOutput("info","No Frames captured *** ")
+     LogOutput("info","No Frames captured *** ")
      returnJson = common.ReturnJSONCreate(returnCode=1, data=self.returnDict)
      return returnJson
      #End of method ParseCapture

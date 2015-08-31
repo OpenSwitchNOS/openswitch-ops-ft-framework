@@ -22,8 +22,9 @@
 #
 ##PROC-#####################################################################
 
-import common
+
 import switch
+from lib import *
 import re
 import pexpect
 
@@ -45,7 +46,7 @@ def BroadcomShell(**kwargs):
        # Enter broadcom shell when configOption is config
 
         command = 'ip netns exec swns telnet localhost 1943\r'
-        common.LogOutput('info', 'Enter Broadcom Shell***')
+        LogOutput('info', 'Enter Broadcom Shell***')
 
        # Get the device response buffer as json return structure here
 
@@ -54,27 +55,27 @@ def BroadcomShell(**kwargs):
         returnCode = devIntRetStruct.get('returnCode')
         returnDict['cmdPrompt'] = devIntRetStruct.get('buffer')
         if returnCode != 0:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to get into the broadcom shell')
     elif configOption == 'execute':
 
-        common.LogOutput('info', 'Execute Broadcom Shell cmd :' + cmd)
+        LogOutput('info', 'Execute Broadcom Shell cmd :' + cmd)
         devIntRetStruct = switch.DeviceInteract(connection=connection,
                 command=cmd, CheckError='CLI')
         returnCode = devIntRetStruct.get('returnCode')
         returnDict['cmdPrompt'] = devIntRetStruct.get('buffer')
         if returnCode != 0:
-            common.LogOutput('error', 'Failed to execute the command : '
+            LogOutput('error', 'Failed to execute the command : '
                               + cmd)
         else:
-            common.LogOutput('info',
+            LogOutput('info',
                              'Successfully executed the command : '
                              + cmd)
     elif configOption == 'unconfig':
 
        # Exit broadcom shell
 
-        common.LogOutput('debug', 'Broadcom shell Exit')
+        LogOutput('debug', 'Broadcom shell Exit')
 
        # ctrl a - z represented from ASCII numbers 1 - 26. and ctrl-d for exiting the shell.
 
@@ -87,14 +88,14 @@ def BroadcomShell(**kwargs):
         returnCode = devIntRetStruct.get('returnCode')
         returnDict['cmdPrompt'] = devIntRetStruct.get('buffer')
         if returnCode != 0:
-            common.LogOutput('error',
+            LogOutput('error',
                              'Failed to exit the broadcom shell')
     else:
         returnDict['cmdPrompt'] = 'Invalid config option passed :' \
             + configOption
-        common.LogOutput('error', 'Invalid config option passed :'
+        LogOutput('error', 'Invalid config option passed :'
                          + configOption)
         returnCode = FAILED
-    returnJson = common.ReturnJSONCreate(returnCode=returnCode,
+    returnJson = ReturnJSONCreate(returnCode=returnCode,
             data=returnDict)
     return returnJson

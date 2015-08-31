@@ -17,21 +17,21 @@ tcInstance.startStep()
 dut01_conn = switch.Connect(headers.topo['dut01'])
 if dut01_conn == None:
    # Means we had an issue in the connect logic
-   common.LogOutput('error', "Failed to connect to device " + headers.topo['dut01'])
+   LogOutput('error', "Failed to connect to device " + headers.topo['dut01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 tcInstance.endStep()
 
 #Step 2 - Show LLDP neighbor
 tcInstance.startStep()
 returnJsonStruct = switch.CLI.ShowLldpNeighborInfo(connection = dut01_conn,port=2)
-Neighbor_Ch = common.ReturnJSONGetData(json=returnJsonStruct,dataElement="Neighbor_Info")
-returnCode = common.ReturnJSONGetCode(json=returnJsonStruct)
+Neighbor_Ch = ReturnJSONGetData(json=returnJsonStruct,dataElement="Neighbor_Info")
+returnCode = ReturnJSONGetCode(json=returnJsonStruct)
 #Insert the logical steps to evaluate the keys obtained from libraries
 #No regular expression parsing should be done in the main testcase .
 if returnCode != 0:
-   common.LogOutput('error', "Failed to how lldp commands on "+ headers.topo['dut01'])
+   LogOutput('error', "Failed to how lldp commands on "+ headers.topo['dut01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 else:
-   common.LogOutput('info', "Successfully showing lldp commands" + headers.topo['dut01'])
+   LogOutput('info', "Successfully showing lldp commands" + headers.topo['dut01'])
 tcInstance.endStep()
 

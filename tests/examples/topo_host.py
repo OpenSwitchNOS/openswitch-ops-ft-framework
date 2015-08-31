@@ -1,4 +1,4 @@
-import common
+
 from lib import testEnviron
 #
 # Topology definition
@@ -30,9 +30,9 @@ cmdOut = wrkston01Obj.NetworkConfig(eth='eth0',
 retCode = cmdOut.get('returnCode')
 retBuff = cmdOut.get('buffer')
 if retCode:
-    common.LogOutput('error', 'Failed to config ipv4 address on host')
+    LogOutput('error', 'Failed to config ipv4 address on host')
 else:
-    common.LogOutput('info', 'Succeed to config ipv4 address on host')
+    LogOutput('info', 'Succeed to config ipv4 address on host')
 
 cmdOut = wrkston01Obj.Network6Config(eth='eth0',
         ipAddr='2001::1',
@@ -42,9 +42,9 @@ cmdOut = wrkston01Obj.Network6Config(eth='eth0',
 retCode = cmdOut.get('returnCode')
 retBuff = cmdOut.get('buffer')
 if retCode:
-    common.LogOutput('error', 'Failed to config ipv6 address on host')
+    LogOutput('error', 'Failed to config ipv6 address on host')
 else:
-    common.LogOutput('info', 'Succeed to config ipv6 address on host')
+    LogOutput('info', 'Succeed to config ipv6 address on host')
 
 
 cmdOut = wrkston01Obj.IPRoutesConfig(
@@ -60,9 +60,9 @@ cmdOut = wrkston01Obj.IPRoutesConfig(
 retCode = cmdOut.get('returnCode')
 retBuff = cmdOut.get('buffer')
 if retCode:
-    common.LogOutput('error', 'Failed to config ipv4 routes on host')
+    LogOutput('error', 'Failed to config ipv4 routes on host')
 else:
-    common.LogOutput('info', 'Succeed to config ipv4 routes on host')
+    LogOutput('info', 'Succeed to config ipv4 routes on host')
 
 #this works only if neigbour is connected
 cmdOut = wrkston01Obj.GetDirectLocalLinkAddresses()
@@ -82,16 +82,16 @@ cmdOut = wrkston01Obj.IPRoutesConfig(
 retCode = cmdOut.get('returnCode')
 retBuff = cmdOut.get('buffer')
 if retCode:
-    common.LogOutput('error', 'Failed to config ipv6 routes on host')
+    LogOutput('error', 'Failed to config ipv6 routes on host')
 else:
-    common.LogOutput('info', 'Succeed to config ipv6 routes on host')
+    LogOutput('info', 'Succeed to config ipv6 routes on host')
 
 
 cmdOut = wrkston01Obj.DevicePing(ipAddr="20.20.20.2")
 retCode = cmdOut.get('returnCode')
 retBuff = cmdOut.get('buffer')
 if retCode:
-    common.LogOutput('error', 'Failed to ping ipv4 dest ip on host')
+    LogOutput('error', 'Failed to ping ipv4 dest ip on host')
 else:
-    common.LogOutput('info', 'Succeed to config ipv4 dest ip on host')
+    LogOutput('info', 'Succeed to config ipv4 dest ip on host')
 topoObj.terminate_nodes()

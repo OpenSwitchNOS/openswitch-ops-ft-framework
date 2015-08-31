@@ -15,8 +15,8 @@
 #              data: 
 #
 ##PROC-###################################################################################
-import common
-import lib
+
+from lib import *
 import re
 import time
 
@@ -26,8 +26,8 @@ def LldpConfig(**kwargs):
     
     # If Device object is not passed, we need to error out
     if deviceObj is None:
-        common.LogOutput('error', "Need to pass switch device object deviceObj")
-        returnCls = lib.returnStruct(returnCode=1)
+        LogOutput('error', "Need to pass switch device object deviceObj")
+        returnCls = returnStruct(returnCode=1)
         return returnCls
     overallBuffer = []
     # Get into vtyshelll
@@ -35,11 +35,11 @@ def LldpConfig(**kwargs):
     overallBuffer.append(returnStructure.buffer())
     returnCode = returnStructure.returnCode()
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh prompt")
+        LogOutput('error', "Failed to get vtysh prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
     
     # Get into config context
@@ -47,11 +47,11 @@ def LldpConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh config prompt")
+        LogOutput('error', "Failed to get vtysh config prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
     
     if enable is True:
@@ -60,29 +60,29 @@ def LldpConfig(**kwargs):
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
         if retCode != 0:
-            common.LogOutput('error', "Failed to enable lldp on device " + deviceObj.device)
+            LogOutput('error', "Failed to enable lldp on device " + deviceObj.device)
         else:
-            common.LogOutput('debug', "Enabled lldp on device " + deviceObj.device)
+            LogOutput('debug', "Enabled lldp on device " + deviceObj.device)
     else:
         command = "no feature lldp\r"
         returnDevInt = deviceObj.DeviceInteract(command=command)
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
         if retCode != 0:
-            common.LogOutput('error', "Failed to disable lldp on device " + deviceObj.device)
+            LogOutput('error', "Failed to disable lldp on device " + deviceObj.device)
         else:
-            common.LogOutput('debug', "Disabled lldp on device " + deviceObj.device)
+            LogOutput('debug', "Disabled lldp on device " + deviceObj.device)
     
     # Get out of  config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get out of vtysh config context")
+        LogOutput('error', "Failed to get out of vtysh config context")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     
     # Get out of vtyshell
@@ -90,16 +90,16 @@ def LldpConfig(**kwargs):
     retCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if retCode != 0:
-        common.LogOutput('error', "Failed to exit vty shell")
+        LogOutput('error', "Failed to exit vty shell")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
     bufferString = ""
     for curLine in overallBuffer:
             bufferString += str(curLine)
-    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
 
