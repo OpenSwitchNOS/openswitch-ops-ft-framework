@@ -3,13 +3,14 @@ import os
 import sys
 import time
 import datetime
-import common
-#import headers
+#
 import json
 from lib import *
-from common import *
+#from common import *
 import inspect
+import xml.etree.ElementTree
 import lib.gbldata
+import logging
 
 class testEnviron ():
     def __init__(self, **kwargs):
@@ -19,34 +20,11 @@ class testEnviron ():
         self.topoObj = None
         self.libDirs = ['common', 'console', 'host', 'switch', 'switch/OVS', 'switch/CLI', 'topology']
         self.ResultsDirectory = dict()
-        self.targetBuild = None
         self.envSetup()
-        #Here is where we will stub in the provisionng logic.  We should have a topoObj by now 
+        # Here is where we will stub in the provisionng logic.  We should have a topoObj by now 
         self.topoObj.CreateDeviceObjects()
-        
-        #Provisioning block starts here 
-        #Provision the physical devices if targetBuild flag is present in the environment 
-        #self.topoObj.deviceObjGet(device="dut01")
-        self.targetBuild.strip()
-        if self.rsvnId != "virtual" and self.targetBuild != "" :
-            try:
-                import RTL
-            except ImportError:
-                common.LogOutput('debug', "RTL environment not available")
-
-            targets = self.topoObj.GetProvisioningTargets()
-            targetList = targets.split()
-            for target in targetList :
-              self.topoObj.deviceObjGet(device=target)
-              returnCls = RTL.SwitchProvisioning(TftpImage=self.targetBuild,topoObj=self.topoObj,target=target)
-              returnCode = returnCls.returnCode()
-              if returnCode != 0 :
-                common.LogOutput('error', "Unable to provision target :: Exiting ***")
-                exit(1)
-
-
         if self.rsvnId != "virtual":
-            common.LogOutput('info', "Enabling all logical links")
+            LogOutput('info', "Enabling all logical links")
             self.topoObj.LinkModifyStatus(enable=1, allLogical=1)
         
         
@@ -60,6 +38,7 @@ class testEnviron ():
         parser.add_argument('-s', help="pytest option", required=False, dest='ptest', default=None)
         args = parser.parse_args()
         self.rsvnId = 'virtual'
+        self.targetBuild = args.targetBuild
         self.resultDir = args.resultDir
         
         
@@ -108,8 +87,18 @@ class testEnviron ():
             # Means we need to create the results structure
             currentDir = GetCurrentDirectory()
             ts = time.time()
-            timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%b-%d_%H:%M:%S')
-            baseResultsDir = os.environ['FT_FRAMEWORK_BASE'] + "/results"
+            timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%b-%d_%H%M%S')
+            #baseResultsDir = os.environ['FT_FRAMEWORK_BASE'] + "/results"
+            if os.path.isdir("/tmp/opsTest-results") is False:
+                #LogOutput('info', "Need to create default test result directory /tmp/opsTest-results")
+                try:
+                    retCode = os.mkdir("/tmp/opsTest-results")
+                except:
+                    print "Failed to create /tmp/opsTest-results"
+                
+            #else:
+            #    'debug', "Default results directory structure in place /tmp/opsTest-results")
+            baseResultsDir = "/tmp/opsTest-results"
             self.ResultsDirectory['resultsDir'] = baseResultsDir + "/" + timeStamp + "/"
             # HEADERS PULLBACK
             #headers.ResultsDirectory['resultsDir'] = baseResultsDir + "/" + timeStamp + "/"
@@ -145,18 +134,11 @@ class testEnviron ():
                 if curKey == "RSVNID":
                     tmpRsvn = os.environ['RSVNID']
                     if str.isdigit(tmpRsvn):
-                        common.LogOutput('info', "Detected RSVNID in environment")
+                        LogOutput('info', "Detected RSVNID in environment")
                         self.rsvnId = tmpRsvn
-                        #break
-                #Get the image to be uploaded on the targets from the environment
-                if curKey == "targetBuild" :
-                    common.LogOutput('info', "Detected provisioning flag in the environment (targetBuild)")
-                    self.targetBuild = os.environ['targetBuild']
-                    #break
+                    break
         else:
             self.rsvnId = args.phystopo
-            
-
             
         
         if retCode['returnCode'] == 0:
@@ -167,32 +149,32 @@ class testEnviron ():
             # Create Files under the result directory structure(summary file)
             retCode = FileCreate(self.ResultsDirectory['resultsDir'], "summary.log")
             if retCode['returnCode'] <> 0 :
-                common.LogOutput('error', "File summary.log not created in the directory structure")
+                LogOutput('error', "File summary.log not created in the directory structure")
                 exit(1)
             # Create Files under the result directory structure(detail.log)
             retCode = FileCreate(self.ResultsDirectory['resultsDir'], "detail.log")
             if retCode['returnCode'] <> 0 :
-                common.LogOutput('error', "File detail.log not created in the directory structure")
+                LogOutput('error', "File detail.log not created in the directory structure")
                 exit(1)
             # Copy topology.xml and the testcase file to results directory for reference
             #try :
             #    shutil.copy(args.testCaseName, self.ResultsDirectory['resultsDir'])
             #except :
-            #    common.LogOutput('error', "Testcase file not copied to destination -> " + self.ResultsDirectory['resultsDir'])
+            #    LogOutput('error', "Testcase file not copied to destination -> " + self.ResultsDirectory['resultsDir'])
             #    exit(1)
         else :
-            common.LogOutput('error', "Result Directory structure not created . Exiting")
+            LogOutput('error', "Result Directory structure not created . Exiting")
             exit(1)
         
         # Header printblock
-        common.LogOutput('info', "", datastamp=True)
-        #common.LogOutput('info' , "Test Case is: " + args.testCaseName)
-        common.LogOutput('info' , "Physical Topology is: " + self.rsvnId)
+        LogOutput('info', "", datastamp=True)
+        #LogOutput('info' , "Test Case is: " + args.testCaseName)
+        LogOutput('info' , "Physical Topology is: " + self.rsvnId)
         
         # Read in the Topology
         if self.rsvnId == "virtual":
             self.topoType = "virtual"
-            common.LogOutput('info', "Topology is virtual - creating environment specified in the test case topoDict structure")
+            LogOutput('info', "Topology is virtual - creating environment specified in the test case topoDict structure")
             # Create a topology object
             #self.topoObj = lib.Topology(topoDict=self.topoDict, runEnv=self)
             self.topoObj = Topology(topoDict=self.topoDict, runEnv=self)
@@ -201,10 +183,10 @@ class testEnviron ():
             try:
                 import RTL
             except ImportError:
-                common.LogOutput('debug', "RTL environment not available")
+                LogOutput('debug', "RTL environment not available")
 
             # This means we have passed a reservation in
-            common.LogOutput('info', "Topology reservation ID was passed in.  ID = " + str(self.rsvnId) + " querying the topology")
+            LogOutput('info', "Topology reservation ID was passed in.  ID = " + str(self.rsvnId) + " querying the topology")
             # Create Topology Object
             self.topoObj = RTL.RTL_Topology(topoDict=self.topoDict, topoType="physical", rsvnId=self.rsvnId, runEnv=self)
     
@@ -302,7 +284,7 @@ class DeviceLogger(object):
             returnCode = 1
         return returnCode
 
-
+###########################################################################################
 # General library routines
 #Params ::  Directory Path to be created
 def CreateDirectory(dirName):
@@ -314,7 +296,7 @@ def CreateDirectory(dirName):
             retDataStruct['DirPath'] = os.getcwd()+dirName
             retDataStruct['returnCode'] = 0
         else :
-            common.LogOutput('error',"Result Directory"+dir ,"not created")
+            LogOutput('error',"Result Directory"+dir ,"not created")
             retDataStruct['returnCode'] = 1
     else :
         retDataStruct['returnCode'] = 1
@@ -349,6 +331,7 @@ def FileCreate(DirPath,fileName):
     retDataStruct = dict()
     try :
         if not os.path.exists(fileName):
+            #pdb.set_trace()
             file = open(filePath,'w')   # Trying to create a new file or open one
             #file.close()
             retDataStruct['returnCode'] = 0
@@ -361,116 +344,206 @@ def FileCreate(DirPath,fileName):
         retDataStruct['returnCode'] = 1
     return retDataStruct
 
+class DeviceLogger(object):
+ # This function overrides the pexpect logger write function to add timestamps to device logs
+   def __init__(self, file):
+      self.file = file
 
+   def write(self, data):
+        # .. filter data however you like
+      ts = time.time()
+      ts = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+      data = data.strip()
+
+      # Do not log blank spaces
+      if data in [' ', '', '\n', '\r', '\r\n']:
+        return
+      if data:  # non-blank
+        # Inspect the stacktrace to get the called module
+        # Module trace needs to be dumped to logging module
+        # This code will not log unnecessary internal modules (so that log looks clean)
+        stackTrace = inspect.stack()
+        module = inspect.getmodule(stackTrace[4][0])
+        if module <> None :
+          modulename = module.__name__
+          if modulename == "pexpect" :
+            modulename = None
+          else :
+            self.file.write("++++" + ts + "  " + "Module:" + "(" + modulename + ")" + "  " + "\n")
+        return self.file.write(data + "\n")
+       # return self.file.write("%s %s" % (ts, data))  # write to original file
+   def flush(self):
+        self.file.flush()
+
+ # OpenExpectLog function opens a new file to log the expect buffer output
+ # Return 1 in case of error (expect logfile not created) , expect file handle in case of success
+
+   def OpenExpectLog(self, ExpectFileName) :
+     retCode = FileCreate(lib.gbldata.ResultsDirectory, ExpectFileName)
+     if retCode['returnCode'] == 0:
+       #.ResultsDirectory['ExpectFileName'] = headers.ResultsDirectory['resultsDir'] + "/" + ExpectFileName
+       #lib.gbldata.ResultsDirectory
+       filename = lib.gbldata.ResultsDirectory + "/" + ExpectFileName
+       expectLogfile = open(filename, 'w')
+       return expectLogfile
+     else :
+       returnCode = 1
+     return returnCode
 
 # library routine to write the logger message to summary and detail file based on the level
-# def LogOutputToFile(path, level, message):
-#     intResult = 1
-#     strSummaryFileName = path + "summary.log"
-#     strDetailedFileName = path + "detail.log"
-#     if (os.access(strSummaryFileName, os.W_OK)) :
-#         pass
-#     else :
-#         print("either file not exists for %s or no write permission" % strSummaryFileName)
-#         return intResult
-# 
-#     if (os.access(strDetailedFileName, os.W_OK)) :
-#         pass
-#     else :
-#         print("either file not exists for %s or no write permission" % strDetailedFileName)
-#         return intResult
-# 
-#     if (level == "debug"):
-#         writeLogFile(strDetailedFileName, level, message)
-#     else :
-#         writeLogFile(strSummaryFileName, level, message)
-#         writeLogFile(strDetailedFileName, level, message)
-#     intResult = 0
-#     return intResult
-# 
-# #internal routine to write the logger message to passed file
-# 
-# def writeLogFile(logfile, level, message) :
-#     logger = logging.getLogger()
-#     formatter = logging.Formatter('%(levelname)-5s - %(asctime)-6s - %(message)s','%H:%M:%S')
-#     fh = logging.FileHandler(logfile)
-#     if (level == "info"):
-#         fh.setLevel(logging.INFO)
-#         logger.setLevel(logging.INFO)
-#         fh.setFormatter(formatter)
-#         logger.addHandler(fh)
-#         logger.info(message)
-#     elif (level == "error"):
-#         fh.setLevel(logging.ERROR)
-#         logger.setLevel(logging.ERROR)
-#         fh.setFormatter(formatter)
-#         logger.addHandler(fh)
-#         logger.error(message)
-#     elif (level == "debug"):
-#         fh.setLevel(logging.DEBUG)
-#         logger.setLevel(logging.DEBUG)
-#         fh.setFormatter(formatter)
-#         logger.addHandler(fh)
-#         logger.debug(message)
-#     logger.removeHandler(fh)
-#     
-#     def LogOutput(dest, message, **kwargs):
-#         datestamp = kwargs.get('datastamp', False)
-#         logType = str(dest)
-# 
-#         if datestamp is True:
-#           timestring = time.strftime("%m/%d/%y %H:%M:%S", time.localtime())
-#         else:
-#             timestring = time.strftime("%H:%M:%S", time.localtime())
-#         messageSpl = message.split("\n")
-#         timestampSent = 0
-#         for msgLine in messageSpl:
-#             if timestampSent:
-#                 #print '\t' + logType + '  ' + msgLine
-#                 print('%s'%msgLine)
-#             else:
-#                 # examine the callstack to print out.
-#                 mystack = inspect.stack()
-#                 #print mystack
-#                 mystacklen = len(mystack)
-#             stackstring = ""
-#             i = mystacklen - 1
-#             while i > 0:
-#                 curMod = mystack[i][3]
-#                 if curMod == "<module>":
-#                     # Need to skip module
-#                     i -= 1
-#                     continue
-#                 stackstring += curMod
-#                 i -= 1
-#                 if i > 0:
-#                     stackstring += "->"
-#                     #Inspect the stacktrace to get the called module
-#                     #Module trace needs to be dumped to logging module
-#                     stackTrace = inspect.stack()
-#                     module = inspect.getmodule(stackTrace[1][0])
-#                     len1 = len(stackTrace)
-#                 if len1 >= 4:
-#                     if module <> None :
-#                         modulename =  module.__name__
-# 
-#             # = inspect.stack()[1][3]
-#             if logType == 'info' or logType == 'error':
-#                 print("%s %-6s\t%s"%(timestring,logType,msgLine))
-#             #else:
-#             #   print("%s %-5s\t[%s] %s"%(timestring,logType,stackstring,msgLine))
-#             #print(timestring, " ", logType, " ", msgLine)
-#             #   timestampSent = 1
-# 
-#     #Logging messages to Log files based on severity
-#     try :
-#         if modulename <> "common.tcAction":
-#             message = "::%-30s\t%s"%(modulename,message)
-#     except NameError:
-#         #message = message
-#         blankString = ""
-#         if logType == 'info':
-#             message = "%s"%(message)
-#         else:
-#             message = "::%s"%(message)
-#     common.LogLib.LogOutputToFile(headers.ResultsDirectory['resultsDir'], dest, message)
+def LogOutputToFile(path, level, message):
+    intResult = 1
+    strSummaryFileName = path + "summary.log"
+    strDetailedFileName = path + "detail.log"
+    if (os.access(strSummaryFileName, os.W_OK)) :
+        pass
+    else :
+        print("either file not exists for %s or no write permission" % strSummaryFileName)
+        return intResult
+ 
+    if (os.access(strDetailedFileName, os.W_OK)) :
+        pass
+    else :
+        print("either file not exists for %s or no write permission" % strDetailedFileName)
+        return intResult
+ 
+    if (level == "debug"):
+        writeLogFile(strDetailedFileName, level, message)
+    else :
+        writeLogFile(strSummaryFileName, level, message)
+        writeLogFile(strDetailedFileName, level, message)
+    intResult = 0
+    return intResult
+ 
+#internal routine to write the logger message to passed file
+ 
+def writeLogFile(logfile, level, message) :
+    logger = logging.getLogger()
+    formatter = logging.Formatter('%(levelname)-5s - %(asctime)-6s - %(message)s','%H:%M:%S')
+    fh = logging.FileHandler(logfile)
+    if (level == "info"):
+        fh.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.info(message)
+    elif (level == "error"):
+        fh.setLevel(logging.ERROR)
+        logger.setLevel(logging.ERROR)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.error(message)
+    elif (level == "debug"):
+        fh.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.debug(message)
+    logger.removeHandler(fh)
+     
+def LogOutput(dest, message, **kwargs):
+    datestamp = kwargs.get('datastamp', False)
+    logType = str(dest)
+ 
+    if datestamp is True:
+        timestring = time.strftime("%m/%d/%y %H:%M:%S", time.localtime())
+    else:
+        timestring = time.strftime("%H:%M:%S", time.localtime())
+        messageSpl = message.split("\n")
+        timestampSent = 0
+        for msgLine in messageSpl:
+            if timestampSent:
+                #print '\t' + logType + '  ' + msgLine
+                print('%s'%msgLine)
+            else:
+                # examine the callstack to print out.
+                mystack = inspect.stack()
+                #print mystack
+                mystacklen = len(mystack)
+            stackstring = ""
+            i = mystacklen - 1
+            while i > 0:
+                curMod = mystack[i][3]
+                if curMod == "<module>":
+                    # Need to skip module
+                    i -= 1
+                    continue
+                stackstring += curMod
+                i -= 1
+                if i > 0:
+                    stackstring += "->"
+                    #Inspect the stacktrace to get the called module
+                    #Module trace needs to be dumped to logging module
+                    stackTrace = inspect.stack()
+                    module = inspect.getmodule(stackTrace[1][0])
+                    len1 = len(stackTrace)
+                    if len1 >= 4:
+                        if module <> None :
+                            modulename =  module.__name__
+ 
+            # = inspect.stack()[1][3]
+            if logType == 'info' or logType == 'error':
+                print("%s %-6s\t%s"%(timestring,logType,msgLine))
+    #Logging messages to Log files based on severity
+    try :
+        if modulename <> "tcAction":
+            message = "::%-30s\t%s"%(modulename,message)
+    except NameError:
+        #message = message
+        blankString = ""
+        if logType == 'info':
+            message = "%s"%(message)
+        else:
+            message = "::%s"%(message)
+    #LogLib.LogOutputToFile(headers.ResultsDirectory['resultsDir'], dest, message)
+    #LogLib.LogOutputToFile(lib.gbldata.ResultsDirectory, dest, message)
+    LogOutputToFile(lib.gbldata.ResultsDirectory, dest, message)
+    
+    
+# XML Manipulation Routines
+def XmlFileLoad(xmlFile):
+   # check and see if the file exists
+   fileExists = os.path.exists(xmlFile)
+   if fileExists == False:
+      LogOutput('info', "File " + xmlFile + " does not exist.")
+      return None
+
+   eTree = xml.etree.ElementTree.parse(xmlFile)
+   return eTree
+
+def XmlElementSubElementAppend(parentElement, childElement):
+    mychild = parentElement.append(childElement)
+    return mychild
+
+
+def XmlGetElementsByTag(etree, tag, **kwargs):
+    allElements = kwargs.get('allElements', False)
+    if allElements is False:
+       elements = etree.find(tag)
+    else:
+       elements = etree.findall(tag)
+    #typeTrue = xml.etree.ElementTree.iselement(elements)
+    #print elements
+    #print typeTrue
+    return elements
+
+# Generic pretty sleep routine
+def Sleep(**kwargs):
+   message = kwargs.get('message')
+   seconds = kwargs.get('seconds')
+
+   message = message + " - Pausing for " + str(seconds) + " seconds"
+   LogOutput('info', message)
+   rangeUpper = seconds + 1
+   for i in range(1, rangeUpper):
+      time.sleep(1)
+      #backspacestring = "\r"
+      sys.stdout.write("\r")
+
+      printstring = "\t\t%-2d of %-2d"%(i, seconds)
+      printstringlen = len(printstring)
+      sys.stdout.write(printstring)
+      sys.stdout.flush()
+   #print ""
+   sys.stdout.write("\r")
+   LogOutput('info', "Completed wait for %d seconds"%seconds)
