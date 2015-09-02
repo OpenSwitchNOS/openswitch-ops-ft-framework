@@ -1,6 +1,6 @@
 import pexpect
 from lib import gbldata
-
+import common
 import switch
 import time
 #import console
@@ -50,24 +50,24 @@ class VSwitch ( Device ):
         vtyEnterRet = self.VtyshShell(enter=True)
         retCode = vtyEnterRet.returnCode()
         if retCode != 0:
-            LogOutput('error', "Unable to enter vtysh")
+            common.LogOutput('error', "Unable to enter vtysh")
             return None
         else:
-            LogOutput('debug', "Entered vtysh")
+            common.LogOutput('debug', "Entered vtysh")
         
         retStruct = self.DeviceInteract(command=cmd)
         returnCode = retStruct.get('returnCode')
         if returnCode != 0:
-            LogOutput('error', "Failed to send command " + cmd +" to device " + self.device)
+            common.LogOutput('error', "Failed to send command " + cmd +" to device " + self.device)
             return None
         returnBuffer = retStruct.get('buffer')
         # Exit vtysh
         vtyExitRet = self.VtyshShell(enter=False)
         retCode = vtyExitRet.returnCode()
         if retCode != 0:
-            LogOutput('error', "Unable to exit vtysh")
+            common.LogOutput('error', "Unable to exit vtysh")
         else:
-            LogOutput('debug', "Exited vtysh")
+            common.LogOutput('debug', "Exited vtysh")
         returnBuffer = retStruct.get('buffer')
         return returnBuffer
     
@@ -75,17 +75,17 @@ class VSwitch ( Device ):
     def Connect(self):
         # Look up the device name in the topology - grab connectivity information
         xpathString = ".//device[name='" + self.device + "']"
-        etreeElement = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        etreeElement = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
         if etreeElement == None:
             # We are not in a good situation, we need to bail
-            LogOutput('error', "Could not find device " + self.device + " in topology")
+            common.LogOutput('error', "Could not find device " + self.device + " in topology")
             return None
         # Code for virtual
         # Go and grab the connection name
         xpathString = ".//device[name='" + self.device + "']/connection/name"
-        virtualConn = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        virtualConn = common.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
         if virtualConn == None:
-            LogOutput('error', "Failed to virtual connection for " + self.device)
+            common.LogOutput('error', "Failed to virtual connection for " + self.device)
             return None
         telnetString = self.connectStringBase + self.device + " /bin/bash"
         #self.expectHndl = pexpect.spawn(telnetString, echo=False)
@@ -95,10 +95,10 @@ class VSwitch ( Device ):
         ExpectInstance = DeviceLogger(expectFileString)
         expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
         if expectLogFile == 1 :
-            LogOutput('error', "Unable to create expect log file")
+            common.LogOutput('error', "Unable to create expect log file")
             exit(1)
         # Opening an expect connection to the device with the specified log file
-        LogOutput('debug', "Opening an expect connection to the device with the specified log file" + expectFileString)
+        common.LogOutput('debug', "Opening an expect connection to the device with the specified log file" + expectFileString)
         self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=DeviceLogger(expectLogFile))
         #self.expectHndl.delaybeforesend = 1
         
@@ -120,29 +120,29 @@ class VSwitch ( Device ):
                                            timeout=200)
             if index == 0:
                 # Need to send login string
-                LogOutput("debug", "Login required::")
+                common.LogOutput("debug", "Login required::")
                 self.expectHndl.sendline("root")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
                 # logged-in in prompt
                 bailflag = 1
-                LogOutput("debug", "Root prompt detected:")
+                common.LogOutput("debug", "Root prompt detected:")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
                 # Got prompt.  We should be good
                 bailflag = 1
-                LogOutput("debug", "Root prompt detected: Virtual")
+                common.LogOutput("debug", "Root prompt detected: Virtual")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
-                LogOutput("debug", "vtysh prompt detected: Revert to root")
+                common.LogOutput("debug", "vtysh prompt detected: Revert to root")
                 self.expectHndl.send ('exit\r')
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
-                LogOutput("debug", "vtysh config prompt detected: Revert to root")
+                common.LogOutput("debug", "vtysh config prompt detected: Revert to root")
                 self.expectHndl.send ('exit\r')
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
-                LogOutput("debug", "vtysh config interface prompt detected: Revert to root")
+                common.LogOutput("debug", "vtysh config interface prompt detected: Revert to root")
                 self.expectHndl.send ('exit \r')
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 6:
@@ -151,15 +151,15 @@ class VSwitch ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 7:
                 # Got EOF
-                LogOutput('error', "Telnet to switch failed")
+                common.LogOutput('error', "Telnet to switch failed")
                 return None
             elif index == 8:
                 # Got EOF
-                LogOutput('error', "Telnet to switch failed")
+                common.LogOutput('error', "Telnet to switch failed")
                 return None
             elif index == 9:
                 # Got a Timeout
-                LogOutput('error', "Connection timed out")
+                common.LogOutput('error', "Connection timed out")
                 return None
             else :
                 connectionBuffer.append(self.expectHndl.before)
@@ -169,7 +169,7 @@ class VSwitch ( Device ):
         # Now lets put in the topology the expect handle
         for curLine in connectionBuffer:
             sanitizedBuffer += str(curLine)
-        LogOutput('debug', sanitizedBuffer)
+        common.LogOutput('debug', sanitizedBuffer)
         self.deviceContext = "linux"
         return self.expectHndl
         
@@ -217,19 +217,20 @@ class VSwitch ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
                 # Got vtysh config prompts
-                LogOutput('debug', "config prompt")
+                common.LogOutput('debug', "config prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
                 # Got vtysh config interface prompts
-                LogOutput('debug', "config interface prompt")
+                common.LogOutput('debug', "config interface prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 6:
                 # Got ONIE prompt - reboot and get to where we need to be
                 #connection.send("reboot \r")
+                common.LogOutput('debug', "Got ONIE Prompt **** ")
                 ErrorFlag = "Onie"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
@@ -237,19 +238,19 @@ class VSwitch ( Device ):
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                LogOutput('error', "connection closed to console")
+                common.LogOutput('error', "connection closed to console")
                 returnCode = 1
             elif index == 8:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                LogOutput('error', "connection closed to console")
+                common.LogOutput('error', "connection closed to console")
                 returnCode = 1
             elif index == 9:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                LogOutput('error', "command timeout")
+                common.LogOutput('error', "command timeout")
                 returnCode = 1
             else :
                 connectionBuffer.append(self.expectHndl.before)
@@ -268,21 +269,21 @@ class VSwitch ( Device ):
             #errorCheckRetStruct = switch.ErrorCheck(connection=connection, buffer=santString)
             #returnCode = errorCheckRetStruct['returnCode']
             # Dump the buffer the the debug log
-            LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+            common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
 
         #The following portion checks for Errors in CLI commands
         if ErrorFlag == 'CLI' :
             #errorCheckRetStruct = switch.CLI.ErrorCheck(connection=connection, buffer=santString)
             #returnCode = errorCheckRetStruct['returnCode']
-            LogOutput('debug', "NEED TO FIX")
-            #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
+            common.LogOutput('debug', "NEED TO FIX")
+        #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
         if ErrorFlag == 'Onie' :
-            #errorCheckRetStruct = switch.ErrorCheckOnie(connection=connection, buffer=santString)
-            #returnCode = errorCheckRetStruct['returnCode']
-            LogOutput('debug', "NEED TO FIX")
+            common.LogOutput('debug', "Checking errors on ONIE prompt")
+            errorCheckRetStruct = self.ErrorCheckOnie(connection=self.expectHndl, buffer=santString)
+            returnCode = errorCheckRetStruct['returnCode']
 
         # Return dictionary
-        LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+        common.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
         retStruct['returnCode'] = returnCode
         retStruct['buffer'] = santString
         return retStruct
@@ -307,7 +308,7 @@ class VSwitch ( Device ):
             buffer += self.expectHndl.before
             buffer += self.expectHndl.after
         else:
-            LogOutput('error', "Received timeout in switch.ErrorCheck")
+            common.LogOutput('error', "Received timeout in switch.ErrorCheck")
             retStruct['returnCode'] = 1
             return retStruct
 
@@ -327,7 +328,7 @@ class VSwitch ( Device ):
         return retStruct
     
     def Reboot(self, **kwargs):
-        LogOutput('info', "Reboot not supported for Virtual Switch")
+        common.LogOutput('info', "Reboot not supported for Virtual Switch")
         pass
         
     def VtyshShell (self, **kwargs):
@@ -343,20 +344,20 @@ class VSwitch ( Device ):
         overallBuffer = []
         if configOption == "config" or option is True:
             if self.deviceContext == "vtyShell":
-                LogOutput('debug', "Already in vtysh context")
+                common.LogOutput('debug', "Already in vtysh context")
                 returnCls = returnStruct(returnCode=0)
                 return returnCls
 
             if self.deviceContext == "linux":
                 #Enter vtysh shell when configOption is config
                 command = "vtysh\r"
-                LogOutput("debug","Enter vtysh Shell***")
+                common.LogOutput("debug","Enter vtysh Shell***")
                 #Get the device response buffer as json return structure here
                 devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
                 returnCode = devIntRetStruct.get('returnCode')
                 overallBuffer.append(devIntRetStruct.get('buffer'))
                 if returnCode != 0:
-                    LogOutput('error', "Failed to get into the vtysh shell")
+                    common.LogOutput('error', "Failed to get into the vtysh shell")
                     bufferString = ""
                     for curLine in overallBuffer:
                         bufferString += str(curLine)
@@ -369,7 +370,7 @@ class VSwitch ( Device ):
                 returnCode = devIntRetStruct.get('returnCode')
                 overallBuffer.append(devIntRetStruct.get('buffer'))
                 if returnCode != 0:
-                    LogOutput('error', "Failed to get into the vtysh shell")
+                    common.LogOutput('error', "Failed to get into the vtysh shell")
                     bufferString = ""
                     for curLine in overallBuffer:
                         bufferString += str(curLine)
@@ -387,7 +388,7 @@ class VSwitch ( Device ):
             return returnCls
         else :
             #Exit vtysh shell
-            LogOutput("debug","Vtysh shell Exit")
+            common.LogOutput("debug","Vtysh shell Exit")
             command = "exit\r"
             #Get the device response buffer as json return structure here
             devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
@@ -395,7 +396,7 @@ class VSwitch ( Device ):
             overallBuffer.append(devIntRetStruct.get('buffer'))
             #returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
             if returnCode != 0:
-                LogOutput('error', "Failed to exit the vtysh shell")
+                common.LogOutput('error', "Failed to exit the vtysh shell")
                 bufferString = ""
                 for curLine in overallBuffer:
                     bufferString += str(curLine)
@@ -416,7 +417,7 @@ class VSwitch ( Device ):
             overallBuffer = []
             if option is True:
                 if self.deviceContext == "vtyShellConfig":
-                    LogOutput('debug', "Already in vtysh config context")
+                    common.LogOutput('debug', "Already in vtysh config context")
                     returnCls = returnStruct(returnCode=0)
                     return returnCls
 
@@ -425,7 +426,7 @@ class VSwitch ( Device ):
                     vtyRetStruct = self.VtyshShell(enter=True)
                     retCode = vtyRetStruct.returnCode()
                     if retCode != 0:
-                        LogOutput('error', "Failed to get into the vtyshell context")
+                        common.LogOutput('error', "Failed to get into the vtyshell context")
                         returnCls = returnStruct(returnCode=1)
                         return returnCls
 
@@ -434,14 +435,14 @@ class VSwitch ( Device ):
 
                     #Enter vtysh shell when configOption is config
                     command = "config terminal\r"
-                    LogOutput("debug","Enter vtysh shell config context***")
+                    common.LogOutput("debug","Enter vtysh shell config context***")
                     #Get the device response buffer as json return structure here
                     devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
                     returnCode = devIntRetStruct.get('returnCode')
                     #returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
                     overallBuffer.append(devIntRetStruct.get('buffer'))
                     if returnCode != 0:
-                        LogOutput('error', "Failed to get into the vtysh shell")
+                        common.LogOutput('error', "Failed to get into the vtysh shell")
                         bufferString = ""
                         for curLine in overallBuffer:
                             bufferString += str(curLine)
@@ -457,7 +458,7 @@ class VSwitch ( Device ):
             else :
                 if self.deviceContext == "vtyShellConfig":
                     #Exit vtysh shell
-                    LogOutput("debug","vtysh config context exit")
+                    common.LogOutput("debug","vtysh config context exit")
                     command = "exit\r"
                     #Get the device response buffer as json return structure here
                     devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
@@ -465,7 +466,7 @@ class VSwitch ( Device ):
                     #returnDict['vtyshPrompt'] = devIntRetStruct.get('buffer')
                     overallBuffer.append(devIntRetStruct.get('buffer'))
                     if returnCode != 0:
-                        LogOutput('error', "Failed to exit the vtysh shell")
+                        common.LogOutput('error', "Failed to exit the vtysh shell")
                         bufferString = ""
                         for curLine in overallBuffer:
                             bufferString += str(curLine)
