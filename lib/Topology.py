@@ -53,7 +53,7 @@ class Topology (HalonTest):
         self.TOPOLOGY = ""
         self.mininetGlobal = ""
         
-        
+        self.inbandIndex = 0
         self.LogicalTopologyCreate()
         self.VirtualXMLCreate()
         self.setupNet()
@@ -656,17 +656,52 @@ class Topology (HalonTest):
     def deviceObjGet(self, **kwargs):
         device = kwargs.get('device', None)
         return(self.deviceObj[device])
-    
+
     def LaunchSwitch (self,  **kwargs):
         device = kwargs.get('device')
-        switchObj = lib.VSwitch(topology=self, device=device)
+        noConnect = kwargs.get('noConnect', False)
+        switchObj = lib.VSwitch(topology=self, device=device, noConnect=noConnect)
         return switchObj
-        
+
     def LaunchHost (self, **kwargs):
         device = kwargs.get('device')
         hostObj = lib.VHost(topology=self, device=device)
         return hostObj
-        
+
+    def inbandSwitchConnectGet(self, **kwargs):
+        deviceConnFrom = kwargs.get('srcObj', None)
+        deviceConnTo = kwargs.get('targetObj', None)
+        targetAddress = kwargs.get('address', None)
+        targetUser = kwargs.get('user', "root")
+        # Create the new how object and then connect.
+        newHostObj = self.LaunchHost(device=deviceConnFrom.device)
+        newSwitchObj = self.LaunchSwitch(noConnect=True)
+        newSwitchObj.expectHndl = newHostObj.expectHndl
+        newSwitchObj.deviceContext = "linux"
+
+        returnCode = 0
+        sshCommand = "ssh "+ targetUser + "@" + str(targetAddress)
+        sshReturn = newHostObj.DeviceInteract(command=sshCommand)
+        sshRetCode = sshReturn.get('returnCode')
+        sshBuffer = sshReturn.get('buffer')
+        if sshRetCode != 0:
+            lib.LogOutput('error', "ssh connection to "+ str(targetAddress) + " failed")
+            returnCode = 1
+        else:
+             lib.LogOutput('debug', "ssh connection to "+ str(targetAddress) + " succeeded")
+
+        if returnCode == 1:
+            return None
+
+        # Now lets stash this away for future retrieval
+        pseudoDeviceName = self.topo.get(deviceConnTo.device) + "-ssh-"+ str(self.inbandIndex)
+        self.inbandIndex += 1
+        self.deviceObj[pseudoDeviceName] = newSwitchObj
+        return newSwitchObj
+
+    def deviceObjList(self):
+        return self.deviceObj.keys()
+
     # Write out Topology File Physical
     def TopologyXMLWrite(self):
         dumpString = ET.tostring(self.TOPOLOGY)

@@ -11,6 +11,7 @@ import inspect
 import xml.etree.ElementTree
 import lib.gbldata
 import logging
+import glob
 
 class testEnviron ():
     def __init__(self, **kwargs):
@@ -237,52 +238,52 @@ class returnStruct():
         self.jsonData = json.dumps(localDict,indent=3)
 
 
-class DeviceLogger(object):
-    # This function overrides the pexpect logger write function to add timestamps to device logs
-    def __init__(self, file):
-        self.file = file
-
-    def write(self, data):
-        # .. filter data however you like
-        ts = time.time()
-        ts = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
-        data = data.strip()
-
-        # Do not log blank spaces
-        if data in [' ', '', '\n', '\r', '\r\n']:
-            return
-        if data:  # non-blank
-            # Inspect the stacktrace to get the called module
-            # Module trace needs to be dumped to logging module
-            # This code will not log unnecessary internal modules (so that log looks clean)
-            stackTrace = inspect.stack()
-            module = inspect.getmodule(stackTrace[4][0])
-            if module <> None :
-                modulename = module.__name__
-                if modulename == "pexpect" :
-                    modulename = None
-                else :
-                    self.file.write("++++" + ts + "  " + "Module:" + "(" + modulename + ")" + "  " + "\n")
-        return self.file.write(data + "\n")
-       
-    # return self.file.write("%s %s" % (ts, data))  # write to original file
-    def flush(self):
-        self.file.flush()
-
-    # OpenExpectLog function opens a new file to log the expect buffer output
-    # Return 1 in case of error (expect logfile not created) , expect file handle in case of success
-    def OpenExpectLog(self, ExpectFileName) :
-        #retCode = FileCreate(headers.ResultsDirectory['resultsDir'], ExpectFileName)
-        retCode = FileCreate(gbldata.ResultsDirectory, ExpectFileName)
-        if retCode['returnCode'] == 0:
-            # HEADERS PULLBACK
-            #headers.ResultsDirectory['ExpectFileName'] = headers.ResultsDirectory['resultsDir'] + "/" + ExpectFileName
-            myExpectFileName = gbldata.ResultsDirectory + "/" + ExpectFileName
-            expectLogfile = open(myExpectFileName, 'w')
-            return expectLogfile
-        else :
-            returnCode = 1
-        return returnCode
+# class DeviceLogger(object):
+#     # This function overrides the pexpect logger write function to add timestamps to device logs
+#     def __init__(self, file):
+#         self.file = file
+# 
+#     def write(self, data):
+#         # .. filter data however you like
+#         ts = time.time()
+#         ts = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+#         data = data.strip()
+# 
+#         # Do not log blank spaces
+#         if data in [' ', '', '\n', '\r', '\r\n']:
+#             return
+#         if data:  # non-blank
+#             # Inspect the stacktrace to get the called module
+#             # Module trace needs to be dumped to logging module
+#             # This code will not log unnecessary internal modules (so that log looks clean)
+#             stackTrace = inspect.stack()
+#             module = inspect.getmodule(stackTrace[4][0])
+#             if module <> None :
+#                 modulename = module.__name__
+#                 if modulename == "pexpect" :
+#                     modulename = None
+#                 else :
+#                     self.file.write("++++" + ts + "  " + "Module:" + "(" + modulename + ")" + "  " + "\n")
+#         return self.file.write(data + "\n")
+#        
+#     # return self.file.write("%s %s" % (ts, data))  # write to original file
+#     def flush(self):
+#         self.file.flush()
+# 
+#     # OpenExpectLog function opens a new file to log the expect buffer output
+#     # Return 1 in case of error (expect logfile not created) , expect file handle in case of success
+#     def OpenExpectLog(self, ExpectFileName) :
+#         #retCode = FileCreate(headers.ResultsDirectory['resultsDir'], ExpectFileName)
+#         retCode = FileCreate(gbldata.ResultsDirectory, ExpectFileName)
+#         if retCode['returnCode'] == 0:
+#             # HEADERS PULLBACK
+#             #headers.ResultsDirectory['ExpectFileName'] = headers.ResultsDirectory['resultsDir'] + "/" + ExpectFileName
+#             myExpectFileName = gbldata.ResultsDirectory + "/" + ExpectFileName
+#             expectLogfile = open(myExpectFileName, 'w')
+#             return expectLogfile
+#         else :
+#             returnCode = 1
+#         return returnCode
 
 ###########################################################################################
 # General library routines
@@ -377,18 +378,44 @@ class DeviceLogger(object):
 
  # OpenExpectLog function opens a new file to log the expect buffer output
  # Return 1 in case of error (expect logfile not created) , expect file handle in case of success
-
    def OpenExpectLog(self, ExpectFileName) :
-     retCode = FileCreate(lib.gbldata.ResultsDirectory, ExpectFileName)
-     if retCode['returnCode'] == 0:
-       #.ResultsDirectory['ExpectFileName'] = headers.ResultsDirectory['resultsDir'] + "/" + ExpectFileName
-       #lib.gbldata.ResultsDirectory
-       filename = lib.gbldata.ResultsDirectory + "/" + ExpectFileName
-       expectLogfile = open(filename, 'w')
-       return expectLogfile
-     else :
-       returnCode = 1
-     return returnCode
+       fullFilePath = lib.gbldata.ResultsDirectory + ExpectFileName
+       if os.path.isfile(fullFilePath):
+            LogOutput('debug', "Filename exists, creating a new indexed file")
+            # Now lets see if there are index files that exists
+            filebase, fileext = os.path.splitext(fullFilePath)
+            fileList = glob.glob(filebase + "*")
+            #print "FileList = " + str(fileList)
+            if len(fileList) == 1:
+                newFileBase = filebase + "_1"
+            elif len(fileList) > 1:
+                # This means we have multiple connections going we need 
+                # to extract the index
+                curListIndex = len(fileList) - 1
+                fileIndexRegExp = re.match("^.*_(\d+).log", fileList[curListIndex])
+                if fileIndexRegExp:
+                    index = fileIndexRegExp.group(1)
+                    #print "current index = "+ str(index)
+                    index = int(index) + 1
+                    #filebase, fileext = os.path.splitext(fullFilePath)
+                    newFileBase = filebase + "_" + str(index) 
+                else:
+                    index = 1
+                    newFileBase = filebase + "_" + str(index)
+            newFileFullPath = newFileBase + fileext
+            ExpectFileName = os.path.basename(newFileFullPath)
+            #print ExpectFileName
+       retCode = FileCreate(lib.gbldata.ResultsDirectory, ExpectFileName)
+       if retCode['returnCode'] == 0:
+           #'full'
+           #.ResultsDirectory['ExpectFileName'] = headers.ResultsDirectory['resultsDir'] + "/" + ExpectFileName
+           #lib.gbldata.ResultsDirectory
+           filename = lib.gbldata.ResultsDirectory + "/" + ExpectFileName
+           expectLogfile = open(filename, 'w')
+           return expectLogfile
+       else :
+           returnCode = 1
+       return returnCode
 
 # library routine to write the logger message to summary and detail file based on the level
 def LogOutputToFile(path, level, message):

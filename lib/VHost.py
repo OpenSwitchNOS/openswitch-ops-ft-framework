@@ -9,31 +9,33 @@ import os
 import re
 from Topology import Topology
 from Device import Device
+from VSwitch import VSwitch
 import socket
 #from lib import *
 import lib
 
 # This is the base class for any device - This gives the test case developer the ability to connect to the device
 # along with interacting with the device
-class VHost ( Device ):
+class VHost ( Device, VSwitch ):
     def __init__(self, **kwargs):
         self.topology = kwargs.get('topology', None)
         self.device = kwargs.get('device', None)
         # Bring in Default member values
         self.defaultMembers()
-        self.initExtMembers()
-        self.Connect()
-    
-    def defaultMembers(self):
-        self.expectHndl = ""
-        self.connectStringBase = "docker exec -ti "
         self.expectDefaultPrompts = ['login:\s*$',
                                'Password:',
                                '\[root@\S+.*\]#',
                                'root@\S+#',
+                               '\(yes/no\)?',
                                pexpect.EOF,
                                pexpect.TIMEOUT]
-        
+        self.initExtMembers()
+        self.Connect()
+
+    def defaultMembers(self):
+        self.expectHndl = ""
+        self.connectStringBase = "docker exec -ti "
+
     def initExtMembers(self):
         self.LIST_ETH_INTERFACES_CMD = 'ifconfig -a | grep Ethernet'
         self.LIST_INTERFACE_IP_CMD = 'ifconfig %s | grep inet'
@@ -117,10 +119,17 @@ class VHost ( Device ):
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
+                # Got yes / no prompt.  We should be good
+                #print "Got prompt, we should be good"
+                #print('Got prompt, we should be good')
+                self.expectHndl.send("yes")
+                self.expectHndl.send("\r")
+                connectionBuffer.append(self.expectHndl.before)
+            elif index == 5:
                 # Got EOF
                 lib.LogOutput('error', "Telnet to host failed")
                 return None
-            elif index == 5:
+            elif index == 6:
                 # Got a Timeout
                 lib.LogOutput('error', "Connection timed out")
                 return None
@@ -142,6 +151,7 @@ class VHost ( Device ):
     
     def DeviceInteract(self, **kwargs):
         command = kwargs.get('command')
+        yesPromptResp = kwargs.get('yesPrompt', "yes")
         errorCheck = kwargs.get('errorCheck', True)
 
         # Local variables
@@ -182,12 +192,21 @@ class VHost ( Device ):
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
+                # Got yes / no prompt.  We should be good
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+                if yesPromptResp == "yes":
+                    self.expectHndl.send("yes")
+                else:
+                    self.expectHndl.send("no")
+                self.expectHndl.send("\r")
+            elif index == 5:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 lib.LogOutput('error', "reached EOF")
                 returnCode = 1
-            elif index == 5:
+            elif index == 6:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)

@@ -18,10 +18,12 @@ class VSwitch ( Device ):
     def __init__(self, **kwargs):
         self.topology = kwargs.get('topology', None)
         self.device = kwargs.get('device', None)
+        self.noConnect = kwargs.get('noConnect', False)
         # Lets initialize some member variables
         self.memberDefaults()
-        self.Connect()
-        
+        if self.noConnect is False:
+            self.Connect()
+
     def memberDefaults(self):
         self.expectHndl = None
         self.connectStringBase = "docker exec -ti "
@@ -45,7 +47,7 @@ class VSwitch ( Device ):
         # Get into the VTYsh
         cmd = kwargs.get('command', None)
         #config = kwargs.get('config', Fa)
-        
+
         # Get into the VTY Shell
         vtyEnterRet = self.VtyshShell(enter=True)
         retCode = vtyEnterRet.returnCode()
@@ -70,7 +72,7 @@ class VSwitch ( Device ):
             LogOutput('debug', "Exited vtysh")
         returnBuffer = retStruct.get('buffer')
         return returnBuffer
-    
+
     # Device Connect Method
     def Connect(self):
         # Look up the device name in the topology - grab connectivity information
