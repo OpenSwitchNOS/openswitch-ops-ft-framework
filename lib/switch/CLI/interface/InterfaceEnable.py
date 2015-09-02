@@ -23,11 +23,30 @@ import time
 def InterfaceEnable(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('interface', None)
+    vlan = kwargs.get('vlan', None)
+    lag = kwargs.get('lag', None)
     enable = kwargs.get('enable', True)
     
     # If Device object is not passed, we need to error out
-    if deviceObj is None or interface is None:
-        LogOutput('error', "Need to pass switch device object deviceObj and interface to this routine")
+    if deviceObj is None:
+        LogOutput('error', "Need to pass switch device object deviceObj to this routine")
+        returnCls = returnStruct(returnCode=1)
+        return returnCls
+
+    paramError = 0
+    if interface is not None:
+        if vlan is not None or lag is not None:
+            paramError = 1
+    if vlan is not None:
+        if interface is not None or lag is not None:
+            paramError = 1
+    if lag is not None:
+        if interface is not None or vlan is not None:
+            paramError = 1
+    if interface is None and vlan is None and lag is None:
+        paramError = 1
+    if paramError == 1:
+        LogOutput('error', "Need to only pass interface, vlan or lag into this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
 
@@ -57,7 +76,12 @@ def InterfaceEnable(**kwargs):
         return returnCls
     
     # Get into the interface context
-    command = "interface " + str(interface)
+    if interface is not None:
+        command = "interface " + str(interface)
+    elif vlan is not None:
+        command = "interface vlan" + str(vlan)
+    elif lag is not None:
+        command = "interface lag" + str(lag)
     returnStructure = deviceObj.DeviceInteract(command=command)
     retCode = returnStructure['returnCode']
     overallBuffer.append(returnStructure['buffer'])

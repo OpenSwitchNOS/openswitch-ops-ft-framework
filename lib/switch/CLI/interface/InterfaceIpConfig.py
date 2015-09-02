@@ -37,8 +37,8 @@ def InterfaceIpConfig(**kwargs):
     
     overallBuffer = []
     # If Device object is not passed, we need to error out
-    if deviceObj is None or interface is None:
-        LogOutput('error', "Need to pass switch device object deviceObj and interface to this routine")
+    if deviceObj is None:
+        LogOutput('error', "Need to pass switch device object to this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
     
