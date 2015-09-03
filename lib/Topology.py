@@ -9,8 +9,8 @@ from mininet.log import *
 from mininet.util import *
 from subprocess import *
 from subprocess import *
-from halonvsi.docker import *
-from halonvsi.halon import *
+from opsvsi.docker import *
+from opsvsi.opsvsitest import *
 import xml.etree.ElementTree as ET
 import re
 import select
@@ -27,10 +27,11 @@ except ImportError:
     #libLogOutput('debug', "RTL environment not available")
     print "no rtl"
     
-class Topology (HalonTest):
+class Topology (OpsVsiTest):
     def __init__(self, **kwargs):
         self.topoDict = kwargs.get('topoDict', None)
         self.runEnv = kwargs.get('runEnv', None)
+        self.hostimage = kwargs.get('hostImage', 'ubuntu:latest')
         #self.topoType = kwargs.get('topoType', None)
         #self.rsvnId = kwargs.get('rsvnId', None)
         self.topoType = 'virtual'
@@ -41,7 +42,7 @@ class Topology (HalonTest):
         self.topo = dict()
         self.deviceObj = dict()
         self.id = str(os.getpid())
-        self.testdir = "/tmp/halonnet/" + str(self.id)
+        self.testdir = "/tmp/openswitch-test/" + str(self.id)
 
         os.makedirs(self.testdir)
         self.setLogLevel('info')
@@ -121,9 +122,9 @@ class Topology (HalonTest):
         # print logicalTopo
         # Configure MiniNet
         self.net = mininet.net.Mininet(topo=self.mntopo,
-                           switch=HalonSwitch,
-                           host=HalonHost,
-                           link=HalonLink,
+                           switch=VsiOpenSwitch,
+                           host=OpsVsiHost,
+                           link=OpsVsiLink,
                            controller=None,
                            build=True)
         print ""
