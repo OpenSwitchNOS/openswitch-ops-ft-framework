@@ -338,6 +338,7 @@ def FileCreate(DirPath,fileName):
             retDataStruct['returnCode'] = 0
         else :
             print "File already exists in this path" + DirPath
+            retDataStruct['returnCode'] = 0
             #do nothing
     except Exception as Err:
         print Err
