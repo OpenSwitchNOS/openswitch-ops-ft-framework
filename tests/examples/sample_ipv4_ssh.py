@@ -13,7 +13,7 @@ topoDict = {"topoExecution": 3000,
             "topoLinks": "lnk01:dut01:wrkston01",
             "topoFilters": "dut01:system-category:switch,\
                             wrkston01:system-category:workstation",
-            "topoLinkFilters": "lnk01:dut01:interface:eth0" }
+            "topoLinkFilter": "lnk01:dut01:interface:eth0" }
 
 #
 # Test object will parse command line and formulate the env

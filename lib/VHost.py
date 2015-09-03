@@ -16,7 +16,7 @@ import lib
 
 # This is the base class for any device - This gives the test case developer the ability to connect to the device
 # along with interacting with the device
-class VHost ( Device, VSwitch ):
+class VHost ( Device ):
     def __init__(self, **kwargs):
         self.topology = kwargs.get('topology', None)
         self.device = kwargs.get('device', None)

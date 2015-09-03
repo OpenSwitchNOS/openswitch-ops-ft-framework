@@ -674,6 +674,7 @@ class Topology (OpsVsiTest):
         deviceConnTo = kwargs.get('targetObj', None)
         targetAddress = kwargs.get('address', None)
         targetUser = kwargs.get('user', "root")
+        sshArgs = kwargs.get('args', "-o StrictHostkeyChecking=no")
         # Create the new how object and then connect.
         newHostObj = self.LaunchHost(device=deviceConnFrom.device)
         newSwitchObj = self.LaunchSwitch(noConnect=True)
@@ -681,7 +682,7 @@ class Topology (OpsVsiTest):
         newSwitchObj.deviceContext = "linux"
 
         returnCode = 0
-        sshCommand = "ssh "+ targetUser + "@" + str(targetAddress)
+        sshCommand = "ssh "+ sshArgs +" "+ targetUser + "@" + str(targetAddress)
         sshReturn = newHostObj.DeviceInteract(command=sshCommand)
         sshRetCode = sshReturn.get('returnCode')
         sshBuffer = sshReturn.get('buffer')
