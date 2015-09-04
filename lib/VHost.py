@@ -736,15 +736,14 @@ class VHost ( Device ):
                 if destNetwork == '::':
                     defaultRoute = 1
                     route_command = \
-                    'ip -6 route %s %s via %s dev %s' % (routeOperation, 'default', gateway, eth)
+                    'ip -6 route %s %s via %s' % (routeOperation, 'default', gateway)
                 else:
                     route_command = \
-                    'ip -6 route %s %s/%d via %s dev %s' % (
+                    'ip -6 route %s %s/%d via %s' % (
                     routeOperation,
                     destNetwork,
                     netMask,
-                    gateway,
-                    eth)
+                    gateway)
                 if metric is not None:
                     route_command += " metric "+ metric
             except socket.error:
