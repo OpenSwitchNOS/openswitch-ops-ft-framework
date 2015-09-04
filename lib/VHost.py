@@ -74,7 +74,7 @@ class VHost ( Device ):
         #Opening an expect connection to the device with the specified log file
         lib.LogOutput('debug', "Opening an expect connection to the device with the specified log file"+expectFileString)
         self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=lib.DeviceLogger(expectLogFile))
-        self.expectHndl.delaybeforesend = 1
+        self.expectHndl.delaybeforesend = .05
         
         # Lets go and detect our connection - this will get us to a context we know about
         retVal = self.DetectConnection()
@@ -163,7 +163,7 @@ class VHost ( Device ):
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
-        time.sleep(1)
+        #time.sleep(1)
         connectionBuffer = []
 
         while bailflag == 0:
@@ -220,6 +220,7 @@ class VHost ( Device ):
                 
                 if tmpBuffer != command:
                     connectionBuffer.append(self.expectHndl.before)
+        self.expectHndl.expect(['$'], timeout=1)
         santString = ""
         for curLine in connectionBuffer:#
             santString += str(curLine)

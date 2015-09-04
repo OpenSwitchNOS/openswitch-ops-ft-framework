@@ -21,7 +21,7 @@
 #
 ##PROC-###################################################################################
 
-import lib
+from lib import *
 import re
 import time
 
@@ -37,8 +37,8 @@ def IpRouteConfig(**kwargs):
     overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None or route is None or mask is None or nexthop is None:
-        common.LogOutput('error', "Need to pass switch device object deviceObj, route, mask, and nexthop to this routine")
-        returnCls = lib.returnStruct(returnCode=1)
+        LogOutput('error', "Need to pass switch device object deviceObj, route, mask, and nexthop to this routine")
+        returnCls = returnStruct(returnCode=1)
         return returnCls
 
     # Get into vtyshelll
@@ -46,11 +46,11 @@ def IpRouteConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh prompt")
+        LogOutput('error', "Failed to get vtysh prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
     # Get into config context
@@ -58,11 +58,11 @@ def IpRouteConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to get vtysh config prompt")
+        LogOutput('error', "Failed to get vtysh config prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     
     # Build route command
@@ -83,20 +83,20 @@ def IpRouteConfig(**kwargs):
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
     if retCode != 0:
-        common.LogOutput('error', "Failed to configure route command "+ command)
+        LogOutput('error', "Failed to configure route command "+ command)
     else:
-        common.LogOutput('debug', "Configured route command " + command)
+        LogOutput('debug', "Configured route command " + command)
     
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to exit vtysh config prompt")
+        LogOutput('error', "Failed to exit vtysh config prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
     
     # Get out of vtyshell
@@ -104,18 +104,18 @@ def IpRouteConfig(**kwargs):
     returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
     if returnCode != 0:
-        common.LogOutput('error', "Failed to exit vtysh prompt")
+        LogOutput('error', "Failed to exit vtysh prompt")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
     #Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
     
 
