@@ -3,7 +3,6 @@ import os
 import sys
 import time
 import datetime
-#
 import json
 from lib import *
 #from common import *
@@ -12,6 +11,7 @@ import xml.etree.ElementTree
 import lib.gbldata
 import logging
 import glob
+import pdb
 
 class testEnviron ():
     def __init__(self, **kwargs):
@@ -21,13 +21,37 @@ class testEnviron ():
         self.topoObj = None
         self.libDirs = ['common', 'console', 'host', 'switch', 'switch/OVS', 'switch/CLI', 'topology']
         self.ResultsDirectory = dict()
+        self.targetBuild = None
         self.envSetup()
         # Here is where we will stub in the provisionng logic.  We should have a topoObj by now 
         self.topoObj.CreateDeviceObjects()
+     
+        #Provisioning block starts here 
+        #Provision the physical devices if targetBuild flag is present in the environment 
+        #self.topoObj.deviceObjGet(device="dut01")
+        if self.targetBuild :
+            self.targetBuild.strip()
+            if self.rsvnId != "virtual"  and self.targetBuild != " ":
+              try:
+                 import RTL
+              except ImportError:
+                 LogOutput('debug', "RTL environment not available")
+              targets = self.topoObj.GetProvisioningTargets()
+              targetList = targets.split()
+              for target in targetList :
+                if target != "None" :
+                  self.topoObj.deviceObjGet(device=target)
+                  returnCls = RTL.SwitchProvisioning(TftpImage=self.targetBuild,topoObj=self.topoObj,target=target)
+                  returnCode = returnCls.returnCode()
+                  if returnCode != 0 :
+                     LogOutput('error', "Unable to provision target :: Exiting ***")
+                     exit(1)
+                  else :
+                     LogOutput('info', "No targets defined in topo dictionary")
+
         if self.rsvnId != "virtual":
             LogOutput('info', "Enabling all logical links")
             self.topoObj.LinkModifyStatus(enable=1, allLogical=1)
-        
         
     def envSetup(self):
         # Command line argument parser
@@ -126,8 +150,8 @@ class testEnviron ():
             #if args.resultDir is None:
             #time.sleep(1)
             retCode = CreateDirectory(self.ResultsDirectory['resultsDir'])
-
-        # Now settle on topology
+            
+        #Nowsettle on topology
         if args.phystopo is None:
             # Check to see if we have an RSVNID variable
             envKeys = os.environ.keys()
@@ -137,10 +161,14 @@ class testEnviron ():
                     if str.isdigit(tmpRsvn):
                         LogOutput('info', "Detected RSVNID in environment")
                         self.rsvnId = tmpRsvn
-                    break
+                        #break
+                #Get the image to be uploaded on the targets from the environment
+                if curKey == "targetBuild" :
+                    LogOutput('info', "Detected provisioning flag in the environment (targetBuild)")
+                    self.targetBuild = os.environ['targetBuild']
+                    #break
         else:
             self.rsvnId = args.phystopo
-            
         
         if retCode['returnCode'] == 0:
             # Create RTL directory
@@ -332,7 +360,6 @@ def FileCreate(DirPath,fileName):
     retDataStruct = dict()
     try :
         if not os.path.exists(fileName):
-            #pdb.set_trace()
             file = open(filePath,'w')   # Trying to create a new file or open one
             #file.close()
             retDataStruct['returnCode'] = 0
