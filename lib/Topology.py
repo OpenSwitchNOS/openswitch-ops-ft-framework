@@ -516,7 +516,14 @@ class Topology (OpsVsiTest):
                 linksList.append(linkName)
         return linksList
     
-    # Logical Topology Create
+    #Get the provisioning targets (Physical devices)
+    def GetProvisioningTargets(self):
+        self.LOGICAL_TOPOLOGY = ET.Element("topology", attrib={'version': "3"})
+        #Get target if there
+        self.targets = str(self.topoDict.get('topoTarget', None))
+        return self.targets
+
+    #Logical Topology Create
     def LogicalTopologyCreate(self):
         self.LOGICAL_TOPOLOGY = ET.Element("topology", attrib={'version': "3"})
 
@@ -633,8 +640,11 @@ class Topology (OpsVsiTest):
                         switchObj = self.LaunchSwitch(device=self.topo[deviceName])
                         self.deviceObj[deviceName] = switchObj
                         deviceLinks = self.Links(device=deviceName)
-                        # Populate Link dictionary for each device str
+                        #Populate Link dictionary for each device str
                         switchObj.linkPortMapping = dict()
+                        #Populate the name of the switch devices in the topology 
+                        switchObj.topo = dict()
+
                         for curLink in deviceLinks:
                             portStruct = self.InterfaceGetByDeviceLink(link=self.topo[curLink], device=self.topo[deviceName])
                             port = portStruct.valueGet()
