@@ -3,8 +3,11 @@ import switch
 import switch.CLI.lldp
 #from switch.CLI.lldp import *
 from lib import testEnviron
+from lib import LogOutput
+
 #import switch
 topoDict = {"topoExecution": 3000,
+            "topoTarget": "dut01 dut02",
             "topoDevices": "dut01 dut02",
             "topoLinks": "lnk01:dut01:dut02",
             "topoFilters": "dut01:system-category:switch,dut02:system-category:switch"}
@@ -29,14 +32,14 @@ if retCode != 0:
     LogOutput('error', "Unable get get LLDP information from switch")
 # This will get you the dictionary back from portstats.  This is indexed by port number
 retStruct = switch.CLI.lldp.ShowLldpNeighborInfo(deviceObj=dut01Obj, port=dut01Obj.linkPortMapping['lnk01'])
-LogOutput('info', retStruct.retValueString)
+#LogOutput('info', retStruct.retValueString)
 retCode = retStruct.returnCode()
 if retCode != 0:
     LogOutput('error', "Unable get get LLDP information from switch")
     
 lnk01PrtStats = retStruct.valueGet(key='portStats')
 NeiDescr = lnk01PrtStats[dut01Obj.linkPortMapping['lnk01']]['Neighbor_chassisDescription']
-LogOutput('info', "Neighbor Chassis Description Field = " + str(NeiDescr))
+LogOutput('info', "Neighbor Chassis Description Field = ")
 
 
 # Now test out Noorins interface prompt

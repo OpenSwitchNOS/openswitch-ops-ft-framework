@@ -232,6 +232,7 @@ class VSwitch ( Device ):
             elif index == 6:
                 # Got ONIE prompt - reboot and get to where we need to be
                 #connection.send("reboot \r")
+                LogOutput('debug', "Got Onie prompt")
                 ErrorFlag = "Onie"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
@@ -280,8 +281,9 @@ class VSwitch ( Device ):
             #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
         if ErrorFlag == 'Onie' :
             #errorCheckRetStruct = switch.ErrorCheckOnie(connection=connection, buffer=santString)
-            #returnCode = errorCheckRetStruct['returnCode']
-            LogOutput('debug', "NEED TO FIX")
+            errorCheckRetStruct = self.ErrorCheckOnie(connection=self.expectHndl, buffer=santString)
+            returnCode = errorCheckRetStruct['returnCode']
+            LogOutput('debug', "Doing error check for Onie prompt")
 
         # Return dictionary
         LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
