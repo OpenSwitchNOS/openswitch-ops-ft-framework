@@ -60,6 +60,7 @@ class testEnviron ():
         parser.add_argument('--physicalTopology', help="physical topology filename", required=False, dest='phystopo', default=None)
         parser.add_argument('--targetBuild', help="List of logical DUTs and coorsponding builds to provision", required=False, dest='targetBuild', default=None)
         parser.add_argument('--resultDir', help="Result directory for the test case to put results in", required=False, dest='resultDir', default=None)
+        parser.add_argument('--junitxml', help="Result directory for the test case to put results in", required=False, dest='junit', default=None)
         parser.add_argument('-s', help="pytest option", required=False, dest='ptest', default=None)
         args = parser.parse_args()
         self.rsvnId = 'virtual'

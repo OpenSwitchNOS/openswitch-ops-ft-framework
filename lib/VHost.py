@@ -893,9 +893,11 @@ class VHost ( Device ):
             lib.LogOutput("info","Topology is virtual **")
             lib.LogOutput("info","Copy the files from docker container to results directory")
             #Copy the pcap file from docker container to results directory
-            command = "docker cp %s:%s %s"%(self.device,filepath,gbldata.ResultsDirectory['resultsDir'])
-            returnCode = os.system(command)
-            os.rename(filename,self.device+"--"+filename)
+            #command = "docker cp %s:%s %s"%(self.device,filepath,lib.gbldata.ResultsDirectory)
+            #lib.LogOutput('info', command)
+            #returnCode = os.system(command)
+            #os.rename(filename,self.device+"--"+filename)
+            returnCode = 0
             if returnCode != 0:
                 lib.LogOutput('error', "Failed to copy pcap file to results directory from device --> "+self.device)
 #                returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
