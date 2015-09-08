@@ -13,6 +13,8 @@ from VSwitch import VSwitch
 import socket
 #from lib import *
 import lib
+import paramiko
+import json
 
 # This is the base class for any device - This gives the test case developer the ability to connect to the device
 # along with interacting with the device
@@ -31,6 +33,7 @@ class VHost ( Device ):
                                pexpect.TIMEOUT]
         self.initExtMembers()
         self.Connect()
+        self.CreateHostRestInfra()
 
     def defaultMembers(self):
         self.expectHndl = ""
@@ -44,6 +47,7 @@ class VHost ( Device ):
         self.ETH_INTERFACE_CFGIP_IFCFG_CMD = 'ifconfig %s %s netmask %s broadcast %s'
         self.ETH_INTERFACE_CFGIP_CLEAR_CMD = 'ip addr del %s/%d dev %s'
         self.ETH_INTERFACE_CFGIP_IFCFG_CLEAR_CMD = 'ifconfig %s 0.0.0.0'
+        self.fwbase = os.environ['FT_FRAMEWORK_BASE']
 
     def Connect(self):
         # Look up the device name in the topology - grab connectivity information
@@ -220,6 +224,8 @@ class VHost ( Device ):
                 
                 if tmpBuffer != command:
                     connectionBuffer.append(self.expectHndl.before)
+
+        connectionBuffer.append(self.expectHndl.after)
         self.expectHndl.expect(['$'], timeout=1)
         santString = ""
         for curLine in connectionBuffer:#
@@ -818,4 +824,145 @@ class VHost ( Device ):
                 localLinkDict['eth'] = output.split(' ')[2]
                 localLinkElements.append(localLinkDict.copy())
         return localLinkElements
+
+
+    def FileTransfer(self,filepath,localpath,direction):
+
+        returnCode = 0
+        paramiko.util.log_to_file('/tmp/paramiko.log')
+        # Look up and see if we are physical or virtual
+        xpathString = ".//reservation/id"
+        rsvnEtreeElement = lib.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+        if rsvnEtreeElement == None:
+        # We are not in a good situation, we need to bail
+            lib.LogOutput('error', "Could not find reservation id tag in topology")
+            return None
+        rsvnType = rsvnEtreeElement.text
+        if rsvnType != 'virtual':
+            #Get the credentials of the workstation from XML file (physical devices)
+            xpathString = ".//device[name='" + self.device + "']/connection/ipAddr"
+            ipNode = lib.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            if ipNode == None:
+                lib.LogOutput('error', "Failed to obtain IP address for device " + device )
+                return None
+            hostIP = ipNode.text
+            lib.LogOutput ('debug', self.device + " connection IP address:  " + hostIP)
+            port = 22
+
+            #Open a ssh connection to the host
+            transport = paramiko.Transport((hostIP, port))
+
+            #Extract username/password for logging in the workstation
+            xpathString = ".//device[name='" + self.device + "']/login/adminPassword"
+            password = lib.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            if password == None:
+                lib.LogOutput('error', "Failed to obtain password for device " + self.device )
+                return None
+            password = password.text
+            xpathString = ".//device[name='" + self.device + "']/login/adminUser"
+            username = lib.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            if username == None:
+                lib.LogOutput('error', "Failed to obtain username for device " + self.device )
+                return None
+            username = username.text
+
+            transport.connect(username = username, password = password)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            #Transfer file
+            try:
+                sftp.mkdir("/root/rest")
+            except IOError, e:
+                print '(assuming ', "/root/rest", 'exists)', e
+
+            try :
+                print filepath
+                print localpath
+                if direction == "get":
+                    sftp.get(filepath,localpath)
+                else:
+                    sftp.put(filepath,localpath)
+            except IOError, e:
+                lib.LogOutput("error","file not transferred to workstation")
+                returnCode = 1
+                print e
+            #Close a connection
+            sftp.close()
+            transport.close()
+            return returnCode
+        else :
+            lib.LogOutput("info","Topology is virtual **")
+            lib.LogOutput("info","Copy the files from docker container to results directory")
+            #Copy the pcap file from docker container to results directory
+            command = "docker cp %s:%s %s"%(self.device,filepath,gbldata.ResultsDirectory['resultsDir'])
+            returnCode = os.system(command)
+            os.rename(filename,self.device+"--"+filename)
+            if returnCode != 0:
+                lib.LogOutput('error', "Failed to copy pcap file to results directory from device --> "+self.device)
+#                returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
+                return returnJson
+
+
+    def CreateHostRestInfra(self):
+        lib.LogOutput("info","Creating HostRestInfra")
+        self.DeviceInteract(command="mkdir /root/rest")
+#        self.FileTransfer("/ws/skrishn1/dev/openSwitchFW/ops-ft-framework/rest.tar.gz", "/root/rest/rest.tar.gz", "put")
+        self.FileTransfer(self.fwbase+"/rest.tar.gz", "/root/rest/rest.tar.gz", "put")
+        tarCommand = "tar -xvzf /root/rest/rest.tar.gz"
+        retDeviceInt = self.DeviceInteract(command=tarCommand)
+        retCode = retDeviceInt.get('returnCode')
+        retBuff = retDeviceInt.get('buffer')
+        if retCode != 0:
+            lib.LogOutput('error', 'Failed to execute the command : '
+                                 + tarCommand)
+            returnCode = 1
+        else:
+            lib.LogOutput('info',
+                                 'Successfully executed the command : '
+                                 + tarCommand)
+        lib.LogOutput("info","Successful in CreateHostRestInfra")
+
+    def RestCmd(self,**kwargs):
+        ip = kwargs.get('switch_ip')
+        url = kwargs.get('url')
+        method = kwargs.get('method')
+        data    = kwargs.get('data', None)
+        returnCode = 0
+        overallBuffer = []
+        bufferString = ""
+        retStruct = dict()
+        try:
+            socket.inet_pton(socket.AF_INET, ip)
+        except socket.error:
+            returnCode = 1
+        if returnCode <> 1:
+            if data <> None:
+                with open('/ws/skrishn1/dev/openSwitchFW/ops-ft-framework/restdata', 'wb') as f:
+#                   f.write(str(data))
+                    json.dump(data,f)
+                    f.close()
+                    self.FileTransfer(self.fwbase+"/restdata", "/root/rest/restdata", "put")
+            restCmd = "python /root/rest/resttest.py --ip=%s --url=%s --method=%s" %(ip,url,method)
+            retDeviceInt = self.DeviceInteract(command=restCmd)
+            retCode = retDeviceInt.get('returnCode')
+            retBuff = retDeviceInt.get('buffer')
+            overallBuffer.append(retBuff)
+            if retCode != 0:
+                lib.LogOutput('error', 'Failed to execute the command : '
+                                  + restCmd)
+                returnCode = 1
+            else:
+                lib.LogOutput('info',
+                                 'Successfully executed the command : '
+                                 + restCmd)
+            for curLin in overallBuffer:
+                bufferString += str(curLin)
+
+            output = bufferString.split("\n")
+            retStruct['http_retcode'] = output[1]
+#            retStruct['http_retcode'] = int(output[1])
+            print "Http Returned Code "+retStruct['http_retcode']
+            retStruct['response_body'] = output[4]
+
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
+        return returnCls
 
