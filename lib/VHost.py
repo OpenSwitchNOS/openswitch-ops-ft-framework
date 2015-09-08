@@ -938,11 +938,11 @@ class VHost ( Device ):
             returnCode = 1
         if returnCode <> 1:
             if data <> None:
-                with open('/ws/skrishn1/dev/openSwitchFW/ops-ft-framework/restdata', 'wb') as f:
-#                   f.write(str(data))
-                    json.dump(data,f)
-                    f.close()
-                    self.FileTransfer(self.fwbase+"/restdata", "/root/rest/restdata", "put")
+                with open(self.fwbase+'/restdata', 'wb') as f:
+                   f.write(str(data))
+#                    json.dump(data,f)
+                   f.close()
+                   self.FileTransfer(self.fwbase+"/restdata", "/root/rest/restdata", "put")
             restCmd = "python /root/rest/resttest.py --ip=%s --url=%s --method=%s" %(ip,url,method)
             retDeviceInt = self.DeviceInteract(command=restCmd)
             retCode = retDeviceInt.get('returnCode')
