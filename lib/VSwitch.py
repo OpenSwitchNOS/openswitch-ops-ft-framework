@@ -215,16 +215,16 @@ class VSwitch ( Device ):
                 LogOutput("debug","vtysh prompt detected")
                 ErrorFlag = "CLI"
                 bailflag = 1
-                self.expectHndl.expect(['$'], timeout=5)
-                time.sleep(4)
+                #self.expectHndl.expect(['$'], timeout=5)
+                #time.sleep(4)
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
                 # Got vtysh config prompts
                 LogOutput('debug', "config prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
-                self.expectHndl.expect(['$'], timeout=5)
-                time.sleep(4) 
+                #self.expectHndl.expect(['$'], timeout=5)
+                #time.sleep(4) 
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
                 # Got vtysh config interface prompts
@@ -259,7 +259,7 @@ class VSwitch ( Device ):
                 returnCode = 1
             else :
                 connectionBuffer.append(self.expectHndl.before)
-                time.sleep(3)
+                #time.sleep(3)
         connectionBuffer.append(self.expectHndl.after)
         self.expectHndl.expect(['$'], timeout=1)
         
@@ -381,14 +381,13 @@ class VSwitch ( Device ):
                 LogOutput('debug', "Already in vtysh context")
                 returnCls = returnStruct(returnCode=0)
                 return returnCls
-
             if self.deviceContext == "linux":
                 #Enter vtysh shell when configOption is config
                 command = "vtysh\r"
                 LogOutput("debug","Enter vtysh Shell***")
                 #Get the device response buffer as json return structure here
                 devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
-                time.sleep(3)
+                #time.sleep(3)
                 returnCode = devIntRetStruct.get('returnCode')
                 overallBuffer.append(devIntRetStruct.get('buffer'))
                 if returnCode != 0:
@@ -398,25 +397,25 @@ class VSwitch ( Device ):
                         bufferString += str(curLine)
                     returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
                     return returnCls
-
+                self.deviceContext = "vtyShell"
                 #Enter paging command for  switch (terminal length)
-                command = "terminal length 0\r"
-                devIntRetStruct = self.DeviceInteract(command=command)
-                time.sleep(1)
-                returnCode = devIntRetStruct.get('returnCode')
-                overallBuffer.append(devIntRetStruct.get('buffer'))
-                if returnCode != 0:
-                    LogOutput('error', "Failed to get into the vtysh shell")
-                    bufferString = ""
-                    for curLine in overallBuffer:
-                        bufferString += str(curLine)
-                    returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
-                    return returnCls
-                else :
-                    buffer = devIntRetStruct.get('buffer')
-                    self.deviceContext = "vtyShell"
-                    returnCls = returnStruct(returnCode=0, buffer=buffer)
-                    return returnCls
+                #command = "terminal length 0\r"
+                #devIntRetStruct = self.DeviceInteract(command=command)
+                #time.sleep(1)
+                #returnCode = devIntRetStruct.get('returnCode')
+                #overallBuffer.append(devIntRetStruct.get('buffer'))
+                #if returnCode != 0:
+                #    LogOutput('error', "Failed to get into the vtysh shell")
+                #    bufferString = ""
+                #    for curLine in overallBuffer:
+                #        bufferString += str(curLine)
+                #    returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
+                #    return returnCls
+                #else :
+                #    buffer = devIntRetStruct.get('buffer')
+                #    self.deviceContext = "vtyShell"
+                #    returnCls = returnStruct(returnCode=0, buffer=buffer)
+                #    return returnCls
             bufferString = ""
             for curLine in overallBuffer:
                 bufferString += str(curLine)
