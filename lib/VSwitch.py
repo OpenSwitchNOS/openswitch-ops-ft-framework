@@ -196,7 +196,6 @@ class VSwitch ( Device ):
         connectionBuffer = []
 
         while bailflag == 0:
-            #DEBUG print connection
             index = self.expectHndl.expect(self.expectList,
                                  timeout=120)
             if index == 0:
@@ -208,20 +207,24 @@ class VSwitch ( Device ):
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
-                # Got vtysh prompts
-                ErrorFlag = "CLI"
+                # Got bash prompt - virtual
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 #$time.sleep(2)
             elif index == 3:
-                # Got bash prompt - virtual
+                LogOutput("debug","vtysh prompt detected")
+                ErrorFlag = "CLI"
                 bailflag = 1
+                self.expectHndl.expect(['$'], timeout=5)
+                time.sleep(4)
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
                 # Got vtysh config prompts
                 LogOutput('debug', "config prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
+                self.expectHndl.expect(['$'], timeout=5)
+                time.sleep(4) 
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
                 # Got vtysh config interface prompts
@@ -256,14 +259,14 @@ class VSwitch ( Device ):
                 returnCode = 1
             else :
                 connectionBuffer.append(self.expectHndl.before)
-                #time.sleep(3)
+                time.sleep(3)
         connectionBuffer.append(self.expectHndl.after)
         self.expectHndl.expect(['$'], timeout=1)
-
-        santString = ""
+        
+        self.santString = ""
         for curLine in connectionBuffer:#
-            santString += str(curLine)
-
+            self.santString += str(curLine)
+     
         #Error Check routine identification
         #There are seperate Error check libraries for CLI,OVS and REST commands.
         #The following portion checks for Errors for OVS commands
@@ -272,12 +275,12 @@ class VSwitch ( Device ):
             #returnCode = errorCheckRetStruct['returnCode']
             # Dump the buffer the the debug log
             LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
-
         #The following portion checks for Errors in CLI commands
         if ErrorFlag == 'CLI' :
             #errorCheckRetStruct = switch.CLI.ErrorCheck(connection=connection, buffer=santString)
-            #returnCode = errorCheckRetStruct['returnCode']
-            LogOutput('debug', "NEED TO FIX")
+            LogOutput('debug', "Doing error check for CLI prompt in vtysh")
+            errorCheckRetStruct = self.ErrorCheckCLI(connection=self.expectHndl, buffer=self.santString)
+            returnCode = errorCheckRetStruct['returnCode']
             #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
         if ErrorFlag == 'Onie' :
             #errorCheckRetStruct = switch.ErrorCheckOnie(connection=connection, buffer=santString)
@@ -286,9 +289,9 @@ class VSwitch ( Device ):
             LogOutput('debug', "Doing error check for Onie prompt")
 
         # Return dictionary
-        LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+        LogOutput('debug', "Sent and received from device: \n" + self.santString + "\n")
         retStruct['returnCode'] = returnCode
-        retStruct['buffer'] = santString
+        retStruct['buffer'] = self.santString
         return retStruct
         
     def ErrorCheck(self, **kwargs):
@@ -330,6 +333,34 @@ class VSwitch ( Device ):
         retStruct['returnCode'] = returnCode
         return retStruct
     
+    #Error check routine for CLI
+    def ErrorCheckCLI(self,**kwargs):
+        self.connection = kwargs.get('connection')
+        self.buffer = kwargs.get('buffer')
+        #Local variables
+        returnCode = 0
+        returnDict= dict()
+        returnDict['returnCode'] = returnCode
+        bufferSplit = self.buffer.split("\n")
+        for line in bufferSplit:
+        #Enter a error code for every failure
+        #Error codes correspond to errors in expect buffer interactions with switch
+          Error_Code1= re.match(".*(command not found)",line,re.I)
+          if re.match(".*(command not found)",line,re.I) :
+            LogOutput("error","Error detected--->"+Error_Code1.group(1))
+            returnCode = 2
+          Error_Code2= re.match(".*(Unknown command)",line,re.I)
+          if re.match(".*(unknown command)",line,re.I) :
+            LogOutput("error","Error detected--->"+Error_Code2.group(1))
+            returnCode = 3
+          Error_Code3= re.match(".*(Command incomplete)",line,re.I)
+          if re.match(".*(Command incomplete)",line,re.I) :
+            LogOutput("error","Error detected--->"+Error_Code3.group(1))
+            returnCode = 4
+
+        returnDict['returnCode'] = returnCode
+        return returnDict
+
     def Reboot(self, **kwargs):
         LogOutput('info', "Reboot not supported for Virtual Switch")
         pass
@@ -357,6 +388,7 @@ class VSwitch ( Device ):
                 LogOutput("debug","Enter vtysh Shell***")
                 #Get the device response buffer as json return structure here
                 devIntRetStruct = self.DeviceInteract(command=command,CheckError = 'CLI')
+                time.sleep(3)
                 returnCode = devIntRetStruct.get('returnCode')
                 overallBuffer.append(devIntRetStruct.get('buffer'))
                 if returnCode != 0:
@@ -370,6 +402,7 @@ class VSwitch ( Device ):
                 #Enter paging command for  switch (terminal length)
                 command = "terminal length 0\r"
                 devIntRetStruct = self.DeviceInteract(command=command)
+                time.sleep(1)
                 returnCode = devIntRetStruct.get('returnCode')
                 overallBuffer.append(devIntRetStruct.get('buffer'))
                 if returnCode != 0:

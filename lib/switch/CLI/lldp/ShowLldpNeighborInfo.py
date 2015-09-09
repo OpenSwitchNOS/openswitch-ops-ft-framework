@@ -52,7 +52,7 @@ def ShowLldpNeighborInfo(**kwargs):
     #Pass LLDP commands here
     command = "show lldp neighbor-info"
     if port != None:
-        command += " " + str(port)
+        command += " " + str(port) + "\r"
     
     LogOutput("info","Show LLDP command ***"+command)
     #devIntRetStruct = switch.DeviceInteract(connection=connection, command=command)
@@ -64,7 +64,7 @@ def ShowLldpNeighborInfo(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
     else:
         rawBuffer = devIntRetStruct.get('buffer')
