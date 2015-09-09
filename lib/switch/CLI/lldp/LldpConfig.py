@@ -19,7 +19,6 @@
 from lib import *
 import re
 import time
-import pdb
 
 def LldpConfig(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
@@ -60,7 +59,6 @@ def LldpConfig(**kwargs):
         returnDevInt = deviceObj.DeviceInteract(command=command)
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
-        pdb.set_trace()
         if retCode != 0:
             LogOutput('error', "Failed to enable lldp on device " + deviceObj.device)
             returnCls = returnStruct(returnCode=retCode, buffer=overallBuffer)
