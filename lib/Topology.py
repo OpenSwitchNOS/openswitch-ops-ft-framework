@@ -53,13 +53,11 @@ class Topology (OpsVsiTest):
         self.LOGICAL_TOPOLOGY = ""
         self.TOPOLOGY = ""
         self.mininetGlobal = ""
-        
         self.inbandIndex = 0
         self.LogicalTopologyCreate()
         self.VirtualXMLCreate()
         self.setupNet()
         self.TopologyXMLWrite()
-        
 
     def setupNet(self, **kwargs):
         #topoDictionary = kwargs.get('topoDictionary')
@@ -78,12 +76,10 @@ class Topology (OpsVsiTest):
             logicalTopo[curDev]['attributes'] = dict()
             logicalTopo[curDev]['links'] = dict()
 
-
         # Create a local dictionary around the devices in topoFilters
         for curFilter in str.split(self.topoFilters, ','):
             (cDev, cAttr, cVal) = str.split(curFilter, ':')
             logicalTopo[cDev]['attributes'][cAttr] = cVal
-
 
         for curDev in logicalTopo.keys():
             # Grag attributes for each device
@@ -96,28 +92,13 @@ class Topology (OpsVsiTest):
                 lib.LogOutput('debug', "Added Workstation Device: " + curDev)
                 self.mntopo.addHost(curDev)
 
-        for curLink in str.split(self.topoLinks, ','):
-            (link, dev1, dev2) = str.split(curLink, ':')
-            # Now parse through topoLinkFilter statements
-            #linkAdded = 0
-            #for curTopoLinkFilter in str.split(self.topoLinkFilter, ','):
-            #    #print curTopoLinkFilter
-            #    (cLink, cDev, cFType, CAttr) = str.split(curTopoLinkFilter, ':')
-            #    if cLink == link :
-            #        if cFType == "interface" :
-            #            if cDev == dev1:
-            #                linkKey = self.mntopo.addLink(dev1, dev2, key=link, port1=int(CAttr))
-            #                linkAdded = 1
-            #            else:
-            #                linkKey = self.mntopo.addLink(dev1, dev2, key=link, port2=int(CAttr))
-            #                linkAdded = 1
-            #lib.LogOutput('debug', "Creating Link " + link + " between " + dev1 + " & " + dev2)
-            #if linkAdded == 0:
-            linkKey = self.mntopo.addLink(dev1, dev2, key=link)
-
-            # Add to Link Logical Topology
-            logicalTopo[dev1]['links'][link] = dev2
-            logicalTopo[dev2]['links'][link] = dev1
+        if self.topoLinks != "":
+            for curLink in str.split(self.topoLinks, ','):
+                (link, dev1, dev2) = str.split(curLink, ':')
+                linkKey = self.mntopo.addLink(dev1, dev2, key=link)
+                # Add to Link Logical Topology
+                logicalTopo[dev1]['links'][link] = dev2
+                logicalTopo[dev2]['links'][link] = dev1
 
         # print logicalTopo
         # Configure MiniNet
@@ -128,9 +109,6 @@ class Topology (OpsVsiTest):
                            controller=None,
                            build=True)
         print ""
-
-
-
         # Now we need to query what we have.... to put in the topology
         # We will not formally have mapping, so we will create the mapping array here.
         switches = self.net.switches
@@ -174,7 +152,6 @@ class Topology (OpsVsiTest):
             node2IntStruct = node2Obj.intfList()
             #print node2IntStruct
 
-
             # Add link to Topology XML
             retStruct = self.VirtualXMLLinkAdd(link=linkName,
                                                    device1=self.topo[node1],
@@ -191,30 +168,26 @@ class Topology (OpsVsiTest):
             outstring = curDev + "  =  " + self.topo[curDev]
             lib.LogOutput('info', outstring)
 
-        # LEts go and resolve the links
-        for curLink in str.split(self.topoLinks, ','):
-            (link, dev1, dev2) = str.split(curLink, ':')
-            dev1LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev1], link=link)
-            if dev1LportStruct.returnCode() != 0:
-                # didn't get link info
-                lib.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev1)
-                continue
-            dev1Lport = dev1LportStruct.valueGet()
-
-            dev2LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev2], link=link)
-            if dev2LportStruct.returnCode() != 0:
-                # didn't get link info
-                lib.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev2)
-                continue
-            dev2Lport = dev2LportStruct.valueGet()
-
-            outstring = link + "  =  " + self.topo[dev1] + ":" + str(dev1Lport) + " <==> " + self.topo[dev2] + ":" + str(dev2Lport)
-            lib.LogOutput('info', outstring)
+        if self.topoLinks != "":
+            # LEts go and resolve the links
+            for curLink in str.split(self.topoLinks, ','):
+                (link, dev1, dev2) = str.split(curLink, ':')
+                dev1LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev1], link=link)
+                if dev1LportStruct.returnCode() != 0:
+                    # didn't get link info
+                    lib.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev1)
+                    continue
+                dev1Lport = dev1LportStruct.valueGet()
+                dev2LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev2], link=link)
+                if dev2LportStruct.returnCode() != 0:
+                    # didn't get link info
+                    lib.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev2)
+                    continue
+                dev2Lport = dev2LportStruct.valueGet()
+                outstring = link + "  =  " + self.topo[dev1] + ":" + str(dev1Lport) + " <==> " + self.topo[dev2] + ":" + str(dev2Lport)
+                lib.LogOutput('info', outstring)
         lib.LogOutput('info', "=====================================================================")
         self.net.start()
-        node1Obj = self.searchNetNodes(self.topo[node1])
-        node1IntStruct = node1Obj.intfList()
-        print node1IntStruct
 
     # Routine to alter link state
     def VirtualLinkModifyStatus(self, **kwargs):
@@ -529,9 +502,10 @@ class Topology (OpsVsiTest):
 
         # Get target if there
         self.targets = str(self.topoDict.get('topoTarget', None))
-
+        #self.topoLinks = str(self.topoDict.get)
         # create the links
         self.topoLinkFilter = ""
+        
         if "topoLinks" in  self.topoDict :
             mytopoLinks = str(self.topoDict['topoLinks'])
             self.topoLinks = re.sub('\s+', '', mytopoLinks)
@@ -542,7 +516,8 @@ class Topology (OpsVsiTest):
             # now search for topoLinkFilter in the dictionary
             if "topoLinkFilter" in self.topoDict :
                 self.topoLinkFilter = str(self.topoDict['topoLinkFilter'])
-                
+        else:
+            self.topoLinks = ""
         # Create TopoDevices
         self.topoDevices = str(self.topoDict['topoDevices'])
         for curDev in str.split(self.topoDevices):
