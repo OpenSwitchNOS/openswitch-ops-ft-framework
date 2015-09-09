@@ -274,7 +274,7 @@ class VSwitch ( Device ):
             #errorCheckRetStruct = switch.ErrorCheck(connection=connection, buffer=santString)
             #returnCode = errorCheckRetStruct['returnCode']
             # Dump the buffer the the debug log
-            LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+            LogOutput('debug', "Sent and received from device: \n" + self.santString + "\n")
         #The following portion checks for Errors in CLI commands
         if ErrorFlag == 'CLI' :
             #errorCheckRetStruct = switch.CLI.ErrorCheck(connection=connection, buffer=santString)
@@ -284,7 +284,7 @@ class VSwitch ( Device ):
             #The following file checks for errors in Onie prompts after analyzing Onie expect buffer
         if ErrorFlag == 'Onie' :
             #errorCheckRetStruct = switch.ErrorCheckOnie(connection=connection, buffer=santString)
-            errorCheckRetStruct = self.ErrorCheckOnie(connection=self.expectHndl, buffer=santString)
+            errorCheckRetStruct = self.ErrorCheckOnie(connection=self.expectHndl, buffer=self.santString)
             returnCode = errorCheckRetStruct['returnCode']
             LogOutput('debug', "Doing error check for Onie prompt")
 
