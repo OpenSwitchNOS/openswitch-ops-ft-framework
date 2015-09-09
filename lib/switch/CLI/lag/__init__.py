@@ -7,3 +7,9 @@ from lagpGlobalSystemID import *
 from lagpGlobalSystemPriority import *
 from lagpGlobalSystemShow import *
 from lacpAggregatesShow import *
+from InterfaceLacpAggKeyConfig import *
+from InterfaceLacpPortIdConfig import *
+from InterfaceLacpPortPriorityConfig import *
+from InterfaceLagShow import *
+from InterfaceLagIdConfig import *
+
