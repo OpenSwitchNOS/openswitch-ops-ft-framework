@@ -24,16 +24,16 @@ def lagHeartbeat(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    lacpFastFlag = kwargs.get('lacpFastFlag', None)
+    lacpFastFlag = kwargs.get('lacpFastFlag', True)
     
     #Variables
     overallBuffer = []
     
     #If device, LAG Id or lacpFastFlag are not passed, return an error
     if deviceObj is None or lagId is None or lacpFastFlag is None:
-        common.lib.LogOutput('error', "Need to pass deviceObj, lagIf and lacpFastFlag to this routing")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        common.lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls= lib.returStruct(returnCode=1)
+        return returnJCls
     
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)
@@ -60,7 +60,7 @@ def lagHeartbeat(**kwargs):
         return returnCls
     
     #enter LAG configuration context
-    command = "interface lag %s\r" % str(lagId)
+    command = "interface lag %s" % str(lagId)
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
@@ -74,7 +74,7 @@ def lagHeartbeat(**kwargs):
     command = ""
     if lacpFastFlag is False:
         command = "no "
-    command += "lacp rate fast\r"
+    command += "lacp rate fast"
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
@@ -95,7 +95,7 @@ def lagHeartbeat(**kwargs):
             lib.LogOutput('debug', "Configure LACP slow heartbeat on interface lag " + str(lagId) + " on device " + deviceObj.device)
         
     #exit LAG configuration context
-    command = "exit\r"
+    command = "exit"
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
