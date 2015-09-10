@@ -33,7 +33,7 @@ class VHost ( Device ):
                                pexpect.TIMEOUT]
         self.initExtMembers()
         self.Connect()
-        self.CreateHostRestInfra()
+        self.CreateRestEnviron()
 
     def defaultMembers(self):
         self.expectHndl = ""
@@ -68,7 +68,7 @@ class VHost ( Device ):
         self.expectHndl = pexpect.spawn(telnetString,echo=False)
         #self.expectHndl.delaybeforesend = .5
         expectFileString  = self.device + ".log"
-        
+
         # VINCE TODO - Move ExpectLog to Common Class
         ExpectInstance = lib.DeviceLogger(expectFileString)
         expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
@@ -79,15 +79,15 @@ class VHost ( Device ):
         lib.LogOutput('debug', "Opening an expect connection to the device with the specified log file"+expectFileString)
         self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=lib.DeviceLogger(expectLogFile))
         self.expectHndl.delaybeforesend = .05
-        
+
         # Lets go and detect our connection - this will get us to a context we know about
         retVal = self.DetectConnection()
-    
+
         if retVal is None:
             return None
         return self.expectHndl
-    
-    
+
+
     def DetectConnection(self):
         bailflag = 0
 
@@ -97,7 +97,7 @@ class VHost ( Device ):
         while bailflag == 0:
             time.sleep(1)
             index = self.expectHndl.expect(self.expectDefaultPrompts, timeout=30)
-            
+
             if index == 0:
                 # Need to send login string
                 connectionBuffer.append(self.expectHndl.before)
@@ -151,8 +151,8 @@ class VHost ( Device ):
         lib.LogOutput('debug', sanitizedBuffer)
 
         return self.expectHndl
-    
-    
+
+
     def DeviceInteract(self, **kwargs):
         command = kwargs.get('command')
         yesPromptResp = kwargs.get('yesPrompt', "yes")
@@ -221,7 +221,7 @@ class VHost ( Device ):
                 # Pull out the \r\n of the buffer
                 tmpBuffer = re.sub('\r\r\n', '', tmpBuffer)
                 print "tmpbuffer = " + tmpBuffer
-                
+
                 if tmpBuffer != command:
                     connectionBuffer.append(self.expectHndl.before)
 
@@ -243,8 +243,8 @@ class VHost ( Device ):
         retStruct['buffer'] = santString
 
         return retStruct
-    
-    
+
+
     def ErrorCheck(self, **kwargs):
         buffer = kwargs.get('buffer')
         # Local variables
@@ -405,8 +405,8 @@ class VHost ( Device ):
                 #+ command
             else:
                 lib.LogOutput('debug','Successfully executed the command : '+ command)
-            
-            if returnCode != 1: 
+
+            if returnCode != 1:
                 command = self.LIST_INTERFACE_IP_CMD % eth
                 retDevInt = self.DeviceInteract(command=command)
                 retCode = retDevInt.get('returnCode')
@@ -421,7 +421,7 @@ class VHost ( Device ):
                 else:
                     lib.LogOutput('debug','Successfully executed the command : '
                                      + command)
- 
+
             if retBuff.find(ipAddr) == -1:
                 lib.LogOutput('error',
                                  'IP addr %s is not configured successfully on interface %s : '
@@ -636,11 +636,11 @@ class VHost ( Device ):
             try:
                 socket.inet_pton(socket.AF_INET6, ipAddr)
                 if ipAddr.find('fe80') == -1:
-                    command = 'ping6 %s -c %d -s %d' % (ipAddr, packetCount, 
+                    command = 'ping6 %s -c %d -s %d' % (ipAddr, packetCount,
                                                         packetSize)
                 else:
                     command = 'ping6 -I %s %s -c %d -s %d' % (eth, ipAddr,
-                                                              packetCount, 
+                                                              packetCount,
                                                               packetSize)
             except socket.error:
                 returnCode = 1
@@ -694,7 +694,7 @@ class VHost ( Device ):
                 retStruct['packet_loss'] = int(statsLine1.group(3))
                 retStruct['time'] = int(statsLine1.group(4))
                 continue
-                
+
             statsLine2 = re.match(r'rtt min/avg/max/mdev = ([0-9]+\.[0-9]+)/([0-9]\.[0-9]+)/([0-9]+\.[0-9]+)/([0-9]+\.[0-9]+) ms', curLine)
             if statsLine2:
                 retStruct['rtt_min'] = float(statsLine2.group(1))
@@ -702,7 +702,7 @@ class VHost ( Device ):
                 retStruct['rtt_max'] = float(statsLine2.group(3))
                 retStruct['rtt_mdev'] = float(statsLine2.group(4))
                 continue
-                
+
         returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
         return returnCls
 
@@ -809,7 +809,7 @@ class VHost ( Device ):
         localLinkElements = []
         command = 'ip -6 neighbour show'
 
-        # Send the command
+       # Send the command
         # Local variables
         retDevInt = self.DeviceInteract(command=command)
         retCode = retDevInt.get('returnCode')
@@ -869,14 +869,7 @@ class VHost ( Device ):
             transport.connect(username = username, password = password)
             sftp = paramiko.SFTPClient.from_transport(transport)
             #Transfer file
-            try:
-                sftp.mkdir("/root/rest")
-            except IOError, e:
-                print '(assuming ', "/root/rest", 'exists)', e
-
             try :
-                print filepath
-                print localpath
                 if direction == "get":
                     sftp.get(filepath,localpath)
                 else:
@@ -888,31 +881,38 @@ class VHost ( Device ):
             #Close a connection
             sftp.close()
             transport.close()
-            return returnCode
         else :
             lib.LogOutput("info","Topology is virtual **")
             lib.LogOutput("info","Copy the files from docker container to results directory")
-            #Copy the pcap file from docker container to results directory
-            #command = "docker cp %s:%s %s"%(self.device,filepath,lib.gbldata.ResultsDirectory)
-            #lib.LogOutput('info', command)
-            #returnCode = os.system(command)
-            #os.rename(filename,self.device+"--"+filename)
-            returnCode = 0
+            '''
+            try :
+                if direction == "get":
+                    command = "docker cp %s:%s %s"%(self.device,filepath,localpath)
+                else:
+                    command = "docker cp %s %s:%s"%(localpath, self.device,filepath)
+            except IOError, e:
+                lib.LogOutput("error","file not transferred to workstation")
+                returnCode = 1
+                print e
+            '''
             if returnCode != 0:
-                lib.LogOutput('error', "Failed to copy pcap file to results directory from device --> "+self.device)
-#                returnJson = common.ReturnJSONCreate(returnCode=returnCode, data=self.returnDict)
-                return returnJson
+                lib.LogOutput('error', "Failed to copy file to/from device --> "+self.device)
+        return returnCode
 
 
-    def CreateHostRestInfra(self):
-        lib.LogOutput("info","Creating HostRestInfra")
-        self.DeviceInteract(command="mkdir /root/rest")
-#        self.FileTransfer("/ws/skrishn1/dev/openSwitchFW/ops-ft-framework/rest.tar.gz", "/root/rest/rest.tar.gz", "put")
-        self.FileTransfer(self.fwbase+"/rest.tar.gz", "/root/rest/rest.tar.gz", "put")
-        tarCommand = "tar -xvzf /root/rest/rest.tar.gz"
+    def CreateRestEnviron(self):
+
+        returnCode = 0
+        overallBuffer = []
+        lib.LogOutput("info","Creating HostRestEnvironment")
+        tarCommand = "cd "+self.fwbase+"/lib; tar -cvzf "+self.fwbase+"/lib/restEnv/rest.tar.gz restEnv"
+        os.system(tarCommand)
+        self.FileTransfer(self.fwbase+"/lib/restEnv/rest.tar.gz", "/root/rest.tar.gz", "put")
+        tarCommand = "tar -xvzf /root/rest.tar.gz"
         retDeviceInt = self.DeviceInteract(command=tarCommand)
         retCode = retDeviceInt.get('returnCode')
         retBuff = retDeviceInt.get('buffer')
+        overallBuffer.append(retBuff)
         if retCode != 0:
             lib.LogOutput('error', 'Failed to execute the command : '
                                  + tarCommand)
@@ -922,6 +922,11 @@ class VHost ( Device ):
                                  'Successfully executed the command : '
                                  + tarCommand)
         lib.LogOutput("info","Successful in CreateHostRestInfra")
+        bufferString = ""
+        for curLin in overallBuffer:
+            bufferString += str(curLin)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
 
     def RestCmd(self,**kwargs):
         ip = kwargs.get('switch_ip')
@@ -938,12 +943,12 @@ class VHost ( Device ):
             returnCode = 1
         if returnCode <> 1:
             if data <> None:
-                with open(self.fwbase+'/restdata', 'wb') as f:
-                   f.write(str(data))
-#                    json.dump(data,f)
+                with open(self.fwbase+'/lib/restEnv/restdata', 'wb') as f:
+#                   f.write(str(data))
+                   json.dump(data,f)
                    f.close()
-                   self.FileTransfer(self.fwbase+"/restdata", "/root/rest/restdata", "put")
-            restCmd = "python /root/rest/resttest.py --ip=%s --url=%s --method=%s" %(ip,url,method)
+                   self.FileTransfer(self.fwbase+"/lib/restEnv/restdata", "/root/restEnv/restdata", "put")
+            restCmd = "python /root/restEnv/resttest.py --ip=%s --url=%s --method=%s" %(ip,url,method)
             retDeviceInt = self.DeviceInteract(command=restCmd)
             retCode = retDeviceInt.get('returnCode')
             retBuff = retDeviceInt.get('buffer')
@@ -967,4 +972,3 @@ class VHost ( Device ):
 
         returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
         return returnCls
-
