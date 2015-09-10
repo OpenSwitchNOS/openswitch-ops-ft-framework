@@ -24,16 +24,16 @@ def lagHash(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    hashType = kwargs.get('hashType', None)
+    hashType = kwargs.get('hashType', 'l3-src-dst')
     
     #Variables
     overallBuffer = []
     
     #If deviceObj, lagId, hashType are not present, display an error
-    if deviceObj is None or lagId is None or hashType is None:
-        common.lib.LogOutput('error', "Need to pass device to configure")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+    if deviceObj is None or lagId is None:
+        common.lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
     
     #If hashType is different from l2-src-dst and l3-src-dst throw an error
     if hashType != 'l2-src-dst' and hashType != 'l3-src-dst':
@@ -66,7 +66,7 @@ def lagHash(**kwargs):
         return returnCls
     
     #enter LAG configuration context
-    command = "interface lag %s\r" % str(lagId)
+    command = "interface lag %s" % str(lagId)
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
@@ -106,7 +106,7 @@ def lagHash(**kwargs):
                 lib.LogOutput('debug', "Configured l3-src-dst hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
         
     #exit LAG configuration context
-    command = "exit\r"
+    command = "exit"
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
