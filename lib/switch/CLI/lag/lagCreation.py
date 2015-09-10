@@ -32,7 +32,7 @@ def lagCreation(**kwargs):
     #If deviceObj, lagId or configFlag are not present, throw an error
     if deviceObj is None or lagId is None or configFlag is None:
         lib.LogOutput('error', "Need to pass deviceObj, lagId and configFlag to use this routine")
-        rreturnCls = lib.returnStruct(returnCode=1)
+        returnCls = lib.returnStruct(returnCode=1)
         return returnCls
     
     # Get into vtyshelll

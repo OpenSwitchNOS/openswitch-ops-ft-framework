@@ -32,8 +32,8 @@ def lagHash(**kwargs):
     #If deviceObj, lagId, hashType are not present, display an error
     if deviceObj is None or lagId is None or hashType is None:
         common.lib.LogOutput('error', "Need to pass device to configure")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
     
     #If hashType is different from l2-src-dst and l3-src-dst throw an error
     if hashType != 'l2-src-dst' and hashType != 'l3-src-dst':

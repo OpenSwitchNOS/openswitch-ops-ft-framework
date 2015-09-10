@@ -32,8 +32,8 @@ def lagHeartbeat(**kwargs):
     #If device, LAG Id or lacpFastFlag are not passed, return an error
     if deviceObj is None or lagId is None or lacpFastFlag is None:
         common.lib.LogOutput('error', "Need to pass deviceObj, lagIf and lacpFastFlag to this routing")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        returnCls= lib.returStruct(returnCode=1)
+        return returnJCls
     
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)
