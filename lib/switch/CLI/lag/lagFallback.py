@@ -24,16 +24,16 @@ def lagFallback(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    fallbackFlag = kwargs.get('fallbackFlag', None)
+    fallbackFlag = kwargs.get('fallbackFlag', True)
     
     #Variables
     overallBuffer = []
     
     #If deviceObj, lagId or fallbackFlag are not passed, we need to throw an error
-    if deviceObj is None or lagId is None or fallbackFlag is None:
-        common.lib.LogOutput('error', "Need to pass deviceObj, lagId and fallbackFlag to use this routine")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+    if deviceObj is None or lagId is None:
+        common.lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
     
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)

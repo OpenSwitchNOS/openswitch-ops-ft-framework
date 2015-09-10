@@ -24,16 +24,16 @@ def lagHash(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    hashType = kwargs.get('hashType', None)
+    hashType = kwargs.get('hashType', 'l3-src-dst')
     
     #Variables
     overallBuffer = []
     
     #If deviceObj, lagId, hashType are not present, display an error
-    if deviceObj is None or lagId is None or hashType is None:
-        common.lib.LogOutput('error', "Need to pass device to configure")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+    if deviceObj is None or lagId is None:
+        common.lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
     
     #If hashType is different from l2-src-dst and l3-src-dst throw an error
     if hashType != 'l2-src-dst' and hashType != 'l3-src-dst':

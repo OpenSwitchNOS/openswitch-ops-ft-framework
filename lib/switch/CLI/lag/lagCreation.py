@@ -24,15 +24,15 @@ def lagCreation(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    configFlag = kggMode = kwargs.get('configFlag', None)
+    configFlag = kggMode = kwargs.get('configFlag', True)
     
     #Variables
     overallBuffer = []
     
     #If deviceObj, lagId or configFlag are not present, throw an error
-    if deviceObj is None or lagId is None or configFlag is None:
-        lib.LogOutput('error', "Need to pass deviceObj, lagId and configFlag to use this routine")
-        rreturnCls = lib.returnStruct(returnCode=1)
+    if deviceObj is None or lagId is None:
+        lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls = lib.returnStruct(returnCode=1)
         return returnCls
     
     # Get into vtyshelll
