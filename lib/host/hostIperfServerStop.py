@@ -23,7 +23,7 @@ import pexpect
 import time
 import re
 
-def ServerStop(** kwargs):
+def hostIperfServerStop(** kwargs):
     #Params
     deviceObj = kwargs.get('deviceObj', None)
     

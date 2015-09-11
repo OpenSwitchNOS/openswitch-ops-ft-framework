@@ -20,7 +20,7 @@ import lib
 import pexpect
 import time
 
-def ClientStart(** kwargs):
+def hostIperfClientStart(** kwargs):
     #Params
     deviceObj = kwargs.get('deviceObj', None)
     port = kwargs.get('port', 5001)
@@ -35,9 +35,9 @@ def ClientStart(** kwargs):
         returnStruct = lib.returnStruct(returnCode=1)
         return returnStruct
     
-    command = 'iperf -c ' + serverIP + ' -p ' + port
-    command = ' -i ' + interval
-    command = ' -t' + time 
+    command = 'iperf -c ' + str(serverIP) + ' -p ' + str(port)
+    command = ' -i ' + str(interval)
+    command = ' -t' + str(time)
     if protocol == 'UDP':
         command = command + ' -u'
 
