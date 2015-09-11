@@ -55,19 +55,32 @@ class testEnviron ():
         
     def envSetup(self):
         # Command line argument parser
-        parser = argparse.ArgumentParser(description='OpenHalon environment test shell')
+        #parser = argparse.ArgumentParser(description='OpenHalon environment test shell')
         #parser.add_argument('--testCase', help="testcase name to run", required=True, dest='testCaseName')
-        parser.add_argument('--physicalTopology', help="physical topology filename", required=False, dest='phystopo', default=None)
-        parser.add_argument('--targetBuild', help="List of logical DUTs and coorsponding builds to provision", required=False, dest='targetBuild', default=None)
-        parser.add_argument('--resultDir', help="Result directory for the test case to put results in", required=False, dest='resultDir', default=None)
-        parser.add_argument('--junitxml', help="Result directory for the test case to put results in", required=False, dest='junit', default=None)
-        parser.add_argument('-s', help="pytest option", required=False, dest='ptest', default=None)
-        args = parser.parse_args()
-        self.rsvnId = 'virtual'
-        self.targetBuild = args.targetBuild
-        self.resultDir = args.resultDir
-        
-        
+        #parser.add_argument('--physicalTopology', help="physical topology filename", required=False, dest='phystopo', default=None)
+        #parser.add_argument('--targetBuild', help="List of logical DUTs and coorsponding builds to provision", required=False, dest='targetBuild', default=None)
+        #parser.add_argument('--resultDir', help="Result directory for the test case to put results in", required=False, dest='resultDir', default=None)
+        #parser.add_argument('--junitxml', help="Result directory for the test case to put results in", required=False, dest='junit', default=None)
+        #parser.add_argument('-s', help="pytest option", required=False, dest='ptest', default=None)
+        #args = parser.parse_args()
+        envRsvnId = os.environ.get('RSVNID', None)
+        if envRsvnId is not None:
+            self.rsvnId = envRsvnId
+        else:
+            self.rsvnId = 'virtual'
+
+        envTargetBuild = os.environ.get('TARGETBUILD', None)
+        if envTargetBuild is not None:
+            self.targetBuild = envTargetBuild
+        #else:
+        #    self.targetBuild = args.targetBuild
+
+        envResultDir = os.environ.get('RESULTDIR', None)
+        if envResultDir is not None:
+            self.resultDir = envResultDir
+        else:
+            self.resultDir = None
+
         pythonPathString = ""
         fwbase = os.environ['FT_FRAMEWORK_BASE']
         sys.path.append(fwbase)
@@ -109,7 +122,7 @@ class testEnviron ():
         #    code = compile(f.read(), masterImport, 'exec')
         #    exec(code)
         
-        if args.resultDir is None:
+        if self.resultDir is None:
             # Means we need to create the results structure
             currentDir = GetCurrentDirectory()
             ts = time.time()
@@ -132,7 +145,7 @@ class testEnviron ():
             self.ResultsDirectory['rtlDir'] = baseResultsDir + "/" + timeStamp + "/RTL/."
             #headers.ResultsDirectory['rtlDir'] = baseResultsDir + "/" + timeStamp + "/RTL/."
         else:
-            baseResultsDir = args.resultDir
+            baseResultsDir = self.resultDir
             self.ResultsDirectory['resultsDir'] = baseResultsDir + "/"
             gbldata.ResultsDirectory = baseResultsDir + "/"
             # HEADERS PULLBACK
@@ -147,29 +160,12 @@ class testEnviron ():
         #self.ResultsDirectory['testcaseName'] = testCaseName
         
         retCode = ChangeDirectory(baseResultsDir)
-        if retCode['returnCode'] == 0 :
-            #if args.resultDir is None:
+        if retCode['returnCode'] == 0  and self.resultDir is None:
+            #if self.resultDir is None:
             #time.sleep(1)
             retCode = CreateDirectory(self.ResultsDirectory['resultsDir'])
             
-        #Nowsettle on topology
-        if args.phystopo is None:
-            # Check to see if we have an RSVNID variable
-            envKeys = os.environ.keys()
-            for curKey in envKeys:
-                if curKey == "RSVNID":
-                    tmpRsvn = os.environ['RSVNID']
-                    if str.isdigit(tmpRsvn):
-                        LogOutput('info', "Detected RSVNID in environment")
-                        self.rsvnId = tmpRsvn
-                        #break
-                #Get the image to be uploaded on the targets from the environment
-                if curKey == "targetBuild" :
-                    LogOutput('info', "Detected provisioning flag in the environment (targetBuild)")
-                    self.targetBuild = os.environ['targetBuild']
-                    #break
-        else:
-            self.rsvnId = args.phystopo
+       
         
         if retCode['returnCode'] == 0:
             # Create RTL directory
@@ -196,10 +192,28 @@ class testEnviron ():
             LogOutput('error', "Result Directory structure not created . Exiting")
             exit(1)
         
+         #Nowsettle on topology
+        if self.rsvnId is "virtual":
+            # Check to see if we have an RSVNID variable
+            envKeys = os.environ.keys()
+            for curKey in envKeys:
+                if curKey == "RSVNID":
+                    tmpRsvn = os.environ['RSVNID']
+                    if str.isdigit(tmpRsvn):
+                        LogOutput('info', "Detected RSVNID in environment")
+                        self.rsvnId = tmpRsvn
+                        #break
+                #Get the image to be uploaded on the targets from the environment
+                if curKey == "targetBuild" :
+                    LogOutput('info', "Detected provisioning flag in the environment (targetBuild)")
+                    self.targetBuild = os.environ['targetBuild']
+                    #break
+        #else:
+        #    self.rsvnId = args.phystopo
         # Header printblock
         LogOutput('info', "", datastamp=True)
         #LogOutput('info' , "Test Case is: " + args.testCaseName)
-        LogOutput('info' , "Physical Topology is: " + self.rsvnId)
+        LogOutput('info' , "Physical Topology is: " + str(self.rsvnId))
         
         # Read in the Topology
         if self.rsvnId == "virtual":

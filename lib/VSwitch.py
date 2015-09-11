@@ -307,7 +307,7 @@ class VSwitch ( Device ):
         command = "echo $?"
         buffer = ""
         self.expectHndl.send(command)
-        self.expectHndl.send('\r\n')
+        self.expectHndl.send('\r')
 
         index = self.expectHndl.expect(['root@\S+:.*#\s*$','bash-\d+.\d+#\s*$'], timeout=200)
         if index == 0 or index == 1:
@@ -317,7 +317,7 @@ class VSwitch ( Device ):
             LogOutput('error', "Received timeout in switch.ErrorCheck")
             retStruct['returnCode'] = 1
             return retStruct
-
+        self.expectHndl.expect(['$'], timeout=1)
 
         bufferSplit = buffer.split("\n")
         for curLine in bufferSplit:

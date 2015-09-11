@@ -217,22 +217,24 @@ class VHost ( Device ):
                 lib.LogOutput('error', "command timeout")
                 returnCode = 1
             else :
-                tmpBuffer = self.expectHndl.before
+                connectionBuffer.append(self.expectHndl.before)
+                #tmpBuffer = self.expectHndl.before
                 # Pull out the \r\n of the buffer
-                tmpBuffer = re.sub('\r\r\n', '', tmpBuffer)
-                print "tmpbuffer = " + tmpBuffer
+                #tmpBuffer = re.sub('\r\r\n', '', tmpBuffer)
+                #print "tmpbuffer = " + tmpBuffer
 
-                if tmpBuffer != command:
-                    connectionBuffer.append(self.expectHndl.before)
+                #if tmpBuffer != command:
+                #    connectionBuffer.append(self.expectHndl.before)
 
         connectionBuffer.append(self.expectHndl.after)
-        self.expectHndl.expect(['$'], timeout=1)
+        self.expectHndl.expect(['$'], timeout=3)
         santString = ""
         for curLine in connectionBuffer:#
             santString += str(curLine)
 
         returnCode = 0
         if errorCheck is True and returnCode == 0:
+            time.sleep(1)
             errorCheckRetStruct = self.ErrorCheck(buffer=santString)
             returnCode = errorCheckRetStruct['returnCode']
         # Dump the buffer the the debug log
@@ -257,7 +259,7 @@ class VHost ( Device ):
         command = "echo $?"
         buffer = ""
         self.expectHndl.send(command)
-        self.expectHndl.send('\r\n')
+        self.expectHndl.send('\r')
         #time.sleep(1)
         #index = self.expectHndl.expect(['root@\S+.*#'], timeout=200)
         index = self.expectHndl.expect(['\[root@.*\]#',
@@ -271,8 +273,9 @@ class VHost ( Device ):
         else:
             lib.LogOutput('error', "Received timeout in ErrorCheck " + str(index))
             retStruct['returnCode'] = 1
+            self.expectHndl.expect(['$'], timeout=1)
             return retStruct
-
+        self.expectHndl.expect(['$'], timeout=1)
 
         bufferSplit = buffer.split("\n")
         for curLine in bufferSplit:
