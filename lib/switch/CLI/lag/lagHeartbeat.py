@@ -24,16 +24,17 @@ def lagHeartbeat(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    lacpFastFlag = kwargs.get('lacpFastFlag', None)
+    lacpFastFlag = kwargs.get('lacpFastFlag', True)
     
     #Variables
     overallBuffer = []
+    finalReturnCode = 0
     
     #If device, LAG Id or lacpFastFlag are not passed, return an error
     if deviceObj is None or lagId is None or lacpFastFlag is None:
-        common.lib.LogOutput('error', "Need to pass deviceObj, lagIf and lacpFastFlag to this routing")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+        common.lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls= lib.returStruct(returnCode=1)
+        return returnJCls
     
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)
@@ -60,11 +61,11 @@ def lagHeartbeat(**kwargs):
         return returnCls
     
     #enter LAG configuration context
-    command = "interface lag %s\r" % str(lagId)
+    command = "interface lag %s" % str(lagId)
     returnDevInt = deviceObj.DeviceInteract(command=command)
-    retCode = returnDevInt['returnCode']
+    returnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
-    if retCode != 0:
+    if returnCode != 0:
         lib.LogOutput('error', "Failed to create LAG " + str(lagId) + " on device " + deviceObj.device)
     else:
         lib.LogOutput('debug', "Created LAG " + str(lagId) + " on device " + deviceObj.device)
@@ -74,20 +75,15 @@ def lagHeartbeat(**kwargs):
     command = ""
     if lacpFastFlag is False:
         command = "no "
-    command += "lacp rate fast\r"
-    returnDevInt = deviceObj.DeviceInteract(command=command)
-    retCode = returnDevInt['returnCode']
+    command += "lacp rate fast"
+    finalReturnCode = deviceObj.DeviceInteract(command=command)
+    returnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
-    if retCode != 0:
+    if finalReturnCode != 0:
         if lacpFastFlag is True:
             lib.LogOutput('error', "Failed to configure LACP fast heartbeat on interface lag " + str(lagId) + " on device " + deviceObj.device)
         else:
             lib.LogOutput('error', "Failed to configure LACP slow heartbeat on interface lag " + str(lagId) + " on device " + deviceObj.device)
-        bufferString = ""
-        for curLine in overallBuffer:
-            bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=retCode, buffer=bufferString)
-        return returnCls
     else:
         if lacpFastFlag is True:
             lib.LogOutput('debug', "Configured LACP fast heartbeat on interface lag " + str(lagId) + " on device " + deviceObj.device)
@@ -95,13 +91,17 @@ def lagHeartbeat(**kwargs):
             lib.LogOutput('debug', "Configure LACP slow heartbeat on interface lag " + str(lagId) + " on device " + deviceObj.device)
         
     #exit LAG configuration context
-    command = "exit\r"
+    command = "exit"
     returnDevInt = deviceObj.DeviceInteract(command=command)
-    retCode = returnDevInt['returnCode']
+    returnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
-    if retCode != 0:
+    if returnCode != 0:
         lib.LogOutput('error', "Failed to exit LAG " + str(lagId) + " configuration context")
-        
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
+        return returnCls
     
     # Get out of  config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
@@ -112,24 +112,24 @@ def lagHeartbeat(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
     
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
-    retCode = returnStructure.returnCode()
+    returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
-    if retCode != 0:
+    if returnCode != 0:
         lib.LogOutput('error', "Failed to exit vty shell")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     #Compile information to return
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    returnCls = lib.returnStruct(returnCode=finalReturnCode, buffer=bufferString)
     return returnCls

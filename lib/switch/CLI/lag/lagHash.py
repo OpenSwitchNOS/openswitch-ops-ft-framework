@@ -24,16 +24,17 @@ def lagHash(**kwargs):
     #Params
     lagId = kwargs.get('lagId', None)
     deviceObj = kwargs.get('deviceObj', None)
-    hashType = kwargs.get('hashType', None)
+    hashType = kwargs.get('hashType', 'l3-src-dst')
     
     #Variables
     overallBuffer = []
+    finalReturnCode = 0
     
     #If deviceObj, lagId, hashType are not present, display an error
-    if deviceObj is None or lagId is None or hashType is None:
-        common.lib.LogOutput('error', "Need to pass device to configure")
-        returnJson = common.ReturnJSONCreate(returnCode=1)
-        return returnJson
+    if deviceObj is None or lagId is None:
+        common.lib.LogOutput('error', "Need to pass deviceObj and lagId to use this routine")
+        returnCls = lib.returnStruct(returnCode=1)
+        return returnCls
     
     #If hashType is different from l2-src-dst and l3-src-dst throw an error
     if hashType != 'l2-src-dst' and hashType != 'l3-src-dst':
@@ -66,53 +67,41 @@ def lagHash(**kwargs):
         return returnCls
     
     #enter LAG configuration context
-    command = "interface lag %s\r" % str(lagId)
+    command = "interface lag %s" % str(lagId)
     returnDevInt = deviceObj.DeviceInteract(command=command)
-    retCode = returnDevInt['returnCode']
+    returnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
-    if retCode != 0:
+    if returnCode != 0:
         lib.LogOutput('error', "Failed to create LAG " + str(lagId) + " on device " + deviceObj.device)
     else:
         lib.LogOutput('debug', "Created LAG " + str(lagId) + " on device " + deviceObj.device)
-     
+    
+     #Generate command to query switch
     if hashType == 'l2-src-dst':
         command = "hash l2-src-dst"
-        returnDevInt = deviceObj.DeviceInteract(command=command)
-        retCode = returnDevInt['returnCode']
-        overallBuffer.append(returnDevInt['buffer'])
-        if retCode != 0:
-            lib.LogOutput('error', "Failed to configure l2-src-dst hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
-            bufferString = ""
-            for curLine in overallBuffer:
-                bufferString += str(curLine)
-            returnCls = lib.returnStruct(returnCode=retCode, buffer=bufferString)
-            return returnCls
-        else:
-            lib.LogOutput('debug', "Configured l2-src-dst hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
     else:
-        if hashType == 'l3-src-dst':
-            command = "no hash l2-src-dst"
-            returnDevInt = deviceObj.DeviceInteract(command=command)
-            retCode = returnDevInt['returnCode']
-            overallBuffer.append(returnDevInt['buffer'])
-            if retCode != 0:
-                lib.LogOutput('error', "Failed to configure l3-src-dst hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
-                bufferString = ""
-                for curLine in overallBuffer:
-                    bufferString += str(curLine)
-                returnCls = lib.returnStruct(returnCode=retCode, buffer=bufferString)
-                return returnCls
-            else:
-                lib.LogOutput('debug', "Configured l3-src-dst hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
+        command = "hash l2-src-dst"
+     
+    finalReturnCode = deviceObj.DeviceInteract(command=command)
+    finalReturnCode = returnDevInt['returnCode']
+    overallBuffer.append(returnDevInt['buffer'])
+    if finalReturnCode != 0:
+        lib.LogOutput('error', "Failed to configure " + hashType + " hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
+    else:
+        lib.LogOutput('debug', "Configured l2-src-dst hashing on interface lag " + str(lagId) + " on device " + deviceObj.device)
         
     #exit LAG configuration context
-    command = "exit\r"
+    command = "exit"
     returnDevInt = deviceObj.DeviceInteract(command=command)
-    retCode = returnDevInt['returnCode']
+    returnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
-    if retCode != 0:
+    if returnCode != 0:
         lib.LogOutput('error', "Failed to exit LAG " + str(lagId) + " configuration context")
-        
+        bufferString = ""
+        for curLine in overallBuffer:
+            bufferString += str(curLine)
+        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        return returnCls
     
     # Get out of  config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
@@ -123,24 +112,24 @@ def lagHash(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
     
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
-    retCode = returnStructure.returnCode()
+    returnCode = returnStructure.returnCode()
     overallBuffer.append(returnStructure.buffer())
-    if retCode != 0:
+    if returnCode != 0:
         lib.LogOutput('error', "Failed to exit vty shell")
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = lib.returnStruct(returnCode=1, buffer=bufferString)
+        returnCls = lib.returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     #Compile information to return
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = lib.returnStruct(returnCode=0, buffer=bufferString)
+    returnCls = lib.returnStruct(returnCode=finalReturnCode, buffer=bufferString)
     return returnCls
