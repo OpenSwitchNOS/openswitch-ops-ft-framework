@@ -12,7 +12,11 @@
 #
 # Returns:     JSON structure
 #              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
+#              data: {"localPort":{"lagId","systemId","portId","key","activeFlag","shortTimeFlag","collectingFlag","stateExpiredFlag","passiveFlag",
+#                                  "longTimeOutFlag","distributingFlag","aggregableFlag","inSyncFlag","neighborStateFlag","individualFlag","outSyncFlag"},
+#                     "remotePort":{"lagId","systemId","portId","key","activeFlag","shortTimeFlag","collectingFlag","stateExpiredFlag","passiveFlag",
+#                                   "longTimeOutFlag","distributingFlag","aggregableFlag","inSyncFlag","neighborStateFlag","individualFlag","outSyncFlag"}
+#                    }
 #
 ##PROC-###################################################################################
 
@@ -94,16 +98,16 @@ def InterfaceLagShow(** kwargs):
     data['remotePort'] = []
     localPort = dict()
     remotePort = dict()
-    index = 0
+    
     for curLine in bufferSplit:
-        # Jalando los System id
+        # Search System id
 
 
 
         lagIdLine = re.match("Aggregate-name\s* :\s*lag(\w*)",curLine)
         if lagIdLine:
             curLocalLagId = lagIdLine.group(1)
-            curRemoteLagId = lagIdLine.group(2)
+            curRemoteLagId = lagIdLine.group(1)
             localPort['lagId'] = curLocalLagId
             remotePort['lagId'] = curRemoteLagId
 
