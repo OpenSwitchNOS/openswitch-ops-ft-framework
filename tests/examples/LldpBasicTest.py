@@ -14,7 +14,7 @@ tcInstance.defineStep(stepDesc="Show LLDP neighbor detail")
 
 # Step 1 - connect to the first Switch
 tcInstance.startStep()
-dut01_conn = switch.Connect(headers.topo['dut01'])
+dut01_conn = opstestfw.switch.Connect(headers.topo['dut01'])
 if dut01_conn == None:
    # Means we had an issue in the connect logic
    LogOutput('error', "Failed to connect to device " + headers.topo['dut01'])
@@ -23,7 +23,7 @@ tcInstance.endStep()
 
 #Step 2 - Show LLDP neighbor
 tcInstance.startStep()
-returnJsonStruct = switch.CLI.ShowLldpNeighborInfo(connection = dut01_conn,port=2)
+returnJsonStruct = opstestfw.switch.CLI.ShowLldpNeighborInfo(connection = dut01_conn,port=2)
 Neighbor_Ch = ReturnJSONGetData(json=returnJsonStruct,dataElement="Neighbor_Info")
 returnCode = ReturnJSONGetCode(json=returnJsonStruct)
 #Insert the logical steps to evaluate the keys obtained from libraries

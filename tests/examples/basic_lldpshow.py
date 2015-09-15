@@ -1,11 +1,11 @@
 
-import switch
-import switch.CLI.lldp
-#from switch.CLI.lldp import *
-from lib import testEnviron
-from lib import LogOutput
+import opstestfw.switch
+import opstestfw.opstestfw.switch.CLI.lldp
+#from opstestfw.switch.CLI.lldp import *
+from opstestfw import testEnviron
+from opstestfw import LogOutput
 
-#import switch
+#import opstestfw.switch
 topoDict = {"topoExecution": 3000,
             "topoTarget": "dut01 dut02",
             "topoDevices": "dut01 dut02",
@@ -24,14 +24,14 @@ topoObj = testObj.topoObjGet()
 dut01Obj = topoObj.deviceObjGet(device="dut01")
 dut02Obj = topoObj.deviceObjGet(device="dut02")
 
-retStruct = switch.CLI.lldp.ShowLldpNeighborInfo(deviceObj=dut01Obj)
+retStruct = opstestfw.switch.CLI.lldp.ShowLldpNeighborInfo(deviceObj=dut01Obj)
 retCode = retStruct.returnCode()
 #print retStruct
 LogOutput('info', "The struct \n" + str(retStruct.retValueString()))
 if retCode != 0:
     LogOutput('error', "Unable get get LLDP information from switch")
 # This will get you the dictionary back from portstats.  This is indexed by port number
-retStruct = switch.CLI.lldp.ShowLldpNeighborInfo(deviceObj=dut01Obj, port=dut01Obj.linkPortMapping['lnk01'])
+retStruct = opstestfw.switch.CLI.lldp.ShowLldpNeighborInfo(deviceObj=dut01Obj, port=dut01Obj.linkPortMapping['lnk01'])
 #LogOutput('info', retStruct.retValueString)
 retCode = retStruct.returnCode()
 if retCode != 0:

@@ -1,10 +1,10 @@
 #from common import *
-import switch
+import opstestfw.switch
 #import pytest
-from switch.CLI import *
-from switch.CLI.lldp import *
-from switch.CLI.interface import *
-from lib import *
+from opstestfw.switch.CLI import *
+from opstestfw.switch.CLI.lldp import *
+from opstestfw.switch.CLI.interface import *
+from opstestfw import *
 
 topoDict = {"topoExecution": 3000,
             "topoDevices": "dut01 wrkston01 wrkston02",

@@ -24,7 +24,7 @@ LogOutput('info', '########################################')
 LogOutput('info', 'Connecting to switch via console'
                  + switchName)
 LogOutput('info', '########################################')
-switchConsoleConn = switch.Connect(switchName)
+switchConsoleConn = opstestfw.switch.Connect(switchName)
 if switchConsoleConn is None:
     LogOutput('error', 'Failed to connect to switch console'
                      + switchName)
@@ -47,7 +47,7 @@ netMask = 24
 
 command = 'ip addr add %s/%d dev eth0' % (mgmtIpAddress, netMask)
 
-retStruct = switch.DeviceInteract(connection=switchConsoleConn,
+retStruct = opstestfw.switch.DeviceInteract(connection=switchConsoleConn,
                                   command=command)
 
 if retStruct['returnCode']:
@@ -90,7 +90,7 @@ for i in range(0, 3):
     LogOutput('info', 'Connecting to host ' + hName)
     LogOutput('info', '########################################')
     if i == 0:
-        hostTelnetSessionForSwitchVtyshShell = host.Connect(hName)
+        hostTelnetSessionForSwitchVtyshShell = opstestfw.host.Connect(hName)
         if hostTelnetSessionForSwitchVtyshShell is None:
             LogOutput('error',
                              'Failed to connect to host for switch vtysh shell'
@@ -98,14 +98,14 @@ for i in range(0, 3):
             exit(1)
     elif i == 1:
         hostTelnetSessionForSwitchBroadcomDriverShell = \
-            host.Connect(hName)
+            opstestfw.host.Connect(hName)
         if hostTelnetSessionForSwitchBroadcomDriverShell is None:
             LogOutput('error',
                              'Failed to connect to host for switch broadcom driver shell'
                               + hName)
             exit(1)
     elif i == 2:
-        hostTelnetSessionForSwitchBashShell = host.Connect(hName)
+        hostTelnetSessionForSwitchBashShell = opstestfw.host.Connect(hName)
         if hostTelnetSessionForSwitchBashShell is None:
             LogOutput('error',
                              'Failed to connect to host for switch bash shell'
@@ -116,7 +116,7 @@ for i in range(0, 3):
 
 ipAddr = '20.20.20.2'
 LogOutput('info', 'Configuring host IP' + hName)
-retStruct = host.NetworkConfig(
+retStruct = opstestfw.host.NetworkConfig(
     connection=hostTelnetSessionForSwitchBashShell,
     eth='eth1',
     ipAddr=ipAddr,
@@ -146,7 +146,7 @@ for i in range(0, 3):
     LogOutput('info', '########################################')
 
     if i == 0:
-        result = host.DeviceConnect(switchName,
+        result = opstestfw.host.DeviceConnect(switchName,
                                     hostConnHandle=hostTelnetSessionForSwitchVtyshShell,
                                     mgmtIpAddress=mgmtIpAddress)
         if result is None:
@@ -156,7 +156,7 @@ for i in range(0, 3):
             continue
         LogOutput('info', 'Get to vtysh shell ' + switchName)
         retStruct = \
-            switch.CLI.VtyshShell(connection=hostTelnetSessionForSwitchVtyshShell)
+            opstestfw.switch.CLI.VtyshShell(connection=hostTelnetSessionForSwitchVtyshShell)
         retCode = ReturnJSONGetCode(json=retStruct)
         if retCode != 0:
             LogOutput('error', 'Failed to get vtysh shell '
@@ -168,7 +168,7 @@ for i in range(0, 3):
             print data
     elif i == 1:
 
-        result = host.DeviceConnect(switchName,
+        result = opstestfw.host.DeviceConnect(switchName,
                                     hostConnHandle=hostTelnetSessionForSwitchBroadcomDriverShell,
                                     mgmtIpAddress=mgmtIpAddress)
         if result is None:
@@ -178,7 +178,7 @@ for i in range(0, 3):
             continue
         LogOutput('info', 'Get to broadcom shell ' + switchName)
         retStruct = \
-            switch.CLI.BroadcomShell(connection=hostTelnetSessionForSwitchBroadcomDriverShell)
+            opstestfw.switch.CLI.BroadcomShell(connection=hostTelnetSessionForSwitchBroadcomDriverShell)
         retCode = ReturnJSONGetCode(json=retStruct)
         if retCode != 0:
             LogOutput('error', 'Failed to get broadcom shell '
@@ -194,7 +194,7 @@ for i in range(0, 3):
         LogOutput('info', 'Execute LS cmd on  broadcom shell '
                          + switchName)
         retStruct = \
-            switch.CLI.BroadcomShell(connection=hostTelnetSessionForSwitchBroadcomDriverShell,
+            opstestfw.switch.CLI.BroadcomShell(connection=hostTelnetSessionForSwitchBroadcomDriverShell,
                 configOption='execute', cmd=command)
         retCode = ReturnJSONGetCode(json=retStruct)
         if retCode != 0:
@@ -209,7 +209,7 @@ for i in range(0, 3):
     else:
 
         command = 'pwd'
-        result = host.DeviceConnect(switchName,
+        result = opstestfw.host.DeviceConnect(switchName,
                                     hostConnHandle=hostTelnetSessionForSwitchBashShell,
                                     mgmtIpAddress=mgmtIpAddress)
         if result is None:
@@ -221,7 +221,7 @@ for i in range(0, 3):
                          'Get to bash shell and executing bash command pwd '
                           + switchName)
         retStruct = \
-            switch.DeviceInteract(connection=hostTelnetSessionForSwitchBashShell,
+            opstestfw.switch.DeviceInteract(connection=hostTelnetSessionForSwitchBashShell,
                                   command=command)
         print retStruct['buffer']
 
@@ -243,7 +243,7 @@ netMask = 24
 
 command = 'ip addr delete %s/%d dev eth0' % (mgmtIpAddress, netMask)
 
-retStruct = switch.DeviceInteract(connection=switchConsoleConn,
+retStruct = opstestfw.switch.DeviceInteract(connection=switchConsoleConn,
                                   command=command)
 
 if retStruct['returnCode']:

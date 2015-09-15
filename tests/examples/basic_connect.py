@@ -9,28 +9,28 @@ for switchE in switchElement:
     LogOutput('info', "########################################")
     LogOutput('info', "Connecting to switch " + switchName)
     LogOutput('info', "########################################")
-    devConn = switch.Connect(switchName)
+    devConn = opstestfw.switch.Connect(switchName)
     if devConn is None:
         LogOutput('error', "Failed to connect to switch " + switchName)
         continue
 
     # Rebooting switch
     LogOutput('info', "Rebooting switch " + switchName)
-    retStruct = switch.Reboot(connection=devConn)
+    retStruct = opstestfw.switch.Reboot(connection=devConn)
     retCode = retStruct.get('returnCode')
     if retCode != 0:
         LogOutput('error', "Failed to reboot switch " + switchName)
     else:
         LogOutput('info', "Successfully rebooted switch " + switchName)
     # Do vlan create
-    retStruct = switch.OVS.OvsBridgeConfig(connection=devConn, bridge="br0", action='config', ports=[1, 2, 3])
+    retStruct = opstestfw.switch.OVS.OvsBridgeConfig(connection=devConn, bridge="br0", action='config', ports=[1, 2, 3])
 
     vlanList = [1]
-    retStruct = switch.OVS.OvsVlanConfig(connection=devConn, bridge="br0", vlans=vlanList)
+    retStruct = opstestfw.switch.OVS.OvsVlanConfig(connection=devConn, bridge="br0", vlans=vlanList)
 
 
     # OvsShow
-    mystruct = switch.OVS.OvsShow(connection=devConn)
+    mystruct = opstestfw.switch.OVS.OvsShow(connection=devConn)
     retCode = ReturnJSONGetCode(json=mystruct)
     print mystruct
     uuid = ReturnJSONGetData(json=mystruct, dataElement="Open_vSwitch_UUID")

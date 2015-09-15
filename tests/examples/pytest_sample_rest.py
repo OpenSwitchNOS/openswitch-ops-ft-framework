@@ -1,7 +1,7 @@
 import pytest
-from switch.CLI import *
-from switch.CLI.interface import *
-from lib import *
+from opstestfw.switch.CLI import *
+from opstestfw.switch.CLI.interface import *
+from opstestfw import *
 
 topoDict = {"topoExecution": 3000,
             "topoDevices": "dut01 wrkston01",

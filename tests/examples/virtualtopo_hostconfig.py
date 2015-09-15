@@ -25,7 +25,7 @@ dut02Port = ReturnJSONGetData(json=dut02LinkStruct)
 tcInstance.endStep()
 
 tcInstance.startStep()
-dut01_conn = switch.Connect(headers.topo['dut01'])
+dut01_conn = opstestfw.switch.Connect(headers.topo['dut01'])
 if dut01_conn == None:
    # Means we had an issue in the connect logic
    LogOutput('error', "Failed to connect to device " + headers.topo['dut01'])
@@ -33,14 +33,14 @@ if dut01_conn == None:
 
 # Configure bridge on this device
 LogOutput('info', "Rebooting device " + headers.topo['dut01'])
-dut01_conn = switch.Reboot(connection=dut01_conn)
-dut01BridgeRetVal = switch.OVS.OvsBridgeConfig(connection=dut01_conn,ports=dut01Port)
+dut01_conn = opstestfw.switch.Reboot(connection=dut01_conn)
+dut01BridgeRetVal = opstestfw.switch.OVS.OvsBridgeConfig(connection=dut01_conn,ports=dut01Port)
 tcInstance.endStep()
 
 
 # Step 2 - connect to the Second Switch
 tcInstance.startStep()
-wrkston01_conn = host.Connect(headers.topo['wrkston01'])
+wrkston01_conn = opstestfw.host.Connect(headers.topo['wrkston01'])
 # Grab the name of the switch from the eTree
 
 hostElement = XmlGetElementsByTag(headers.TOPOLOGY,
@@ -56,7 +56,7 @@ for hostE in hostElement:
 
 ipAddr = '20.20.20.2'
 LogOutput('info', 'Configuring host IP' + hName)
-retStruct = host.NetworkConfig(
+retStruct = opstestfw.host.NetworkConfig(
         connection=wrkston01_conn,
         eth='eth0',
         ipAddr=ipAddr,
@@ -84,7 +84,7 @@ netMask = 24
 gateway = '20.20.20.5'
 
 LogOutput('info', 'Add ipv4 routes to host %s' % hName)
-retStruct = host.IPRoutesConfig(
+retStruct = opstestfw.host.IPRoutesConfig(
         connection=wrkston01_conn,
         routeOperation='add',
         destNetwork=destNetwork,
@@ -107,7 +107,7 @@ else:
 ipAddr = '20.20.20.2'
 LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
                      hName))
-retStruct = host.DevicePing(connection=wrkston01_conn, ipAddr=ipAddr)
+retStruct = opstestfw.host.DevicePing(connection=wrkston01_conn, ipAddr=ipAddr)
 retCode = retStruct.get('returnCode')
 retBuff = retStruct.get('buffer')
 if retCode:
@@ -117,9 +117,9 @@ else:
     LogOutput('info', 'Succeeded to ping %s from host %s '
                          % (ipAddr, hName))
 
-host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
+opstestfw.host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
 LogOutput('info', 'Delete ipv4 routes to host %s' % hName)
-retStruct = host.IPRoutesConfig(
+retStruct = opstestfw.host.IPRoutesConfig(
         connection=wrkston01_conn,
         routeOperation='delete',
         destNetwork=destNetwork,
@@ -144,7 +144,7 @@ else:
 
 ipAddr = '20.20.20.2'
 LogOutput('info', 'Clearing host IP' + hName)
-retStruct = host.NetworkConfig(
+retStruct = opstestfw.host.NetworkConfig(
         connection=wrkston01_conn,
         eth='eth0',
         ipAddr=ipAddr,
@@ -167,7 +167,7 @@ else:
 
 ipAddr = '2001::1'
 LogOutput('info', 'Configuring host IP' + hName)
-retStruct = host.Network6Config(connection=wrkston01_conn, eth='eth0',
+retStruct = opstestfw.host.Network6Config(connection=wrkston01_conn, eth='eth0',
                                     ipAddr=ipAddr, netMask=64, clear=0)
 retCode = retStruct.get('returnCode')
 retBuff = retStruct.get('buffer')
@@ -183,11 +183,11 @@ else:
 LogOutput('info', 'Get Local link addresses from host %s'
                      % hName)
 interfaceList = \
-        host.GetDirectLocalLinkAddresses(connection=wrkston01_conn, ipv6Flag=1)
+        opstestfw.host.GetDirectLocalLinkAddresses(connection=wrkston01_conn, ipv6Flag=1)
 localLinkAddress = interfaceList[0]['address']
 eth = interfaceList[0]['eth']
 LogOutput('info', 'Add routes to host %s' % hName)
-retStruct = host.IPRoutesConfig(
+retStruct = opstestfw.host.IPRoutesConfig(
         connection=devConn,
         routeOperation='add',
         destNetwork='2002::',
@@ -214,7 +214,7 @@ print retBuff
 ipAddr = '2001::1'
 LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
                      hName))
-retStruct = host.DevicePing(connection=wrkston01_conn, ipAddr=ipAddr,
+retStruct = opstestfw.host.DevicePing(connection=wrkston01_conn, ipAddr=ipAddr,
                                 ipv6Flag=1)
 retCode = retStruct.get('returnCode')
 retBuff = retStruct.get('buffer')
@@ -226,13 +226,13 @@ else:
                          % (ipAddr, hName))
 print retBuff
 
-host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
+opstestfw.host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
 ipAddr = '2001::1'
 
 #   ipAddr = "fe80::250:56ff:febd:e5"
 
 LogOutput('info', 'Configuring host IP' + hName)
-retStruct = host.Network6Config(connection=wrkston01_conn, eth='eth0',
+retStruct = opstestfw.host.Network6Config(connection=wrkston01_conn, eth='eth0',
                                     ipAddr=ipAddr, netMask=64, clear=1)
 retCode = retStruct.get('returnCode')
 retBuff = retStruct.get('buffer')
@@ -245,7 +245,7 @@ else:
                          % (ipAddr, hName))
 '''
 LogOutput('info', 'Delete ipv6 routes to host %s' % hName)
-retStruct = host.IPRoutesConfig(
+retStruct = opstestfw.host.IPRoutesConfig(
         connection=wrkston01_conn,
         routeOperation='delete',
         destNetwork='2002::',
@@ -267,11 +267,11 @@ else:
                          % hName)
 print retBuff
 '''
-host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
+opstestfw.host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
 # if wrkston01_conn == None:
 #    LogOutput('error', "Failed to connect to device " + headers.topo['dut02'])
 #    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
-# dut01BridgeRetVal = switch.OVS.OvsBridgeConfig(connection=dut02_conn,ports=dut02Port)
+# dut01BridgeRetVal = opstestfw.switch.OVS.OvsBridgeConfig(connection=dut02_conn,ports=dut02Port)
 tcInstance.endStep()
 
 tcInstance.startStep()
@@ -289,7 +289,7 @@ Sleep(seconds=25, message="Waiting for switch processes to fully come up")
 tcInstance.startStep()
 # Run a command
 LogOutput('info', "Running an ovs-vsctl show on dut01")
-retStruct = switch.OVS.OvsShow(connection=dut01_conn)
+retStruct = opstestfw.switch.OVS.OvsShow(connection=dut01_conn)
 retCode = ReturnJSONGetCode(json=retStruct)
 if retCode != 0:
    LogOutput('error', "Failed to retrieve ovs-vsctl show output from dut01")
@@ -303,7 +303,7 @@ tcInstance.endStep()
 # Step 4 - ovs-vsctl show on the second switch
 tcInstance.startStep()
 LogOutput('info', "Running ifconfig on wrkston01")
-retStruct = host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
+retStruct = opstestfw.host.DeviceInteract(connection=wrkston01_conn,command="ifconfig")
 retCode = retStruct['returnCode']
 ifconfigBuffer = retStruct['buffer']
 if retCode != 0:

@@ -22,7 +22,7 @@ for hostE in hostElement:
     LogOutput('info', '########################################')
     LogOutput('info', 'Connecting to host ' + hName)
     LogOutput('info', '########################################')
-    devConn = host.Connect(hName)
+    devConn = opstestfw.host.Connect(hName)
     if devConn is None:
         LogOutput('error', 'Failed to connect to host ' + hName)
         continue
@@ -43,7 +43,7 @@ for hostE in hostElement:
 
     ipAddr = '20.20.20.2'
     LogOutput('info', 'Configuring host IP' + hName)
-    retStruct = host.NetworkConfig(
+    retStruct = opstestfw.host.NetworkConfig(
         connection=devConn,
         eth='eth1',
         ipAddr=ipAddr,
@@ -71,7 +71,7 @@ for hostE in hostElement:
     gateway = '20.20.20.5'
 
     LogOutput('info', 'Add ipv4 routes to host %s' % hName)
-    retStruct = host.IPRoutesConfig(
+    retStruct = opstestfw.host.IPRoutesConfig(
         connection=devConn,
         routeOperation='add',
         destNetwork=destNetwork,
@@ -94,7 +94,7 @@ for hostE in hostElement:
     ipAddr = '30.30.30.5'
     LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
                      hName))
-    retStruct = host.DevicePing(connection=devConn, ipAddr=ipAddr)
+    retStruct = opstestfw.host.DevicePing(connection=devConn, ipAddr=ipAddr)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
     if retCode:
@@ -105,7 +105,7 @@ for hostE in hostElement:
                          % (ipAddr, hName))
 
     LogOutput('info', 'Delete ipv4 routes to host %s' % hName)
-    retStruct = host.IPRoutesConfig(
+    retStruct = opstestfw.host.IPRoutesConfig(
         connection=devConn,
         routeOperation='delete',
         destNetwork=destNetwork,
@@ -130,7 +130,7 @@ for hostE in hostElement:
 
     ipAddr = '20.20.20.2'
     LogOutput('info', 'Clearing host IP' + hName)
-    retStruct = host.NetworkConfig(
+    retStruct = opstestfw.host.NetworkConfig(
         connection=devConn,
         eth='eth1',
         ipAddr=ipAddr,
@@ -153,7 +153,7 @@ for hostE in hostElement:
 
     ipAddr = '2001::1'
     LogOutput('info', 'Configuring host IP' + hName)
-    retStruct = host.Network6Config(connection=devConn, eth='eth1',
+    retStruct = opstestfw.host.Network6Config(connection=devConn, eth='eth1',
                                     ipAddr=ipAddr, netMask=64, clear=0)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
@@ -169,11 +169,11 @@ for hostE in hostElement:
     LogOutput('info', 'Get Local link addresses from host %s'
                      % hName)
     interfaceList = \
-        host.GetDirectLocalLinkAddresses(connection=devConn, ipv6Flag=1)
+        opstestfw.host.GetDirectLocalLinkAddresses(connection=devConn, ipv6Flag=1)
     localLinkAddress = interfaceList[0]['address']
     eth = interfaceList[0]['eth']
     LogOutput('info', 'Add routes to host %s' % hName)
-    retStruct = host.IPRoutesConfig(
+    retStruct = opstestfw.host.IPRoutesConfig(
         connection=devConn,
         routeOperation='add',
         destNetwork='2002::',
@@ -200,7 +200,7 @@ for hostE in hostElement:
     ipAddr = '2002::2'
     LogOutput('info', 'Pinging %s from host %s' % (ipAddr,
                      hName))
-    retStruct = host.DevicePing(connection=devConn, ipAddr=ipAddr,
+    retStruct = opstestfw.host.DevicePing(connection=devConn, ipAddr=ipAddr,
                                 ipv6Flag=1)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
@@ -217,7 +217,7 @@ for hostE in hostElement:
 #   ipAddr = "fe80::250:56ff:febd:e5"
 
     LogOutput('info', 'Configuring host IP' + hName)
-    retStruct = host.Network6Config(connection=devConn, eth='eth1',
+    retStruct = opstestfw.host.Network6Config(connection=devConn, eth='eth1',
                                     ipAddr=ipAddr, netMask=64, clear=1)
     retCode = retStruct.get('returnCode')
     retBuff = retStruct.get('buffer')
@@ -230,7 +230,7 @@ for hostE in hostElement:
                          % (ipAddr, hName))
 
     LogOutput('info', 'Delete ipv6 routes to host %s' % hName)
-    retStruct = host.IPRoutesConfig(
+    retStruct = opstestfw.host.IPRoutesConfig(
         connection=devConn,
         routeOperation='delete',
         destNetwork='2002::',

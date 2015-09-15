@@ -34,7 +34,7 @@ numSwitches = len(switchElement)
 for switchE in switchElement:
    switchName = switchE.text
 
-devConn = switch.Connect(switchName)
+devConn = opstestfw.switch.Connect(switchName)
 if devConn is None:
         LogOutput('error', "Failed to connect to switch " + switchName)
         tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
@@ -45,7 +45,7 @@ tcInstance.endStep()
 
 #Step 3: Issue Reboot command to the switch in topology
 tcInstance.startStep()
-retStruct = switch.Reboot(connection=devConn)
+retStruct = opstestfw.switch.Reboot(connection=devConn)
 returnCode = retStruct.get('returnCode')
 if returnCode != 0:
    LogOutput('error', "Failed to reboot switch " + switchName)
@@ -58,7 +58,7 @@ tcInstance.endStep()
 #Step 4: Configure VLAN on the switch
 tcInstance.startStep()
 # Creating OVS Bridge
-retStruct = switch.OVS.OvsBridgeConfig(connection=devConn, bridge="br0", action='config', ports=[1, 2, 3])
+retStruct = opstestfw.switch.OVS.OvsBridgeConfig(connection=devConn, bridge="br0", action='config', ports=[1, 2, 3])
 returnCode = ReturnJSONGetCode(json=retStruct)
 if returnCode != 0:
    LogOutput('error', "Failed to configure OVS bridge " + bridge)
@@ -68,7 +68,7 @@ else:
 
 #Configuring a VLAN
 vlanList = [7]
-retStruct = switch.OVS.OvsVlanConfig(connection=devConn, bridge="br0", vlans=vlanList)
+retStruct = opstestfw.switch.OVS.OvsVlanConfig(connection=devConn, bridge="br0", vlans=vlanList)
 returnCode = ReturnJSONGetCode(json=retStruct)
 if returnCode != 0:
    LogOutput('error', "Failed to configure VLAN on" + bridge)
@@ -80,7 +80,7 @@ tcInstance.endStep()
 
 #Step 5 : OVS Show commands
 tcInstance.startStep()
-mystruct = switch.OVS.OvsShow(connection=devConn)
+mystruct = opstestfw.switch.OVS.OvsShow(connection=devConn)
 retCode = ReturnJSONGetCode(json=mystruct)
 uuid = ReturnJSONGetData(json=mystruct, dataElement="Open_vSwitch_UUID")
 LogOutput('info', "Open VSwitch UUID:" + str(uuid))
@@ -99,7 +99,7 @@ tcInstance.endStep()
 #Step 6: Testcase Cleanup
 tcInstance.startStep()
 
-retStruct = switch.Reboot(connection=devConn)
+retStruct = opstestfw.switch.Reboot(connection=devConn)
 returnCode = retStruct.get('returnCode')
 if returnCode != 0:
    LogOutput('error', "Failed to reboot switch " + switchName)

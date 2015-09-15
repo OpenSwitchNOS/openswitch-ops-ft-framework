@@ -27,7 +27,7 @@ tcInstance.endStep()
 # Step 2 - Connect to the workstation
 tcInstance.startStep()
 LogOutput('info', "##Connecting to host "+ headers.topo['wrkston01'])
-wrkston01Conn = host.Connect(headers.topo['wrkston01'])
+wrkston01Conn = opstestfw.host.Connect(headers.topo['wrkston01'])
 if wrkston01Conn is None :
    LogOutput('error', "Failed to connect to host " + headers.topo['wrkston01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
@@ -46,7 +46,7 @@ tcInstance.endStep()
 #Step 4 Capture LLDP packets
 #Packet Capture
 tcInstance.startStep()
-pktInstance = host.PacketCapture(headers.topo['wrkston01'],"capture.pcap")
+pktInstance = opstestfw.host.PacketCapture(headers.topo['wrkston01'],"capture.pcap")
 #Filter can be passed as an optional argument
 #pktInstance.StartCapture(connection=wrkston01Conn,filter="lldp")
 pktInstance.StartCapture(connection=wrkston01Conn)

@@ -13,11 +13,11 @@ tcInstance.defineStep(stepDesc="Restore stolen link to the device "+ headers.top
 
 switchName = headers.topo['dut01']
 tcInstance.startStep()
-dut01_conn = switch.Connect(headers.topo['dut01'])
+dut01_conn = opstestfw.switch.Connect(headers.topo['dut01'])
 if dut01_conn == None:
    LogOutput('error', "Failed to connect to device " + headers.topo['dut01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
-dut02_conn = switch.Connect(headers.topo['dut02'])
+dut02_conn = opstestfw.switch.Connect(headers.topo['dut02'])
 if dut02_conn == None:
    LogOutput('error', "Failed to connect to device " + headers.topo['dut02'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)

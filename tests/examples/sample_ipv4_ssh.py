@@ -1,13 +1,13 @@
 
-import switch
-#import switch.CLI.lldp
-from switch.CLI import *
-from switch.CLI.lldp import *
-from switch.CLI.interface import *
+import opstestfw.switch
+#import opstestfw.opstestfw.switch.CLI.lldp
+from opstestfw.switch.CLI import *
+from opstestfw.switch.CLI.lldp import *
+from opstestfw.switch.CLI.interface import *
 
-#from switch.CLI.lldp import *
-from lib import testEnviron
-#import switch
+#from opstestfw.switch.CLI.lldp import *
+from opstestfw import testEnviron
+#import opstestfw.switch
 topoDict = {"topoExecution": 3000,
             "topoDevices": "dut01 wrkston01",
             "topoLinks": "lnk01:dut01:wrkston01",

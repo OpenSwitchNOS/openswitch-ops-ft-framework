@@ -1,5 +1,5 @@
 
-from lib import testEnviron
+from opstestfw import testEnviron
 #
 # Topology definition
 topoDict = {"topoType" : "all",

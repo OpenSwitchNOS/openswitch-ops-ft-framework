@@ -25,25 +25,25 @@ dut02Port = ReturnJSONGetData(json=dut02LinkStruct)
 tcInstance.endStep()
 
 tcInstance.startStep()
-dut01_conn = switch.Connect(headers.topo['dut01'])
+dut01_conn = opstestfw.switch.Connect(headers.topo['dut01'])
 if dut01_conn == None:
    # Means we had an issue in the connect logic
    LogOutput('error', "Failed to connect to device " + headers.topo['dut01'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
 
 # Configure bridge on this device
-#dut01_conn = switch.Reboot(connection=dut01_conn)
-dut01BridgeRetVal = switch.OVS.OvsBridgeConfig(connection=dut01_conn,ports=dut01Port)
+#dut01_conn = opstestfw.switch.Reboot(connection=dut01_conn)
+dut01BridgeRetVal = opstestfw.switch.OVS.OvsBridgeConfig(connection=dut01_conn,ports=dut01Port)
 tcInstance.endStep()
 
 
 # Step 2 - connect to the Second Switch
 tcInstance.startStep()
-dut02_conn = switch.Connect(headers.topo['dut02'])
+dut02_conn = opstestfw.switch.Connect(headers.topo['dut02'])
 if dut02_conn == None:
    LogOutput('error', "Failed to connect to device " + headers.topo['dut02'])
    tcInstance.setVerdictAction (TC_STEPVERDICT_FAIL, TC_STEPFAILACTION_EXIT)
-dut01BridgeRetVal = switch.OVS.OvsBridgeConfig(connection=dut02_conn,ports=dut02Port)
+dut01BridgeRetVal = opstestfw.switch.OVS.OvsBridgeConfig(connection=dut02_conn,ports=dut02Port)
 tcInstance.endStep()
 
 tcInstance.startStep()
@@ -61,7 +61,7 @@ Sleep(seconds=25, message="Waiting for switch processes to fully come up")
 tcInstance.startStep()
 # Run a command
 LogOutput('info', "Running an ovs-vsctl show on dut01")
-retStruct = switch.OVS.OvsShow(connection=dut01_conn)
+retStruct = opstestfw.switch.OVS.OvsShow(connection=dut01_conn)
 retCode = ReturnJSONGetCode(json=retStruct)
 if retCode != 0:
    LogOutput('error', "Failed to retrieve ovs-vsctl show output from dut01")
@@ -75,7 +75,7 @@ tcInstance.endStep()
 # Step 4 - ovs-vsctl show on the second switch
 tcInstance.startStep()
 LogOutput('info', "Running an ovs-vsctl show on dut02")
-retStruct = switch.OVS.OvsShow(connection=dut02_conn)
+retStruct = opstestfw.switch.OVS.OvsShow(connection=dut02_conn)
 retCode = ReturnJSONGetCode(json=retStruct)
 if retCode != 0:
    LogOutput('error', "Failed to retrieve ovs-vsctl show output from dut02")

@@ -13,10 +13,10 @@
 
 import pytest
 import common
-import switch
-from switch.CLI.vlan import * 
-from lib import testEnviron
-from lib import *
+import opstestfw.switch
+from opstestfw.switch.CLI.vlan import * 
+from opstestfw import testEnviron
+from opstestfw import *
 # Topology definition
 topoDict = {"topoExecution": 1000,
             "topoTarget": "dut01",
