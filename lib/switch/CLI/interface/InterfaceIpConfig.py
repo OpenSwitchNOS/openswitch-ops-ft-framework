@@ -8,7 +8,7 @@
 # Purpose:     Library function configure IPv4 address on an interface
 #
 # Params:      deviceObj - device object
-#              interface - interface number context
+#              interface - interface number context, "mgmt" configures the management interface on DUT
 #              ipv6flag - default is False (ipv4 default).  set True for IPv6 
 #              addr  - address string for Ipv4 address
 #              mask - subnet mask bits
@@ -109,8 +109,14 @@ def InterfaceIpConfig(**kwargs):
             command += "ip "
         else:
             command += "ipv6 "
-        
-        command += "address "+ str(addr) + "/" + str(mask)
+        if interface == "mgmt":
+            command +=  "static " 
+         
+        if interface != "mgmt" :
+            command += "address "+ str(addr) + "/" + str(mask)
+        else :
+            command += str(addr) + "/" + str(mask)
+
         if secondary is True:
             command += " secondary"
         command += "\r"
