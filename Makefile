@@ -10,6 +10,9 @@ test:
 build: 
 	python setup.py build
 
+bdist_egg: build
+	python setup.py bdist_egg
+    
 install: 
 # some setuptools versions have a bug, need to run install
 # twice to overcome caching issues

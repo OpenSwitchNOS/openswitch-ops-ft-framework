@@ -4,6 +4,7 @@ import sys
 import time
 import datetime
 import json
+import pytest
 from opstestfw import *
 #from common import *
 import inspect
@@ -159,6 +160,7 @@ class testEnviron ():
         #LogOutput('info', sys.path)
         #print sys.path
         #Nowsettle on topology
+        topologyType = str(self.topoDict.get('topoType', None))
         if self.rsvnId is "virtual":
             # Check to see if we have an RSVNID variable
             envKeys = os.environ.keys()
@@ -174,8 +176,26 @@ class testEnviron ():
                     LogOutput('info', "Detected provisioning flag in the environment (targetBuild)")
                     self.targetBuild = os.environ['targetBuild']
                     #break
-        #else:
-        #    self.rsvnId = args.phystopo
+            # Do TopoDict Check to see if this is physical only
+            # If not there, we can run either physical / virtual
+            # if set to physical, then only can run physical
+            # if set to virtual, then only can run virtual
+            if topologyType == "None" or topologyType == "virtual":
+                LogOutput('debug', "Topology validation passed")
+            else:
+                LogOutput('error', "Topology type validation failed.\
+                          Running a physical test virtually")
+                pytest.skip("Topology type validation failed.  Running\
+                            a physical only test virtually")
+        else:
+            if topologyType == "None" or topologyType == "physical":
+                LogOutput('debug', "Topology validation passed")
+            else:
+                LogOutput('error', "Topology type validation failed.\
+                          Running a physical test virtually")
+                pytest.skip("Topology type validation failed.  Running\
+                            a virtual only test physically")
+            #self.rsvnId = args.phystopo
         # Header printblock
         LogOutput('info', "", datastamp=True)
         #LogOutput('info' , "Test Case is: " + args.testCaseName)
