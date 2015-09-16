@@ -36,10 +36,10 @@ def hostIperfClientStart(** kwargs):
         return returnStruct
     
     command = 'iperf -c ' + str(serverIP) + ' -p ' + str(port)
-    command = ' -i ' + str(interval)
-    command = ' -t' + str(time)
+    command += ' -i ' + str(interval)
+    command += ' -t ' + str(time)
     if protocol == 'UDP':
-        command = command + ' -u'
+        command += ' -u'
 
     deviceObj.expectHndl.sendline(command)
     
