@@ -19,7 +19,6 @@ import re
 
 
 def hostIperfClientStop(** kwargs):
-
     """
     Library function to generate traffic using iperf.
 
@@ -44,10 +43,11 @@ def hostIperfClientStop(** kwargs):
         returnStruct = opstestfw.returnStruct(returnCode=1)
         return returnStruct
 
-    deviceObj.expectHndl.expect(['\$', pexpect.TIMEOUT], timeout=1)
+    deviceObj.expectHndl.expect(['# ', pexpect.TIMEOUT], timeout=1)
 
-    ips_and_ports = re.search('local (.*) port (\d+) connected with (.*) port (\d+)',
-                              deviceObj.expectHndl.before)
+    ips_and_ports = re.search(
+        'local (.*) port (\d+) connected with (.*) port (\d+)',
+        deviceObj.expectHndl.before)
 
     traffic_data = re.findall('sec  ([.\d]+ .*?)  ([.\d]+ .+)\r',
                               deviceObj.expectHndl.before)

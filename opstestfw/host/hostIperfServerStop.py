@@ -20,7 +20,6 @@ import re
 
 
 def hostIperfServerStop(** kwargs):
-
     """
     Library function to process information from traffic received using iperf.
 
@@ -45,13 +44,14 @@ def hostIperfServerStop(** kwargs):
         returnJson = opstestfw.returnStruct(returnCode=1)
         return returnJson
 
-    deviceObj.expectHndl.expect(['\$', pexpect.TIMEOUT], timeout=1)
+    deviceObj.expectHndl.expect(['# ', pexpect.TIMEOUT], timeout=1)
 
-    ips_and_ports = re.search('local (.*) port (\d+) connected with (.*) port (\d+)',
-                              deviceObj.expectHndl.before)
+    ips_and_ports = re.search(
+        'local (.*) port (\d+) connected with (.*) port (\d+)',
+        deviceObj.expectHndl.before)
 
-    traffic_data = re.findall('sec  ([.\d]+ .*?)  ([.\d]+ .+)\r',
-                              deviceObj.expectHndl.before)
+    traffic_data = re.findall(
+        'sec  ([.\d]+ .*?)  ([.\d]+ .+)\r', deviceObj.expectHndl.before)
 
     # If client fails result is None and returnList == []
 
