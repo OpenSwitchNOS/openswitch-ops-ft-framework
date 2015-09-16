@@ -1,11 +1,12 @@
-#########################################################################################
+##########################################################################
 # Name:        opstestfw.host.hostIperfClientStop
 #
 # Namespace:   host
 #
-# Author:      Diego Hurtado 
+# Author:      Diego Hurtado
 #
-# Purpose:     Library function to stop and collect data after transmitting traffic using iperf
+# Purpose:     Library function to stop and collect data after transmitting
+#              traffic using iperf
 #
 # Params:         deviceObj - Workstation identifier
 #
@@ -16,28 +17,31 @@
 #                               'Server IP': Server IP address
 #                               'Server port': Server port
 #                   buffer: - Raw output
-##PROC-###################################################################################
+##PROC-###################################################################
 
 import opstestfw
 import pexpect
-import time
 import re
 
+
 def hostIperfClientStop(** kwargs):
-    #Params
+    # Params
     deviceObj = kwargs.get('deviceObj', None)
-    
-    #If device is not passed, we need error message
+
+    # If device is not passed, we need error message
     if deviceObj is None:
         opstestfw.LogOutput('error', "Need to pass device to configure")
         returnStruct = opstestfw.returnStruct(returnCode=1)
         return returnStruct
-    
+
     deviceObj.expectHndl.expect(['\$', pexpect.TIMEOUT], timeout=1)
 
-    ips_and_ports = re.search('local (.*) port (\d+) connected with (.*) port (\d+)', deviceObj.expectHndl.before)
+    ips_and_ports = re.search(
+        'local (.*) port (\d+) connected with (.*) port (\d+)',
+        deviceObj.expectHndl.before)
 
-    traffic_data = re.findall('sec  ([.\d]+ .*?)  ([.\d]+ .+)\r', deviceObj.expectHndl.before)
+    traffic_data = re.findall(
+        'sec  ([.\d]+ .*?)  ([.\d]+ .+)\r', deviceObj.expectHndl.before)
 
     # If client fails result is None and returnList == []
 
@@ -64,6 +68,7 @@ def hostIperfClientStop(** kwargs):
     deviceObj.expectHndl.send(command)
     deviceObj.expectHndl.expect('#')
 
-    #Compile information to return
-    returnCls = opstestfw.returnStruct(returnCode=0, buffer=deviceObj.expectHndl.before, data=data_dict)
+    # Compile information to return
+    returnCls = opstestfw.returnStruct(
+        returnCode=0, buffer=deviceObj.expectHndl.before, data=data_dict)
     return returnCls
