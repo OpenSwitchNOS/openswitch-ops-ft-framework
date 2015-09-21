@@ -1,36 +1,35 @@
-##########################################################################################
-# Name:        opstestfw.switch.CLI.lldp.LldpInterfaceConfig
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw.switch.CLI.lldp
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Vince Mendoza
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function configure lldp interface context settings
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object
-#              interface - interface number context
-#              transmission - True turns on transmission / False turns off transmission
-#              reception - True turns on transmission / False turns off transmission
-#
-# Returns:     JSON structure
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
-#
-##PROC-###################################################################################
 
 from opstestfw import *
 import re
 import time
+
 
 def LldpInterfaceConfig(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('interface', None)
     transmission = kwargs.get('transmission', None)
     reception = kwargs.get('reception', None)
-    
+
     # If Device object is not passed, we need to error out
     if deviceObj is None or interface is None:
-        LogOutput('error', "Need to pass switch device object deviceObj and interface to this routine")
+        LogOutput(
+            'error',
+            "Need to pass switch device object deviceObj and interface to this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
 
@@ -58,14 +57,16 @@ def LldpInterfaceConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Get into the interface context
     command = "interface " + str(interface)
     returnDict = deviceObj.DeviceInteract(command=command)
     retCode = returnDict['returnCode']
     overallBuffer.append(returnDict['buffer'])
     if retCode != 0:
-        LogOutput('error', "Failed to enter interface context for interface " + str(interface))
+        LogOutput(
+            'error',
+            "Failed to enter interface context for interface " + str(interface))
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
@@ -79,9 +80,13 @@ def LldpInterfaceConfig(**kwargs):
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to enable lldp tranmission on interface " + str(interface))
+            LogOutput(
+                'error',
+                "Failed to enable lldp tranmission on interface " + str(interface))
         else:
-            LogOutput('debug', "Enabled lldp transmission on interface " + str(interface))
+            LogOutput(
+                'debug',
+                "Enabled lldp transmission on interface " + str(interface))
 
     if transmission is False:
         command = "no lldp transmission\r"
@@ -89,30 +94,42 @@ def LldpInterfaceConfig(**kwargs):
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to disable lldp transmission on interface " + str(interface))
+            LogOutput(
+                'error',
+                "Failed to disable lldp transmission on interface " + str(interface))
         else:
-            LogOutput('debug', "Disabled lldp transmission on interface " + str(interface))
-    
+            LogOutput(
+                'debug',
+                "Disabled lldp transmission on interface " + str(interface))
+
     if reception is True:
         command = "lldp reception\r"
         returnDict = deviceObj.DeviceInteract(command=command)
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to enable lldp reception on interface  " + str(interface))
+            LogOutput(
+                'error',
+                "Failed to enable lldp reception on interface  " + str(interface))
         else:
-            LogOutput('debug', "Enabled lldp reception on interface " + str(interface))
-    
+            LogOutput(
+                'debug',
+                "Enabled lldp reception on interface " + str(interface))
+
     if reception is False:
         command = "no lldp reception\r"
         returnDict = deviceObj.DeviceInteract(command=command)
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to disable lldp reception on interface  " + str(interface))
+            LogOutput(
+                'error',
+                "Failed to disable lldp reception on interface  " + str(interface))
         else:
-            LogOutput('debug', "Disabled lldp reception on interface " + str(interface))
-    
+            LogOutput(
+                'debug',
+                "Disabled lldp reception on interface " + str(interface))
+
     # Get out of the interface context
     command = "exit \r"
     returnDict = deviceObj.DeviceInteract(command=command)
@@ -120,8 +137,7 @@ def LldpInterfaceConfig(**kwargs):
     overallBuffer.append(returnDict['buffer'])
     if retCode != 0:
         LogOutput('error', "Failed to exit the interface context")
-        
-    
+
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -133,7 +149,7 @@ def LldpInterfaceConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -146,10 +162,9 @@ def LldpInterfaceConfig(**kwargs):
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
-    #Return results
+    # Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
     returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
-

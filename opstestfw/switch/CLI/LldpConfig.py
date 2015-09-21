@@ -1,29 +1,28 @@
-##########################################################################################
-# Name:        opstestfw.switch.CLI.lldp.lldpEnable
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw.switch.CLI.lldp
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Vince Mendoza
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function to enable / disable lldp
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object
-#              enable    - flag to enable True / Faluse
-#
-# Returns:     JSON structure
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
-#
-##PROC-###################################################################################
 
 from opstestfw import *
 import re
 import time
 
+
 def LldpConfig(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
     enable = kwargs.get('enable', True)
-    
+
     # If Device object is not passed, we need to error out
     if deviceObj is None:
         LogOutput('error', "Need to pass switch device object deviceObj")
@@ -41,7 +40,7 @@ def LldpConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
-    
+
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=True)
     returnCode = returnStructure.returnCode()
@@ -53,14 +52,17 @@ def LldpConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=returnCode, buffer=overallBuffer)
         return returnCls
-    
+
     if enable is True:
         command = "feature lldp\r"
         returnDevInt = deviceObj.DeviceInteract(command=command)
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to enable lldp on device " + deviceObj.device)
+            LogOutput(
+                'error',
+                "Failed to enable lldp on device " +
+                deviceObj.device)
             returnCls = returnStruct(returnCode=retCode, buffer=overallBuffer)
             return returnCls
         else:
@@ -71,10 +73,13 @@ def LldpConfig(**kwargs):
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to disable lldp on device " + deviceObj.device)
+            LogOutput(
+                'error',
+                "Failed to disable lldp on device " +
+                deviceObj.device)
         else:
             LogOutput('debug', "Disabled lldp on device " + deviceObj.device)
-    
+
     # Get out of  config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -86,7 +91,7 @@ def LldpConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     retCode = returnStructure.returnCode()
@@ -104,4 +109,3 @@ def LldpConfig(**kwargs):
             bufferString += str(curLine)
     returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
-
