@@ -25,12 +25,14 @@ try:
     import rtltestfw
 except ImportError:
     print "no remote environment"
-    
+
+
 class Topology (OpsVsiTest):
     def __init__(self, **kwargs):
         self.topoDict = kwargs.get('topoDict', None)
         self.runEnv = kwargs.get('runEnv', None)
-        self.hostimage = kwargs.get('hostImage', 'ubuntu:latest')
+#        self.hostimage = kwargs.get('hostImage', 'ubuntu:latest')a
+        self.hostimage = 'ubuntu:latest'
         #self.topoType = kwargs.get('topoType', None)
         #self.rsvnId = kwargs.get('rsvnId', None)
         self.topoType = 'virtual'
@@ -55,6 +57,7 @@ class Topology (OpsVsiTest):
         self.inbandIndex = 0
         self.LogicalTopologyCreate()
         self.VirtualXMLCreate()
+        self.setHostImageOpts(self.hostimage)
         self.setupNet()
         self.TopologyXMLWrite()
 
@@ -537,8 +540,10 @@ class Topology (OpsVsiTest):
             # Search for the tag in logical topology
             xpath = ".//device[@name='"+cDev+"']"
             deviceTag = opstestfw.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath)
-            if deviceTag != None:
+            if deviceTag != None and cAttr != "docker-image":
                 attributeTag = ET.SubElement(deviceTag, 'attribute', attrib={'name': cAttr, 'value': cVal})
+            if cAttr == "docker-image":
+                self.hostimage = cVal
         
         # Now parse through topoLinkFilter statements
         if self.topoLinkFilter != "":

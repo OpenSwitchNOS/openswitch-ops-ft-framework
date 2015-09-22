@@ -830,6 +830,7 @@ class VHost ( Device ):
         return localLinkElements
 
 
+
     def FileTransfer(self,filepath,localpath,direction):
 
         returnCode = 0
@@ -887,18 +888,25 @@ class VHost ( Device ):
             transport.close()
         else :
             opstestfw.LogOutput("info","Topology is virtual **")
-            opstestfw.LogOutput("info","Copy the files from docker container to results directory")
-            '''
+            opstestfw.LogOutput("info","Copy the files from/to docker container")
             try :
                 if direction == "get":
                     command = "docker cp %s:%s %s"%(self.device,filepath,localpath)
                 else:
-                    command = "docker cp %s %s:%s"%(localpath, self.device,filepath)
+                    #/tmp is a shared folder between VM and docker run instance
+                    command = "cp %s %s"%(filepath, self.topology.testdir+"/"+self.device.split('_')[1]+"/shared/")
+                    os.system(command)
+                    file_tobe_copied = filepath.split('/')[-1]
+#                   cpCommand = "cp /shared/rest.tar.gz /root/"
+                    cpCommand = "cp /shared/%s %s"%(file_tobe_copied, localpath)
+                    retDeviceInt = self.DeviceInteract(command=cpCommand)
+                    retCode = retDeviceInt.get('returnCode')
+                    retBuff = retDeviceInt.get('buffer')
+
             except IOError, e:
-                opstestfw.LogOutput("error","file not transferred to workstation")
+                opstestfw.LogOutput("error","file not transferred from/to workstation")
                 returnCode = 1
                 print e
-            '''
             if returnCode != 0:
                 opstestfw.LogOutput('error', "Failed to copy file to/from device --> "+self.device)
         return returnCode
@@ -909,9 +917,11 @@ class VHost ( Device ):
         returnCode = 0
         overallBuffer = []
         opstestfw.LogOutput("info","Creating HostRestEnvironment")
-        tarCommand = "cd "+self.fwbase+"/lib; tar -cvzf "+self.fwbase+"/lib/restEnv/rest.tar.gz restEnv"
+        tarCommand = "cd "+self.fwbase+"; tar -cvzf "+self.fwbase+"/restEnv/rest.tar.gz restEnv"
         os.system(tarCommand)
-        self.FileTransfer(self.fwbase+"/lib/restEnv/rest.tar.gz", "/root/rest.tar.gz", "put")
+        self.FileTransfer(self.fwbase+"/restEnv/rest.tar.gz", "/root/rest.tar.gz", "put")
+        cdCommand = "cd /root"
+        retDeviceInt = self.DeviceInteract(command=cdCommand)
         tarCommand = "tar -xvzf /root/rest.tar.gz"
         retDeviceInt = self.DeviceInteract(command=tarCommand)
         retCode = retDeviceInt.get('returnCode')
@@ -947,11 +957,11 @@ class VHost ( Device ):
             returnCode = 1
         if returnCode <> 1:
             if data <> None:
-                with open(self.fwbase+'/lib/restEnv/restdata', 'wb') as f:
+               with open(self.fwbase+'/restEnv/restdata', 'wb') as f:
 #                   f.write(str(data))
                    json.dump(data,f)
                    f.close()
-                   self.FileTransfer(self.fwbase+"/lib/restEnv/restdata", "/root/restEnv/restdata", "put")
+                   self.FileTransfer(self.fwbase+"/restEnv/restdata", "/root/restEnv/restdata", "put")
             restCmd = "python /root/restEnv/resttest.py --ip=%s --url=%s --method=%s" %(ip,url,method)
             retDeviceInt = self.DeviceInteract(command=restCmd)
             retCode = retDeviceInt.get('returnCode')
@@ -970,7 +980,6 @@ class VHost ( Device ):
 
             output = bufferString.split("\n")
             retStruct['http_retcode'] = output[1]
-#            retStruct['http_retcode'] = int(output[1])
             print "Http Returned Code "+retStruct['http_retcode']
             retStruct['response_body'] = output[4]
 
