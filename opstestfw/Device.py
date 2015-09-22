@@ -14,12 +14,9 @@
 #    under the License.
 #
 import pexpect
-from opstestfw import gbldata
 from opstestfw import *
 import opstestfw.switch
 import time
-import xml.etree.ElementTree
-import os
 import re
 from Topology import Topology
 
@@ -30,8 +27,20 @@ ability to connect to the device along with interacting with the device
 
 
 class Device ():
+    """
+    This is the base class for any device.
+    """
 
     def __init__(self, **kwargs):
+        """
+        Device class object is created and will contain all connection
+        information about the device.
+
+        :param topology: Topology dictionary defined in the testcase
+        :type topology: dictionary
+        :param device: Name of the device
+        :type device: string
+        """
         self.topology = kwargs.get('topology', None)
         self.device = kwargs.get('device', None)
         self.expectHndl = None
@@ -43,6 +52,14 @@ class Device ():
         self.Connect()
 
     def cmd(self, cmd):
+        """
+        Method to allow you to send a command to a device
+
+        :param arg1: Command string
+        :type arg1:  string
+        :return: string of the output from command execution
+        :rtype: string
+        """
         retStruct = self.DeviceInteract(command=cmd)
         returnCode = retStruct.get('returnCode')
         if returnCode != 0:
@@ -53,8 +70,10 @@ class Device ():
         returnBuffer = retStruct.get('buffer')
         return returnBuffer
 
-    # Device Connect Method
     def Connect(self):
+        """
+        Method to connect to device
+        """
         # Look up and see if we are physical or virtual
         xpathString = ".//reservation/id"
         rsvnEtreeElement = XmlGetElementsByTag(self.topology.TOPOLOGY,
@@ -92,8 +111,8 @@ class Device ():
         else:
             # Code for physical
             # Grab IP from etree
-            xpathString = ".//device[name='" + self.device + "']/connection/ipAddr"
-            ipNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            xpthStr = ".//device[name='" + self.device + "']/connection/ipAddr"
+            ipNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpthStr)
             if ipNode is None:
                 LogOutput('error',
                           "Failed to obtain IP address for \
@@ -106,8 +125,8 @@ class Device ():
                       IP address:  " + self.ipAddress)
 
             # Grab Port from etree
-            xpathString = ".//device[name='" + self.device + "']/connection/port"
-            portNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
+            xpathStr = ".//device[name='" + self.device + "']/connection/port"
+            portNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathStr)
             if portNode is None:
                 LogOutput('error',
                           "Failed to obtain Port for \
@@ -120,24 +139,19 @@ class Device ():
 
             # Grab a connetion element - not testing this since this should
             # exist since we obtained things before us
-            xpathString = ".//device[name='" + self.device + "']/connection"
-            connectionElement = XmlGetElementsByTag(self.topology.TOPOLOGY,
-                                                    xpathString)
+            # xpathString = ".//device[name='" + self.device + "']/connection"
+            # connectionElement = XmlGetElementsByTag(self.topology.TOPOLOGY,
+            #                                        xpathString)
 
-            # Grab a connetion element - not testing this since this should
-            # exist since we obtainedthings before us
-            xpathString = ".//device[name='" + self.device + "']/connection"
-            connectionElement = XmlGetElementsByTag(self.topology.TOPOLOGY,
-                                                    xpathString)
             # Create Telnet handle
             # Enable expect device Logging for every connection
             # Single Log file exists for logging device exchange using pexpect
             # logger.  Device logger  name format :: devicename_IP-Port
 
             telnetString = "telnet " + self.ipAddress + " " + self.port
-            expectFileString = self.device + "_" + self.ipAddress + "--" + self.port + ".log"
+            FS = self.device + "_" + self.ipAddress + "--" + self.port + ".log"
 
-            ExpectInstance = opstestfw.ExpectLog.DeviceLogger(expectFileString)
+            ExpectInstance = opstestfw.ExpectLog.DeviceLogger(FS)
             expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
             if expectLogFile == 1:
                 LogOutput('error', "Unable to create expect log file")
@@ -184,8 +198,11 @@ class Device ():
             if retVal is None:
                 return None
 
-    # DetectConnection - This will get the device in the proper context state
     def DetectConnection(self):
+        """
+        Method to detect device connections.  This method is only called from
+        the self.Connect method.
+        """
         bailflag = 0
 
         self.expectHndl.send('\r')
@@ -228,12 +245,22 @@ class Device ():
         LogOutput('debug', sanitizedBuffer)
         return self.expectHndl
 
-    # Routine allows the user to interact with a device and get appropriate
-    # output
     def DeviceInteract(self, **kwargs):
+        """
+        Routine to interact with a device CLI over a connection.
+
+        :param command: command string to send to the device
+        :type command: string
+        :param errorCheck: boolean to turn on / off error checking
+        :type errorCheck: boolean
+        :param CheckError:  Type of error to check - CLI / ONIE
+        :type CheckError: string
+        :return: Dictionary with returnCode and buffer keys
+        :rtype: dictionary
+        """
         command = kwargs.get('command')
         errorCheck = kwargs.get('errorCheck', True)
-        ErrorFlag = kwargs.get('CheckError')
+        ErrorFlag = kwargs.get('CheckError', None)
 
         # Local variables
         bailflag = 0
@@ -306,6 +333,14 @@ class Device ():
         return retStruct
 
     def ErrorCheck(self, **kwargs):
+        """
+        Method for error checking the buffer
+
+        :param buffer: output buffer from self.DeviceInteract to check
+        :type buffer: string
+        :return: dictionary with returnCode key
+        :rtype: dictionary
+        """
         buffer = kwargs.get('buffer')
         # Local variables
         returnCode = 0
