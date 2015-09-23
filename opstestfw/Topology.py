@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 import re
 import select
 import opstestfw
+import shutil
 #from opstestfw import *
 from opstestfw import gbldata
 
@@ -44,10 +45,14 @@ class Topology (OpsVsiTest):
         self.deviceObj = dict()
         self.id = str(os.getpid())
         self.testdir = "/tmp/openswitch-test/" + str(self.id)
-
+        if os.path.exists(self.testdir) is True:
+            shutil.rmtree(self.testdir)
         os.makedirs(self.testdir)
-        self.setLogLevel('info')
-        #self.setLogLevel('debug')
+        envVsiDebug = os.environ.get('VSIDEBUG', None)
+        if envVsiDebug is None:
+            self.setLogLevel('info')
+        else:
+            self.setLogLevel('debug')
         self.hostmounts = []
         self.switchmounts = []
         # Initialize Structures
@@ -259,18 +264,36 @@ class Topology (OpsVsiTest):
 
     def terminate_nodes(self):
         # gather up all nudes
+        # Close file desc
+        for curDev in str.split(self.topoDevices):
+            devObj = self.deviceObjGet(device=curDev)
+            devObj.expectHndl.close()
+        self.shell = 1
+        self.net.stop()
+        self.setLogLevel('output')
+        # Work around to kill workstations that hang around
+        tmp_topo = SingleSwitchTopo(k=1, hopts=self.getHostOpts(), 
+                                    sopts=self.getSwitchOpts())
+        tmpnet = Mininet(tmp_topo, switch=VsiOpenSwitch,
+                           host=Host, link=OpsVsiLink,
+                           controller=None, build=True)
+        tmpnet.start()
+        time.sleep(5)
+        tmpnet.stop()
+
         switch_list = self.net.switches
         host_list = self.net.hosts
+        for curHost in host_list:
+            opstestfw.LogOutput('debug', "terminating " + str(curHost))
+            curHost.terminate()
+            curHost.cleanup()
+            dockerRmlCmd = "docker rm -f -v " + curHost.container_name
+            os.system(dockerRmlCmd)
 
         for curSwitch in switch_list:
             opstestfw.LogOutput('debug', "terminating " + str(curSwitch))
             curSwitch.terminate()
 
-        for curHost in host_list:
-            opstestfw.LogOutput('debug', "terminating " + str(curHost))
-            curHost.stop()
-            curHost.terminate()
-    
     # Virtual TOPOLOGY XML Routines
     def VirtualXMLCreate(self):
         # Create Logical Topology based on dictionary - Low PRiority

@@ -13,6 +13,7 @@ import opstestfw.gbldata
 import logging
 import glob
 import pdb
+import inspect
 from commands import *
 
 class testEnviron ():
@@ -183,18 +184,22 @@ class testEnviron ():
             if topologyType == "None" or topologyType == "virtual":
                 LogOutput('debug', "Topology validation passed")
             else:
-                LogOutput('error', "Topology type validation failed.\
-                          Running a physical test virtually")
-                pytest.skip("Topology type validation failed.  Running\
-                            a physical only test virtually")
+                LogOutput('info', 
+                          "Skipping test due to it being a physical only test")
+                time.sleep(2)
+                pytest.skip("Skipping test due to it being a physical "
+                            "only test")
+
         else:
             if topologyType == "None" or topologyType == "physical":
                 LogOutput('debug', "Topology validation passed")
             else:
-                LogOutput('error', "Topology type validation failed.\
-                          Running a physical test virtually")
-                pytest.skip("Topology type validation failed.  Running\
-                            a virtual only test physically")
+                LogOutput('info',
+                          "Skipping test due to it being a virtual only test")
+                time.sleep(2)
+                pytest.skip("Skipping test due to it being a virtual only "
+                            "test ")
+
             #self.rsvnId = args.phystopo
         # Header printblock
         LogOutput('info', "", datastamp=True)
