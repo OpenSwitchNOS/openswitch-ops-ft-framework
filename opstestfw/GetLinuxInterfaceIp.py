@@ -1,4 +1,4 @@
-##########################################################################################
+##########################################################################
 # Name:        opstestfw.GetLinuxInterfaceIp
 #
 # Namespace:   opstestfw
@@ -11,24 +11,25 @@
 #
 # Returns:     JSON structure
 #              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
+#              data:
 #
-##PROC-###################################################################################
+##PROC-###################################################################
 from opstestfw import *
 import re
 import time
 
+
 def GetLinuxInterfaceIp(**kwargs):
     deviceObj = kwargs.get('deviceObj', None)
     returnCode = 0
-    ipAddr = None 
+    ipAddr = None
     overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None:
-        LogOutput('error', "Need to pass switch device object to this routine")
+        LogOutput('error', "Pass switch/wrkstn device object to this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
-    
+
     # Get the interface ip
     command = "ifconfig eth0 | grep 'inet addr'"
     returnStructure = deviceObj.DeviceInteract(command=command)
@@ -37,20 +38,28 @@ def GetLinuxInterfaceIp(**kwargs):
 
     overallBuffer.append(buf)
     if retCode != 0:
-        LogOutput('error', "Failed to ifconfig on eth0 interface for the switch")
+        LogOutput(
+            'error',
+            "Failed to ifconfig on eth0 interface for the device")
         returnCode = 1
     else:
-        LogOutput('info', "Success to ifconfig on eth0 interface for the switch")
+        LogOutput(
+            'info',
+            "Success to ifconfig on eth0 interface for the device")
         print buf
-        inetAddr = buf.split('\n')[1].split(' ')
-        print inetAddr
-        if len(inetAddr) > 10:
-            ipAddr = inetAddr[11].split(':')[1]
+        if buf.find("inet addr:") != -1:
+            inetAddr = buf.split('\n')[1].split(' ')
+            print inetAddr
+            if len(inetAddr) > 10:
+                ipAddr = inetAddr[11].split(':')[1]
         else:
-            ipAddr=""
+            ipAddr="" 
 
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = returnStruct(returnCode=returnCode, data=ipAddr, buffer=bufferString)
+    returnCls = returnStruct(
+        returnCode=returnCode,
+        data=ipAddr,
+        buffer=bufferString)
     return returnCls

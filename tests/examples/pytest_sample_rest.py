@@ -1,4 +1,5 @@
 import pytest
+import json
 from opstestfw.switch.CLI import *
 from opstestfw import *
 
@@ -13,159 +14,178 @@ topoDict = {"topoExecution": 3000,
 switchMgmtAddr = "10.10.10.2"
 restClientAddr = "10.10.10.3"
 
+
 def switch_reboot(dut01):
     # Reboot switch
-    LogOutput('info', "Reboot switch")
+    info('###  Reboot switch  ###\n')
     dut01.Reboot()
     rebootRetStruct = returnStruct(returnCode=0)
     return rebootRetStruct
 
-def config_rest_environment(dut01, wrkston01):
 
+def config_rest_environment(dut01, wrkston01):
     global switchMgmtAddr
     global restClientAddr
 
     retStruct = GetLinuxInterfaceIp(deviceObj=dut01)
-    if retStruct.returnCode() != 0:
-#        assert("Failed to get linux interface ip on switch")
-        pass
-    else:
-        LogOutput('info', "Successful in getting linux interface ip on the switch")
+    assert retStruct.returnCode() == 0, 'Failed to get linux interface ip on switch'
+    info('### Successful in getting linux interface ip on the switch ###\n')
     switchIpAddr = retStruct.data
 
     if switchIpAddr == "":
         switchIpAddr = "172.17.0.253"
 
-    if switchIpAddr != None or switchIpAddr != "":
+    if switchIpAddr is not None or switchIpAddr != "":
         switchMgmtAddr = switchIpAddr
-        #restClientAddr = "172.17.0.253"
-    print switchMgmtAddr
+
+
     retStruct = InterfaceIpConfig(deviceObj=dut01,
                                   interface="mgmt",
                                   addr=switchMgmtAddr, mask=24, config=True)
-
-    if retStruct.returnCode() != 0:
-        assert("Failed to configure IP on switchport")
-    else:
-        LogOutput('info', "Successfully configured ip on switch port")
+    assert retStruct.returnCode() == 0, 'Failed to configure IP on switchport'
+    info('### Successfully configured ip on switch port ###\n')
     cmdOut = dut01.cmdVtysh(command="show run")
-    LogOutput('info', "Running config of the switch:\n" + cmdOut)
-    LogOutput('info', "Configuring workstations")
-    retStruct = wrkston01.NetworkConfig(ipAddr=restClientAddr, netMask="255.255.255.0",broadcast="140.1.2.255",\
-                         interface=wrkston01.linkPortMapping['lnk01'], config=True)
-    if retStruct.returnCode() != 0:
-        assert("Failed to configure IP on workstation")
-    cmdOut = wrkston01.cmd("ifconfig "+ wrkston01.linkPortMapping['lnk01'])
-    LogOutput('info', "Ifconfig info for workstation 1:\n" + cmdOut)
-
+    info('### Running config of the switch:\n' + cmdOut + ' ###\n')
+    info('### Configuring workstations ###\n')
+    retStruct = wrkston01.NetworkConfig(
+        ipAddr=restClientAddr,
+        netMask="255.255.255.0",
+        broadcast="140.1.2.255",
+        interface=wrkston01.linkPortMapping['lnk01'],
+        config=True)
+    assert retStruct.returnCode() == 0, 'Failed to configure IP on workstation'
+    info('### Successfully configured IP on workstation ###\n')
+    cmdOut = wrkston01.cmd("ifconfig " + wrkston01.linkPortMapping['lnk01'])
+    info('### Ifconfig info for workstation 1:\n' + cmdOut + '###\n')
 
     retStruct = GetLinuxInterfaceIp(deviceObj=wrkston01)
-    if retStruct.returnCode() != 0:
-        assert("Failed to get linux interface ip on switch")
-    else:
-        LogOutput('info', "Successful in getting linux interface ip on the workstation")
+    assert retStruct.returnCode() == 0, 'Failed to get linux interface ip on switch'
+    info('### Successful in getting linux interface ip on the workstation ###\n')
     switchIpAddr = retStruct.data
-   retStruct = returnStruct(returnCode=0)
-    return retStruct
-
-
-#
-def deviceCleanup(dut01, wrkston01):
-
-    retStruct = wrkston01.NetworkConfig(ipAddr=restClientAddr, netMask="255.255.255.0",broadcast="140.1.2.255",\
-                                        interface=wrkston01.linkPortMapping['lnk01'], config=False)
-    if retStruct.returnCode() != 0:
-        assert("Failed to unconfigure IP address on workstation 1")
-    cmdOut = wrkston01.cmd("ifconfig "+ wrkston01.linkPortMapping['lnk01'])
-    LogOutput('info', "Ifconfig info for workstation 1:\n" + cmdOut)
-#
-    retStruct = InterfaceIpConfig(deviceObj=dut01,
-                               interface="mgmt",
-                               addr=switchMgmtAddr, mask=24, config=False)
-    if retStruct.returnCode() != 0:
-        assert("Failed to unconfigure IP address on dut01 port " )
-    else:
-        LogOutput('info', "Unconfigure IP address on dut01 port ")
-
-    cmdOut = dut01.cmdVtysh(command="show run")
-    LogOutput('info', "Running config of the switch:\n" + cmdOut)
     retStruct = returnStruct(returnCode=0)
     return retStruct
 
 
-def restTestPort(wrkston01):
+def deviceCleanup(dut01, wrkston01):
+    retStruct = wrkston01.NetworkConfig(
+        ipAddr=restClientAddr,
+        netMask="255.255.255.0",
+        broadcast="140.1.2.255",
+        interface=wrkston01.linkPortMapping['lnk01'],
+        config=False)
+    assert retStruct.returnCode() == 0, 'Failed to unconfigure IP address on workstation 1'
+    info('### Successfully unconfigured ip on Workstation 1 ###\n')
+    cmdOut = wrkston01.cmd("ifconfig " + wrkston01.linkPortMapping['lnk01'])
+    info('### Ifconfig info for workstation 1:\n' + cmdOut + ' ###')
+
+    retStruct = InterfaceIpConfig(deviceObj=dut01,
+                                  interface="mgmt",
+                                  addr=switchMgmtAddr, mask=24, config=False)
+    assert retStruct.returnCode() == 0, 'Failed to unconfigure IP address on dut01 port'
+    info('### Unconfigured IP address on dut01 port " ###\n')
+    cmdOut = dut01.cmdVtysh(command="show run")
+    info('Running config of the switch:\n' + cmdOut)
+    retStruct = returnStruct(returnCode=0)
+    return retStruct
 
 
+def restTestSystem(wrkston01):
     data = {
-    "configuration": {
-        "name": "169",
-        "interfaces": ["/rest/v1/system/interfaces/1"],
-        "trunks": [413],
-        "ip4_address_secondary": ["192.168.0.1"],
-        "lacp": ["active"],
-        "bond_mode": ["l2-src-dst-hash"],
-        "tag": [654],
-        "vlan_mode": ["trunk"],
-        "ip6_address": ["2001:0db8:85a3:0000:0000:8a2e:0370:7334"],
-        "external_ids": {"extid1key": "extid1value"},
-        "bond_options": {"key1": "value1"},
-        "mac": ["01:23:45:67:89:ab"],
-        "other_config": {"cfg-1key": "cfg1val"},
-        "bond_active_slave": ["string"],
-        "ip6_address_secondary": ["01:23:45:67:89:ab"],
-        "vlan_options": {"opt1key": "opt2val"},
-        "ip4_address": ["192.168.0.1"]
-    },
-    "referenced_by": [{"uri":"/rest/v1/system/bridges/bridge_normal"}],
-    }
+        "configuration": {
+            "bridges": ["/rest/v1/system/bridge_normal"],
+            "lacp_config": {},
+            "dns_servers": [],
+            "aaa": {
+                "ssh_publickeyauthentication": "enable",
+                "fallback": "true",
+                "radius": "false",
+                "ssh_passkeyauthentication": "enable"},
+            "logrotate_config": {},
+            "hostname": "openswitch",
+            "manager_options": [],
+            "subsystems": ["/rest/v1/system/base"],
+            "asset_tag_number": "",
+            "ssl": [],
+            "mgmt_intf": {
+                "ip": switchMgmtAddr,
+                "subnet-mask": "24",
+                "mode": "static",
+                "name": "eth0",
+                "default-gateway": "172.16.0.1"},
+            "radius_servers": [],
+            "management_vrf": [],
+            "other_config": {
+                "enable-statistics": "true"},
+            "daemons": [
+                "/rest/v1/system/fand",
+                "/rest/v1/system/powerd",
+                "/rest/v1/system/sysd",
+                "/rest/v1/system/ledd",
+                "/rest/v1/system/pmd",
+                "/rest/v1/system/tempd"],
+            "bufmon_config": {},
+            "external_ids": {},
+            "ecmp_config": {},
+            "vrfs": ["/rest/v1/system/vrf_default"]}}
 
-    retStruct = wrkston01.RestCmd(switch_ip=switchMgmtAddr, url="/rest/v1/system/ports", method="POST", data=data)
-    if retStruct.returnCode() != 0:
-        assert("Failed to Execute rest command" + "POST for url=/rest/v1/system/ports")
-    else:
-        LogOutput('info', "Success in executing the rest command" + "POST for url=/rest/v1/system/ports")
+    retStruct = wrkston01.RestCmd(
+        switch_ip=switchMgmtAddr,
+        url="/rest/v1/system",
+        method="PUT",
+        data=data)
+    assert retStruct.returnCode(
+    ) == 0, 'Failed to Execute rest command + "PUT for url=/rest/v1/system"'
+    info('### Success in executing the rest command + "PUT for url=/rest/v1/system" ###\n')
+    info('http return code' + retStruct.data['http_retcode'])
 
-    LogOutput('info', 'http return code' +retStruct.data['http_retcode'])
+    assert retStruct.data[
+        'http_retcode'] != '200', 'Rest PUT system Failed\n' + retStruct.data['response_body']
+    info('### Success in Rest PUT system ###\n')
+    info('###' + retStruct.data['response_body'] + '###\n')
 
-    if retStruct.data['http_retcode'].find("201") == -1:
-        assert("Rest POST port Failed ")
-    else:
-        LogOutput('info', retStruct.data['response_body'])
+    retStruct = wrkston01.RestCmd(
+        switch_ip=switchMgmtAddr,
+        url="/rest/v1/system",
+        method="GET")
+    assert retStruct.returnCode(
+    ) == 0, 'Failed to Execute rest command" + "GET for url=/rest/v1/system"'
+    info('### Success in executing the rest command" + "GET for url=/rest/v1/system" ###\n')
+    info('http return code' + retStruct.data['http_retcode'])
 
-    retStruct = wrkston01.RestCmd(switch_ip=switchMgmtAddr, url="/rest/v1/system/ports/169", method="GET")
-    if retStruct.returnCode() != 0:
-        assert("Failed to Execute rest command" + "GET for url=/rest/v1/system/ports/169")
-    else:
-        LogOutput('info', "Success in executing the rest command" + "GET for url=/rest/v1/system")
-
-    LogOutput('info', 'http return code' +retStruct.data['http_retcode'])
-
-    if retStruct.data['http_retcode'].find("200") == -1:
-        assert("Rest GET port Failed ")
-    else:
-        LogOutput('info', retStruct.data['response_body'])
-
-    retStruct = wrkston01.RestCmd(switch_ip=switchMgmtAddr, url="/rest/v1/system/ports/169", method="DELETE")
-    if retStruct.returnCode() != 0:
-        assert("Failed to Execute rest command" + "DELETE for url=/rest/v1/system/ports/169")
-    else:
-        LogOutput('info', "Success in executing the rest command" + "DELETE for url=/rest/v1/system/ports/169")
-
-    LogOutput('info', 'http return code' +retStruct.data['http_retcode'])
-
-    if retStruct.data['http_retcode'].find("204") == -1:
-        assert("Rest DELETE port Failed ")
+    assert retStruct.data[
+        'http_retcode'] != '200', 'Rest GET system Failed\n' + retStruct.data['response_body']
+    info('### Success in Rest GET system ###\n')
+    info('###' + retStruct.data['response_body'] + '###\n')
+    json_data = retStruct.data['response_body']
+    data_dict = json.loads(json_data)
+    data_config = data_dict["configuration"]
+    data_mgmt = data_config["mgmt_intf"]
+    data_otherconfig = data_config["other_config"]
+    assert data_config[
+        "hostname"] == 'openswitch', 'Failed in checking the GET METHOD JSON response validation for hostname'
+    info('### Success in Rest GET system for hostname ###\n')
+    assert data_otherconfig[
+        "enable-statistics"] == 'true', 'Failed in checking the GET METHOD JSON response validation for enable-statistics'
+    info('### Success in Rest GET system for enable-statistics ###\n')
+    assert data_mgmt[
+        "ip"] == switchMgmtAddr, 'Failed in checking the GET METHOD JSON response validation for management ip'
+    info('### Success in Rest GET system for management ip ###\n')
+    assert data_mgmt[
+        "name"] == 'eth0', 'Failed in checking the GET METHOD JSON response validation for name'
+    info('### Success in Rest GET system for name ###\n')
 
     retStruct = returnStruct(returnCode=0)
     return retStruct
 
 
 class Test_ft_framework_rest:
+
     def setup_class(cls):
         # Create Topology object and connect to devices
         Test_ft_framework_rest.testObj = testEnviron(topoDict=topoDict)
         Test_ft_framework_rest.topoObj = Test_ft_framework_rest.testObj.topoObjGet()
-        wrkston01Obj = Test_ft_framework_rest.topoObj.deviceObjGet(device="wrkston01")
+        wrkston01Obj = Test_ft_framework_rest.topoObj.deviceObjGet(
+            device="wrkston01")
         wrkston01Obj.CreateRestEnviron()
 
     def teardown_class(cls):
@@ -173,48 +193,39 @@ class Test_ft_framework_rest:
         Test_ft_framework_rest.topoObj.terminate_nodes()
 
     def test_reboot_switch(self):
-        LogOutput('info', "############################################")
-        LogOutput('info', "Reboot the switch")
-        LogOutput('info', "############################################")
+        info('########################################################\n')
+        info('############       Reboot the switch          ##########\n')
+        info('########################################################\n')
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
-        devRebootRetStruct = switch_reboot(dut01Obj)
-        if devRebootRetStruct.returnCode() != 0:
-            assert("Failed to reboot Switch")
-        else:
-            LogOutput('info', "Passed Switch Reboot piece")
+        retStruct = switch_reboot(dut01Obj)
+        assert retStruct.returnCode() == 0, 'Failed to reboot Switch'
+        info('### Successful in Switch Reboot piece ###\n')
 
     def test_config_rest_environment(self):
-        LogOutput('info', "############################################")
-        LogOutput('info', "Configure REST environment")
-        LogOutput('info', "############################################")
+        info('#######################################################\n')
+        info('######        Configure REST environment           ####\n')
+        info('#######################################################\n')
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
         wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
         retStruct = config_rest_environment(dut01Obj, wrkston01Obj)
-        if retStruct.returnCode() != 0:
-            assert("Failed to config REST environ")
-        else:
-            LogOutput('info', "Passed config REST environ test")
+        assert retStruct.returnCode() == 0, 'Failed to config REST environment'
+        info('### Successful in config REST environment test ###\n')
 
-    def test_restTestPort(self):
-        LogOutput('info', "############################################")
-        LogOutput('info', "Testing REST port basic functionality")
-        LogOutput('info', "############################################")
+    def test_restTestSystem(self):
+        info('#######################################################\n')
+        info('######   Testing REST system basic functionality   ####\n')
+        info('#######################################################\n')
         wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
-        retStruct = restTestPort(wrkston01Obj)
-        if retStruct.returnCode() != 0:
-            assert("Failed to test rest port sample")
-        else:
-            LogOutput('info', "Passed to test rest port sample")
+        retStruct = restTestSystem(wrkston01Obj)
+        assert retStruct.returnCode() == 0, 'Failed to test rest system'
+        info('### Successful in test rest system ###\n')
 
     def test_clean_up_devices(self):
-        LogOutput('info', "############################################")
-        LogOutput('info', "Device Cleanup - rolling back config")
-        LogOutput('info', "############################################")
+        info('#######################################################\n')
+        info('######    Device Cleanup - rolling back config     ####\n')
+        info('#######################################################\n')
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
         wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
         retStruct = deviceCleanup(dut01Obj, wrkston01Obj)
-        if retStruct.returnCode() != 0:
-            assert("Failed to cleanup device")
-        else:
-            LogOutput('info', "Cleaned up devices")
-
+        assert retStruct.returnCode() == 0, 'Failed to cleanup device'
+        info('### Successfully Cleaned up devices ###\n')
