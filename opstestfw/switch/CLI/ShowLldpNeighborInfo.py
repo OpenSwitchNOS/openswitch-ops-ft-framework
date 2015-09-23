@@ -42,7 +42,8 @@ def ShowLldpNeighborInfo(**kwargs):
     # Pass LLDP commands here
     command = "show lldp neighbor-info"
     if port is not None:
-        command += " " + str(port) + "\r"
+        #command += " " + str(port) + "\r"
+        command += " " + str(port)
 
     LogOutput("info", "Show LLDP command ***" + command)
     # devIntRetStruct = opstestfw.switch.DeviceInteract(connection=connection,

@@ -161,7 +161,7 @@ class VSwitch(Device):
         self.expectHndl = pexpect.spawn(telnetString,
                                         echo=False,
                                         logfile=DeviceLogger(expectLogFile))
-        self.expectHndl.delaybeforesend = .05
+        self.expectHndl.delaybeforesend = .50
 
         # Lets go and detect our connection - this will get us to a context
         # we know about
@@ -280,6 +280,7 @@ class VSwitch(Device):
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
+        #time.
         connectionBuffer = []
 
         while bailflag == 0:
@@ -341,7 +342,11 @@ class VSwitch(Device):
             else:
                 connectionBuffer.append(self.expectHndl.before)
         connectionBuffer.append(self.expectHndl.after)
-        self.expectHndl.expect(['$'], timeout=1)
+        LogOutput('debug', 
+                  "Index = "+ str(index) + " Command = " + command 
+                  + "\nOutput\n" + str(connectionBuffer))
+        #self.expectHndl.send('\r')
+        self.expectHndl.expect(['$'], timeout=4)
 
         self.santString = ""
         for curLine in connectionBuffer:

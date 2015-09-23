@@ -95,7 +95,7 @@ def InterfaceEnable(**kwargs):
 
     # Need to get into the Interface context
     if enable is True:
-        command = "no shutdown\r"
+        command = "no shutdown"
         returnStructure = deviceObj.DeviceInteract(command=command)
         retCode = returnStructure['returnCode']
         overallBuffer.append(returnStructure['buffer'])
@@ -104,7 +104,7 @@ def InterfaceEnable(**kwargs):
         else:
             LogOutput('debug', "Enabled interface " + str(interface))
     else:
-        command = "shutdown\r"
+        command = "shutdown"
         returnStructure = deviceObj.DeviceInteract(command=command)
         retCode = returnStructure['returnCode']
         overallBuffer.append(returnStructure['buffer'])
