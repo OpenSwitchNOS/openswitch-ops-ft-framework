@@ -351,6 +351,11 @@ class Topology (OpsVsiTest):
         This routine deletes docker container instances
 
         """
+
+        envKeepContainers = os.environ.get('VSIKEEPENV', None)
+        if envKeepContainers is not None or envKeepContainers == 1:
+            return
+
         # gather up all nodes
         # Close file desc
         for curDev in str.split(self.topoDevices):
