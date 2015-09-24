@@ -13,6 +13,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+"""
+Interface level configuration for LLDP
+@param:deviceObj : Device Object 
+@type:deviceObj  : object
+
+@param:interface : Switch Interface
+@type:deviceObj  : integer
+
+@param:transmission : Enables transmission when True
+@type:transmission  : Boolean
+
+@param:reception : enables reception when True
+@type:reception  : Boolean
+
+"""
 
 from opstestfw import *
 import re

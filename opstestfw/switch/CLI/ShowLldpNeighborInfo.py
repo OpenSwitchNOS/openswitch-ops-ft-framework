@@ -14,6 +14,15 @@
 #    under the License.
 #
 
+"""
+This routine shows LLDP neighbor information on a switch
+@param deviceObj : Device object
+@type  deviceObj : object
+
+@param port      : Device port
+@type  port      : integer 
+
+"""
 import opstestfw.switch
 from opstestfw import *
 import re
