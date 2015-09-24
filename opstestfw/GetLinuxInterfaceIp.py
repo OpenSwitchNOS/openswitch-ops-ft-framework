@@ -9,7 +9,7 @@
 #
 # Params:      deviceObj - device object
 #
-# Returns:     JSON structure
+# Returns:     
 #              returnCode - status of command(0 for pass , gets errorcodes for failure)
 #              data:
 #
@@ -52,6 +52,8 @@ def GetLinuxInterfaceIp(**kwargs):
             print inetAddr
             if len(inetAddr) > 10:
                 ipAddr = inetAddr[11].split(':')[1]
+            else:
+                ipAddr=""
         else:
             ipAddr="" 
 

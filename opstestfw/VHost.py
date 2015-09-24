@@ -1,95 +1,158 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
 import pexpect
-from opstestfw import gbldata
-
 import opstestfw.switch
 import time
-#import console
-import xml.etree.ElementTree
 import os
 import re
-from Topology import Topology
 from Device import Device
-from VSwitch import VSwitch
 import socket
-#from opstestfw import *
 import opstestfw
 import paramiko
 import json
 
-# This is the base class for any device - This gives the test case developer the ability to connect to the device
-# along with interacting with the device
-class VHost ( Device ):
+
+class VHost(Device):
+
+    """
+    Virtual Host Class definition
+
+    This Class defines the host connections and interface connectivity
+    """
+
     def __init__(self, **kwargs):
+        """
+        VHost init method
+
+        This method will create a VHost object that will contain all
+        connection information to interact with the device and also contain
+        the logical port to physical port mapping information on device
+        connectivity
+
+        :param topology: topology dictionary defined in the test case
+        :type topology: dictionary
+        :param device: device name to create the object
+        :type device: string
+        """
         self.topology = kwargs.get('topology', None)
         self.device = kwargs.get('device', None)
         # Bring in Default member values
         self.defaultMembers()
         self.expectDefaultPrompts = ['login:\s*$',
-                               'Password:',
-                               '\[root@\S+.*\]#',
-                               'root@\S+#',
-                               '\(yes/no\)?',
-                               pexpect.EOF,
-                               pexpect.TIMEOUT]
+                                     'Password:',
+                                     '\[root@\S+.*\]#',
+                                     'root@\S+#',
+                                     '\(yes/no\)?',
+                                     pexpect.EOF,
+                                     pexpect.TIMEOUT]
         self.initExtMembers()
         self.Connect()
-        #self.CreateRestEnviron()
 
     def defaultMembers(self):
+        """
+        membersDefaults method
+
+        This method just defines the defaults for all the members assocated
+        with this method.
+        """
         self.expectHndl = ""
         self.connectStringBase = "docker exec -ti "
 
     def initExtMembers(self):
+        """
+        initExtMembers method
+
+        This method just defines host base interface config commands
+        """
         self.LIST_ETH_INTERFACES_CMD = 'ifconfig -a | grep Ethernet'
         self.LIST_INTERFACE_IP_CMD = 'ifconfig %s | grep inet'
         self.ENABLE_ETH_INTERFACE_CMD = 'ifconfig %s up'
         self.ETH_INTERFACE_CFGIP_CMD = 'ip addr add %s/%d dev %s'
-        self.ETH_INTERFACE_CFGIP_IFCFG_CMD = 'ifconfig %s %s netmask %s broadcast %s'
+        self.ETH_INT_CFGIP_IFCFG_CMD = 'ifconfig %s %s netmask %s broadcast %s'
         self.ETH_INTERFACE_CFGIP_CLEAR_CMD = 'ip addr del %s/%d dev %s'
         self.ETH_INTERFACE_CFGIP_IFCFG_CLEAR_CMD = 'ifconfig %s 0.0.0.0'
-        #self.fwbase = os.environ['FT_FRAMEWORK_BASE']
         self.fwbase = os.path.dirname(opstestfw.__file__)
 
     def Connect(self):
-        # Look up the device name in the topology - grab connectivity information
+        """
+        Connect Method
+
+        This method is used to connect to the VHost device.  This is called
+        by the init method.
+        """
+        # Look up the device name in the topology - grab connectivity
+        # information
         xpathString = ".//device[name='" + self.device + "']"
-        etreeElement = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
-        if etreeElement == None:
+        etreeElement = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY,
+                                                     xpathString)
+        if etreeElement is None:
             # We are not in a good situation, we need to bail
-            opstestfw.LogOutput('error', "Could not find device " + self.device + " in topology")
+            opstestfw.LogOutput('error',
+                                "Could not find"
+                                " device " + self.device + " in topology")
             return None
         # Code for virtual
         # Go and grab the connection name
         xpathString = ".//device[name='" + self.device + "']/connection/name"
-        virtualConn = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
-        if virtualConn == None:
-            opstestfw.LogOutput('error', "Failed to virtual connection for " + self.device )
+        virtualConn = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY,
+                                                    xpathString)
+        if virtualConn is None:
+            opstestfw.LogOutput('error',
+                                "Failed to virtual connection "
+                                "for " + self.device)
             return None
         telnetString = self.connectStringBase + self.device + " /bin/bash"
-        self.expectHndl = pexpect.spawn(telnetString,echo=False)
-        #self.expectHndl.delaybeforesend = .5
-        expectFileString  = self.device + ".log"
+        self.expectHndl = pexpect.spawn(telnetString, echo=False)
+        expectFileString = self.device + ".log"
 
-        # VINCE TODO - Move ExpectLog to Common Class
         ExpectInstance = opstestfw.DeviceLogger(expectFileString)
-        expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
-        if expectLogFile == 1 :
+        expLog = ExpectInstance.OpenExpectLog(expectFileString)
+        if expLog == 1:
             opstestfw.LogOutput('error', "Unable to create expect log file")
             exit(1)
-        #Opening an expect connection to the device with the specified log file
-        opstestfw.LogOutput('debug', "Opening an expect connection to the device with the specified log file"+expectFileString)
-        self.expectHndl = pexpect.spawn(telnetString, echo=False, logfile=opstestfw.DeviceLogger(expectLogFile))
+        # Opening an expect connection to the device with the specified
+        # log file
+        opstestfw.LogOutput('debug', "Opening an expect connection to "
+                            "the device with the specified log "
+                            "file" + expectFileString)
+        self.expectHndl = pexpect.spawn(telnetString,
+                                        echo=False,
+                                        logfile=opstestfw.DeviceLogger(expLog))
         self.expectHndl.delaybeforesend = .05
 
-        # Lets go and detect our connection - this will get us to a context we know about
+        # Lets go and detect our connection - this will get us to a context
+        # we know about
         retVal = self.DetectConnection()
 
         if retVal is None:
             return None
         return self.expectHndl
 
-
     def DetectConnection(self):
+        """
+        DetectConnection Method
+
+        This method called during the connect process to establish a connection
+        with the device.  This method is used internally and only by the
+        Connect functionality.
+
+        :return: expect handle
+        :rtype: expect object
+        """
+
         bailflag = 0
 
         self.expectHndl.send('\r')
@@ -97,36 +160,29 @@ class VHost ( Device ):
         sanitizedBuffer = ""
         while bailflag == 0:
             time.sleep(1)
-            index = self.expectHndl.expect(self.expectDefaultPrompts, timeout=30)
+            index = self.expectHndl.expect(self.expectDefaultPrompts,
+                                           timeout=30)
 
             if index == 0:
                 # Need to send login string
                 connectionBuffer.append(self.expectHndl.before)
                 self.expectHndl.send("root")
                 self.expectHndl.send("\r")
-                #connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
                 # Need to send password string
                 connectionBuffer.append(self.expectHndl.before)
                 self.expectHndl.send("procurve")
                 self.expectHndl.send("\r")
-                #connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
                 # Got prompt.  We should be good
-                #print "Got prompt, we should be good"
-                #print('Got prompt, we should be good')
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
                 # Got prompt.  We should be good
-                #print "Got prompt, we should be good"
-                #print('Got prompt, we should be good')
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
                 # Got yes / no prompt.  We should be good
-                #print "Got prompt, we should be good"
-                #print('Got prompt, we should be good')
                 self.expectHndl.send("yes")
                 self.expectHndl.send("\r")
                 connectionBuffer.append(self.expectHndl.before)
@@ -138,23 +194,37 @@ class VHost ( Device ):
                 # Got a Timeout
                 opstestfw.LogOutput('error', "Connection timed out")
                 return None
-            else :
-                #print "Got index ", index, " wainting again"
-                #print('Got index %d wainting again'.format(index))
+            else:
                 connectionBuffer.append(self.expectHndl.before)
         # Append on buffer after
         connectionBuffer.append(self.expectHndl.after)
         # Now lets put in the topology the expect handle
         self.expectHndl.expect(['$'], timeout=2)
         for curLine in connectionBuffer:
-            #opstestfw.LogOutput('debug', curLine)
             sanitizedBuffer += curLine
         opstestfw.LogOutput('debug', sanitizedBuffer)
 
         return self.expectHndl
 
-
     def DeviceInteract(self, **kwargs):
+        """
+        DeviceInteract Method
+
+        This method will send commands over an established connection with
+        the device, obtain the output from the command transaction, and then
+        send the return buffer off to the appropriate error check routine
+
+        :param command: string of the command to execute
+        :type command: string
+        :param errorCheck: boolean True to error check, False to turn off
+                           error checking.
+        :type errorCheck: boolean
+        :param yesPrompt: yes prompt answer - choice yes / no
+        :type yesPrompt: string
+        :return: dictionary containing returnCode and buffer
+        :rtype: dictionary
+        """
+
         command = kwargs.get('command')
         yesPromptResp = kwargs.get('yesPrompt', "yes")
         errorCheck = kwargs.get('errorCheck', True)
@@ -168,12 +238,11 @@ class VHost ( Device ):
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
-        #time.sleep(1)
         connectionBuffer = []
 
         while bailflag == 0:
-            #DEBUG print connection
-            index = self.expectHndl.expect(self.expectDefaultPrompts, timeout=30)
+            index = self.expectHndl.expect(self.expectDefaultPrompts,
+                                           timeout=30)
             if index == 0:
                 # Need to send login string
                 self.expectHndl.send("root")
@@ -186,14 +255,10 @@ class VHost ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
                 # Got prompt.  We should be good
-                #print "Got prompt, we should be good"
-                #print('Got prompt, we should be good')
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
                 # Got prompt.  We should be good
-                #print "Got prompt, we should be good"
-                #print('Got prompt, we should be good')
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 4:
@@ -217,20 +282,13 @@ class VHost ( Device ):
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "command timeout")
                 returnCode = 1
-            else :
+            else:
                 connectionBuffer.append(self.expectHndl.before)
-                #tmpBuffer = self.expectHndl.before
-                # Pull out the \r\n of the buffer
-                #tmpBuffer = re.sub('\r\r\n', '', tmpBuffer)
-                #print "tmpbuffer = " + tmpBuffer
-
-                #if tmpBuffer != command:
-                #    connectionBuffer.append(self.expectHndl.before)
 
         connectionBuffer.append(self.expectHndl.after)
         self.expectHndl.expect(['$'], timeout=3)
         santString = ""
-        for curLine in connectionBuffer:#
+        for curLine in connectionBuffer:
             santString += str(curLine)
 
         returnCode = 0
@@ -239,7 +297,9 @@ class VHost ( Device ):
             errorCheckRetStruct = self.ErrorCheck(buffer=santString)
             returnCode = errorCheckRetStruct['returnCode']
         # Dump the buffer the the debug log
-        opstestfw.LogOutput('debug', "Sent and received from device: \n" + santString + "\n")
+        opstestfw.LogOutput('debug',
+                            "Sent and received from device:"
+                            " \n" + santString + "\n")
 
         # Return dictionary
         retStruct['returnCode'] = returnCode
@@ -247,8 +307,18 @@ class VHost ( Device ):
 
         return retStruct
 
-
     def ErrorCheck(self, **kwargs):
+        """
+        ErrorCheck Method
+
+        This method is used to error check a buffer after self.DeviceInteract
+        method is run.
+        :param buffer: buffer from selfDeviceInteract to check for errors
+        :type buffer: string
+        :return: dictionary containing returnCode key
+        :rtype: dictionary
+        """
+
         buffer = kwargs.get('buffer')
         # Local variables
         returnCode = 0
@@ -261,18 +331,16 @@ class VHost ( Device ):
         buffer = ""
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
-        #time.sleep(1)
-        #index = self.expectHndl.expect(['root@\S+.*#'], timeout=200)
         index = self.expectHndl.expect(['\[root@.*\]#',
                                         'root@.*#',
                                         pexpect.EOF,
                                         pexpect.TIMEOUT], timeout=30)
-        #index = self.expectHndl.expect(self.expectList, timeout=20)
         if index == 0 or index == 1:
             buffer += self.expectHndl.before
             buffer += self.expectHndl.after
         else:
-            opstestfw.LogOutput('error', "Received timeout in ErrorCheck " + str(index))
+            opstestfw.LogOutput('error',
+                                "Received timeout in ErrorCheck " + str(index))
             retStruct['returnCode'] = 1
             self.expectHndl.expect(['$'], timeout=1)
             return retStruct
@@ -292,6 +360,24 @@ class VHost ( Device ):
         return retStruct
 
     def NetworkConfig(self, **kwargs):
+        """
+        NetworkConfig Method
+
+        This method will configure an ip address over a network interface
+        :param interface: network interface to configure address on
+        :type interface: string
+        :param ipAddr: ip address string
+        :type ipAddr: string
+        :param netMask: network mask string in IP format
+        :type netMask: string
+        :param broadcast: broadcast address for interface
+        :type broadcast: string
+        :param config: True to config / False to unconfig interface
+        :type config: boolean
+        :return: returnStruct Object
+        :rtype: object
+        """
+
         eth = kwargs.get('interface')
         ipAddr = kwargs.get('ipAddr')
         netMask = kwargs.get('netMask')
@@ -302,24 +388,18 @@ class VHost ( Device ):
         interfaceUpOption = 0
         returnCode = 0
 
-        retStruct = dict()
-
-        if self.ipFormatChk(ipAddr) == False:
+        if self.ipFormatChk(ipAddr) is False:
             opstestfw.LogOutput('error', 'invalid ipaddress format :' + ipAddr)
             returnCode = 1
-            #retStruct['buffer'] = 'Invalid ip address passed'
-        elif self.ipFormatChk(netMask) == False:
+        elif self.ipFormatChk(netMask) is False:
             opstestfw.LogOutput('error', 'invalid netmask format :' + netMask)
             returnCode = 1
-            #retStruct['buffer'] = 'Invalid net mask passed'
-        elif self.ipFormatChk(broadcast) == False:
-            opstestfw.LogOutput('error', 'invalid broadcast format :'
-                             + broadcast)
+        elif self.ipFormatChk(broadcast) is False:
+            opstestfw.LogOutput('error',
+                                'invalid broadcast format :' + broadcast)
             returnCode = 1
-            #retStruct['buffer'] = 'Invalid broadcast passed'
 
         if returnCode:
-            #retStruct['returnCode'] = returnCode
             returnCls = opstestfw.returnStruct(returnCode=1)
             return returnCls
 
@@ -327,28 +407,29 @@ class VHost ( Device ):
         # Validate that the interface exists
         while bailflag == 0:
             # Send the command
-            retDeviceInt = self.DeviceInteract(command=self.LIST_ETH_INTERFACES_CMD)
+            retDeviceInt = self.DeviceInteract(
+                command=self.LIST_ETH_INTERFACES_CMD)
             retCode = retDeviceInt.get('returnCode')
             retBuff = retDeviceInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                                  + self.LIST_ETH_INTERFACES_CMD)
+                                    + self.LIST_ETH_INTERFACES_CMD)
                 bailflag = 1
                 returnCode = 1
             else:
                 opstestfw.LogOutput('debug',
-                                 'Successfully executed the command : '
-                                 + self.LIST_ETH_INTERFACES_CMD)
+                                    'Successfully executed the command : '
+                                    + self.LIST_ETH_INTERFACES_CMD)
                 if retBuff.find(eth) != -1:
-                    opstestfw.LogOutput('debug','eth interface is validated for : '
-                                    + eth)
+                    opstestfw.LogOutput('debug',
+                                        'eth interface is validated for : '
+                                        + eth)
                     bailflag = 1
                 else:
-                    opstestfw.LogOutput('debug', 'eth interface failed to validate for : '
-                                        + eth)
-                    #retStruct['buffer'] = \
-                    #        'eth interface failed to validate for : ' + eth
+                    opstestfw.LogOutput('debug',
+                                        "eth interface failed to validate "
+                                        "for : " + eth)
                     if interfaceUpOption:
                         bailflag = 1
                         returnCode = 1
@@ -361,22 +442,21 @@ class VHost ( Device ):
                     overallBuffer.append(retBuff)
                     if retCode != 0:
                         opstestfw.LogOutput('error',
-                                        'Failed to execute the command : '
-                                        + command)
+                                            'Failed to execute the command : '
+                                            + command)
                         bailflag = 1
                         returnCode = 1
-                        #retStruct['buffer'] = \
-                        #        'Failed to execute the command : ' + command
                     else:
                         opstestfw.LogOutput('debug',
-                                         'Successfully executed the command : '
-                                         + command)
+                                            "Successfully executed the "
+                                            "command : " + command)
 
                     if returnCode:
                         bufferString = ""
                         for curLine in overallBuffer:
                             bufferString += str(curLine)
-                        returnCls = opstestfw.returnStruct(returnCode=1, buffer=bufferString)
+                        returnCls = opstestfw.returnStruct(returnCode=1,
+                                                           buffer=bufferString)
                         return returnCls
 
         if config is False:
@@ -387,28 +467,29 @@ class VHost ( Device ):
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                              + command)
+                                    + command)
                 returnCode = 1
-                #retStruct['buffer'] = 'Failed to execute the command : ' + command
             else:
-                opstestfw.LogOutput('info','Successfully executed the command : '
-                                 + command)
+                opstestfw.LogOutput('info',
+                                    'Successfully executed the command : '
+                                    + command)
         else:
             # Here we are configuring the interface
-            command = self.ETH_INTERFACE_CFGIP_IFCFG_CMD % (eth, ipAddr, netMask,
-                broadcast)
+            command = self.ETH_INT_CFGIP_IFCFG_CMD % (eth, ipAddr, netMask,
+                                                      broadcast)
             retDevInt = self.DeviceInteract(command=command)
             retCode = retDevInt.get('returnCode')
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
-                opstestfw.LogOutput('error', 'Failed to execute the command : '
-                            + command)
+                opstestfw.LogOutput('error',
+                                    'Failed to execute the command : '
+                                    + command)
                 returnCode = 1
-                #retStruct['buffer'] = 'Failed to execute the command : ' \
-                #+ command
             else:
-                opstestfw.LogOutput('debug','Successfully executed the command : '+ command)
+                opstestfw.LogOutput('debug',
+                                    'Successfully executed the command : '
+                                    + command)
 
             if returnCode != 1:
                 command = self.LIST_INTERFACE_IP_CMD % eth
@@ -418,43 +499,68 @@ class VHost ( Device ):
                 overallBuffer.append(retBuff)
                 if retCode != 0:
                     opstestfw.LogOutput('error',
-                                 'Failed to execute the command : '
-                                 + command)
+                                        'Failed to execute the command : '
+                                        + command)
                     returnCode = 1
-                    #retStruct['buffer'] = 'Failed to execute the command : ' + command
                 else:
-                    opstestfw.LogOutput('debug','Successfully executed the command : '
-                                     + command)
+                    opstestfw.LogOutput('debug',
+                                        'Successfully executed the command : '
+                                        + command)
 
             if retBuff.find(ipAddr) == -1:
                 opstestfw.LogOutput('error',
-                                 'IP addr %s is not configured successfully on interface %s : '
-                                  % (ipAddr, eth))
-                #retStruct['buffer'] = 'Failed to execute the command : ' + command
+                                    "IP addr %s is not configured "
+                                    "successfully on interface %s : "
+                                    % (ipAddr, eth))
             else:
-                opstestfw.LogOutput('info','IP addr %s configured successfully on interface %s : '
-                                 % (ipAddr, eth))
+                opstestfw.LogOutput('info',
+                                    "IP addr %s configured successfully on "
+                                    "interface %s : " % (ipAddr, eth))
 
-        #retStruct['returnCode'] = returnCode
         # Fill out buffer
         bufferString = ""
         for curLin in overallBuffer:
             bufferString += str(curLin)
-            #print curLin
-        #retStruct['buffer'] = bufferString
-        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = opstestfw.returnStruct(returnCode=returnCode,
+                                           buffer=bufferString)
         return returnCls
 
-
     def ipFormatChk(self, ip_str):
-        pattern = \
-         r"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
-        if re.match(pattern, ip_str):
-            return True
-        else:
-            return False
+        """
+        ipFormatChk Method
 
-    def Network6Config(self,**kwargs):
+        This method validate ip string format
+        :param arg1: ip address string
+        :type arg1: string
+        :return: boolean
+        :rtype: boolean
+        """
+
+        patternv4 = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+        if re.match(patternv4, ip_str):
+            return True
+        patternv6 = r"(?:(?:[[:xdigit:]]{0,4}:){1,7}[[:xdigit:]]{0,4})"
+        if re.match(patternv6, ip_str):
+            return True
+        return False
+
+    def Network6Config(self, **kwargs):
+        """
+        Network6Config Method
+
+        This method will configure an ipv6 address over a network interface
+        :param interface: network interface to configure address on
+        :type interface: string
+        :param ipAddr: ip address string
+        :type ipAddr: string
+        :param netMask: network mask string in IP format
+        :type netMask: string
+        :param config: True to config / False to unconfig interface
+        :type config: boolean
+        :return: returnStruct Object
+        :rtype: object
+        """
+
         eth = kwargs.get('interface')
         ipAddr = kwargs.get('ipAddr')
         netMask = kwargs.get('netMask')
@@ -464,9 +570,7 @@ class VHost ( Device ):
         bailflag = 0
         interfaceUpOption = 0
         returnCode = 0
-        retStruct = dict()
         overallBuffer = []
-        #retStruct['buffer'] = []
 
         try:
             socket.inet_pton(socket.AF_INET6, ipAddr)
@@ -477,41 +581,37 @@ class VHost ( Device ):
             returnCode = 1
 
         if returnCode:
-            #retStruct['returnCode'] = returnCode
             opstestfw.LogOutput('error',
-                         'Invalid ipv6 address or netMask passed ')
-            #retStruct['buffer'] = 'Invalid ipv6 address or netMask passed '
+                                'Invalid ipv6 address or netMask passed ')
             returnCls = opstestfw.returnStruct(returnCode=returnCode)
             return returnCls
 
         while bailflag == 0:
             # Send the command
-            retDevInt = self.DeviceInteract(command=self.LIST_ETH_INTERFACES_CMD)
+            retDevInt = self.DeviceInteract(
+                command=self.LIST_ETH_INTERFACES_CMD
+            )
             retCode = retDevInt.get('returnCode')
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                              + self.LIST_ETH_INTERFACES_CMD)
+                                    + self.LIST_ETH_INTERFACES_CMD)
                 bailflag = 1
                 returnCode = 1
-                #retStruct['buffer'] = 'Failed to execute the command : ' \
-                # + self.LIST_ETH_INTERFACES_CMD
             else:
                 opstestfw.LogOutput('debug',
-                             'Successfully executed the command : '
-                             + self.LIST_ETH_INTERFACES_CMD)
+                                    'Successfully executed the command : '
+                                    + self.LIST_ETH_INTERFACES_CMD)
                 if retBuff.find(eth) != -1:
                     opstestfw.LogOutput('info',
-                                 'eth interface is validated for : '
-                                 + eth)
+                                        'eth interface is validated for : '
+                                        + eth)
                     bailflag = 1
                 else:
                     opstestfw.LogOutput('error',
-                                 'eth interface failed to validate for : '
-                                  + eth)
-                    #retStruct['buffer'] = \
-                    #'eth interface failed to validate for : ' + eth
+                                        'eth interf failed to validate for : '
+                                        + eth)
                     if interfaceUpOption:
                         bailflag = 1
                         returnCode = 1
@@ -524,42 +624,39 @@ class VHost ( Device ):
                     overallBuffer.append(retBuff)
                     if retCode != 0:
                         opstestfw.LogOutput('error',
-                            'Failed to execute the command : '
-                            + command)
+                                            'Failed to execute the command : '
+                                            + command)
                         bailflag = 1
                         returnCode = 1
-                        #retStruct['buffer'] = \
-                        #'Failed to execute the command : ' + command
                     else:
                         opstestfw.LogOutput('debug',
-                            'Successfully executed the command : '
-                            + command)
+                                            'Success executed the command : '
+                                            + command)
 
         if returnCode:
             bufferString = ""
             for curLin in overallBuffer:
                 bufferString += str(curLin)
 
-            #retStruct['buffer'] = bufferString
-            returnCls = opstestfw.returnStruct(returnCode=1, buffer=bufferString)
+            returnCls = opstestfw.returnStruct(returnCode=1,
+                                               buffer=bufferString)
             return returnCls
 
         if config is False:
-            command = self.ETH_INTERFACE_CFGIP_CLEAR_CMD % (ipAddr, netMask, eth)
+            command = self.ETH_INTERFACE_CFGIP_CLEAR_CMD % (
+                ipAddr, netMask, eth)
             retDevInt = self.DeviceInteract(command=command)
             retCode = retDevInt.get('returnCode')
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                              + command)
+                                    + command)
                 returnCode = 1
-                #retStruct['buffer'] = 'Failed to execute the command : ' \
-                #+ command
             else:
                 opstestfw.LogOutput('debug',
-                             'Successfully executed the command : '
-                             + command)
+                                    'Successfully executed the command : '
+                                    + command)
         else:
             command = self.ETH_INTERFACE_CFGIP_CMD % (ipAddr, netMask, eth)
             retDevInt = self.DeviceInteract(command=command)
@@ -568,14 +665,12 @@ class VHost ( Device ):
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                              + command)
+                                    + command)
                 returnCode = 1
-                #retStruct['buffer'] = 'Failed to execute the command : ' \
-                #+ command
             else:
                 opstestfw.LogOutput('debug',
-                             'Successfully executed the command : '
-                             + command)
+                                    'Successfully executed the command : '
+                                    + command)
 
             if returnCode != 1:
                 command = self.LIST_INTERFACE_IP_CMD % eth
@@ -585,36 +680,50 @@ class VHost ( Device ):
                 overallBuffer.append(retBuff)
                 if retCode != 0:
                     opstestfw.LogOutput('error',
-                                 'Failed to execute the command : '
-                                 + command)
+                                        'Failed to execute the command : '
+                                        + command)
                     returnCode = 1
-                    #retStruct['buffer'] = \
-                    #'Failed to execute the command : ' + command
                 else:
                     opstestfw.LogOutput('debug',
-                                 'Successfully executed the command : '
-                                 + command)
+                                        'Successfully executed the command : '
+                                        + command)
 
             if retBuff.find(ipAddr) == -1:
                 opstestfw.LogOutput('error',
-                                 'IP addr %s is not configured successfully on interface %s : '
-                                  % (ipAddr, eth))
-                #retStruct['buffer'] = \
-                #    'Failed to execute the command : ' + command
+                                    'IP addr %s is not configured successfully\
+                                  on interface %s : '
+                                    % (ipAddr, eth))
             else:
                 opstestfw.LogOutput('info',
-                                 'IP addr %s configured successfully on interface %s : '
-                                  % (ipAddr, eth))
+                                    'IP addr %s configured successfully on \
+                                  interface %s : '
+                                    % (ipAddr, eth))
 
         bufferString = ""
         for curLin in overallBuffer:
             bufferString += str(curLin)
-            #print curLin
-        #retStruct['buffer'] = bufferString
-        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = opstestfw.returnStruct(
+            returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     def Ping(self, **kwargs):
+        """
+        Ping Method
+
+        This method will be used to ping a destination
+        :param ipAddr: destination ip address string
+        :type ipAddr: string
+        :param ipv6Flag: True to ipv6 / False to ipv4
+        :type ipv6Flag: boolean
+        :param packetCount: no of echo packets to be sent
+        :type packetCount: integer
+        :param packetSize: size of the echo packet
+        :type packetSize: integer
+        :param interface: host network interface to be used
+        :type interface: string
+        :return: returnStruct Object
+        :rtype: object
+        """
 
         ipAddr = kwargs.get('ipAddr')
         ipv6Flag = kwargs.get('ipv6Flag', False)
@@ -623,8 +732,6 @@ class VHost ( Device ):
         eth = kwargs.get('interface', 'eth1')
 
         retStruct = dict()
-        #retStruct['returnCode'] = 1
-        #retStruct['buffer'] = ""
         retStruct['packets_transmitted'] = 0
         retStruct['packets_received'] = 0
         retStruct['packet_loss'] = 0
@@ -664,33 +771,34 @@ class VHost ( Device ):
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                                 + command)
+                                    + command)
             else:
-                opstestfw.LogOutput('info', 'Successfully executed the command : '
-                                 + command)
+                opstestfw.LogOutput(
+                    'info', 'Successfully executed the command : ' + command)
 
             if retBuff.find('bytes from') == -1:
                 returnCode = 1
             else:
                 returnCode = 0
-                #retStruct['buffer'] = retBuff
         else:
             returnCode = 1
-            #retStruct['buffer'] = 'Invalid ip address'
 
         # Fill out buffer
         bufferString = ""
         for curLin in overallBuffer:
             bufferString += str(curLin)
-            #print curLin
-        #retStruct['buffer'] = bufferString
 
         # Carve the buffer up to get statistics
-        #10 packets transmitted, 10 received, 0% packet loss, time 8997ms
-        #rtt min/avg/max/mdev = 0.342/0.456/0.693/0.096 ms
-
+        # 10 packets transmitted, 10 received, 0% packet loss, time 8997ms
+        # rtt min/avg/max/mdev = 0.342/0.456/0.693/0.096 ms
         for curLine in bufferString.split('\r\n'):
             print curLine
+            '''
+            statsLine1 = re.match(r'(\d+) packets transmitted,\
+                                    (\d+) received,\
+                                    (\d+)% packet loss,\
+                                    time (\d+)ms', curLine)
+            '''
             statsLine1 = re.match(r'(\d+) packets transmitted, (\d+) received, (\d+)% packet loss, time (\d+)ms', curLine)
             if statsLine1:
                 retStruct['packets_transmitted'] = int(statsLine1.group(1))
@@ -699,7 +807,9 @@ class VHost ( Device ):
                 retStruct['time'] = int(statsLine1.group(4))
                 continue
 
-            statsLine2 = re.match(r'rtt min/avg/max/mdev = ([0-9]+\.[0-9]+)/([0-9]\.[0-9]+)/([0-9]+\.[0-9]+)/([0-9]+\.[0-9]+) ms', curLine)
+            statsLine2 = re.match(
+                r'rtt min/avg/max/mdev = ([0-9]+\.[0-9]+)/([0-9]\.[0-9]+)/([0-9]+\.[0-9]+)/([0-9]+\.[0-9]+) ms',
+                curLine)
             if statsLine2:
                 retStruct['rtt_min'] = float(statsLine2.group(1))
                 retStruct['rtt_avg'] = float(statsLine2.group(2))
@@ -707,25 +817,42 @@ class VHost ( Device ):
                 retStruct['rtt_mdev'] = float(statsLine2.group(4))
                 continue
 
-        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
+        returnCls = opstestfw.returnStruct(returnCode=returnCode,
+                                           buffer=bufferString, data=retStruct)
         return returnCls
 
     def IPRoutesConfig(self, **kwargs):
+        """
+        IPRoutesConfig Method
+
+        This method will be used to configure route on a interface
+        :param config: True to config / False to unconfig interface
+        :type config: boolean
+        :param destNetwork: destination network address string
+        :type destNetwork: string
+        :param netMask: network mask string in IP format
+        :type netMask: string
+        :param gateway: gateway address
+        :type gateway: string
+        :param interface: host network interface to be used
+        :type interface: string
+        :param metric: route metric to be used
+        :type metric: string
+        :param ipv6Flag: True to ipv6 / False to ipv4
+        :type ipv6Flag: boolean
+        :return: returnStruct Object
+        :rtype: object
+        """
+
         config = kwargs.get('config', True)
         destNetwork = kwargs.get('destNetwork')
         netMask = kwargs.get('netMask')
-        #via = kwargs.get('via')
         gateway = kwargs.get('gateway', None)
         eth = kwargs.get('interface', 'eth1')
         metric = kwargs.get('metric', None)
         ipv6Flag = kwargs.get('ipv6Flag', False)
 
-        defaultRoute = 0
-
-        retStruct = dict()
         overallBuffer = []
-        # Local variables
-        #connection = self.expectHndl
 
         returnCode = 0
 
@@ -735,48 +862,43 @@ class VHost ( Device ):
             routeOperation = "del"
 
         if routeOperation != 'add' and routeOperation != 'del':
-            #retStruct['buffer'] = 'Invalid routeOperation : %s' \
-            #% routeOperation
-            opstestfw.LogOutput('error', "Invalid route operation : " + routeOperation)
+            opstestfw.LogOutput('error', "Invalid route operation : "
+                                + routeOperation)
             returnCode = 1
 
         if ipv6Flag:
             try:
                 socket.inet_pton(socket.AF_INET6, destNetwork)
                 if destNetwork == '::':
-                    defaultRoute = 1
-                    route_command = \
-                    'ip -6 route %s %s via %s' % (routeOperation, 'default', gateway)
+                    route_command = 'ip -6 route %s %s via \
+                                  %s' % (routeOperation, 'default', gateway)
                 else:
                     route_command = \
-                    'ip -6 route %s %s/%d via %s' % (
-                    routeOperation,
-                    destNetwork,
-                    netMask,
-                    gateway)
+                        'ip -6 route %s %s/%d via %s' % (
+                            routeOperation,
+                            destNetwork,
+                            netMask,
+                            gateway)
                 if metric is not None:
-                    route_command += " metric "+ metric
+                    route_command += " metric " + metric
             except socket.error:
-                #retStruct['buffer'] = 'Invalid destination : %s' \
-                #% destNetwork
-                opstestfw.LogOutput('error', "Invalid destination " + destNetwork)
+                opstestfw.LogOutput('error', "Invalid destination "
+                                    + destNetwork)
                 returnCode = 1
         else:
             try:
                 socket.inet_pton(socket.AF_INET, destNetwork)
                 if destNetwork == '0.0.0.0':
-                    defaultRoute = 1
                     route_command = 'route %s %s gw %s dev %s metric %d' \
-                    % (routeOperation, 'default', gateway, eth, metric)
+                        % (routeOperation, 'default', gateway, eth, metric)
                 else:
                     route_command = 'route %s -net %s/%d gw %s' \
-                    % (routeOperation, destNetwork, netMask, gateway)
+                        % (routeOperation, destNetwork, netMask, gateway)
                 if metric is not None:
                     route_command += ' metric ' + metric
             except socket.error:
-                #retStruct['buffer'] = 'Invalid destination : %s' \
-                #% destNetwork
-                opstestfw.LogOutput('error', "Invalid destination : " + destNetwork)
+                opstestfw.LogOutput('error', "Invalid destination : "
+                                    + destNetwork)
                 returnCode = 1
 
         if returnCode == 0:
@@ -787,40 +909,42 @@ class VHost ( Device ):
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                              + route_command)
+                                    + route_command)
                 returnCode = 1
             else:
-                opstestfw.LogOutput('info','Successfully executed the command : '
-                                 + route_command)
-                #retStruct['buffer'] = retBuff
+                opstestfw.LogOutput('info',
+                                    'Successfully executed the command : '
+                                    + route_command)
         else:
-            #retStruct['buffer'] = 'Invalid ip address'
             opstestfw.LogOutput('error', "Invalid IP address")
 
-        #retStruct['returnCode'] = returnCode
-        #return retStruct
         bufferString = ""
         for curLin in overallBuffer:
             bufferString += str(curLin)
-            #print curLin
-        #retStruct['buffer'] = bufferString
-        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = opstestfw.returnStruct(returnCode=returnCode,
+                                           buffer=bufferString)
         return returnCls
 
     def GetDirectLocalLinkAddresses(self):
+        """
+        GetDirectLocalLinkAddresses Method
+
+        This method will be used to get host neighbour link local addr
+        :return: array of dictionary elements containing interface and address
+        :rtype: array
+        """
 
         localLinkDict = dict()
         localLinkElements = []
         command = 'ip -6 neighbour show'
 
        # Send the command
-        # Local variables
         retDevInt = self.DeviceInteract(command=command)
         retCode = retDevInt.get('returnCode')
         retBuff = retDevInt.get('buffer')
         if retCode != 0:
             opstestfw.LogOutput('error', 'Failed to execute the command : '
-                         + command)
+                                + command)
             retBuff = retBuff.split('\n')
         for output in retBuff:
             if re.search('^fe80', output):
@@ -829,97 +953,156 @@ class VHost ( Device ):
                 localLinkElements.append(localLinkDict.copy())
         return localLinkElements
 
+    def FileTransfer(self, filepath, localpath, direction):
+        """
+        FileTransfer Method
 
-
-    def FileTransfer(self,filepath,localpath,direction):
+        This method will be used to transfer file from/to host
+        :param filepath: host remote file including the path
+        :type filepath: string
+        :param localpath: host local file including the path
+        :type localpath: string
+        :param direction: get/put for getting from or copying to host
+        :type direction: string
+        :return: returnStruct Object
+        :rtype: object
+        """
 
         returnCode = 0
         paramiko.util.log_to_file('/tmp/paramiko.log')
         # Look up and see if we are physical or virtual
         xpathString = ".//reservation/id"
-        rsvnEtreeElement = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
-        if rsvnEtreeElement == None:
-        # We are not in a good situation, we need to bail
-            opstestfw.LogOutput('error', "Could not find reservation id tag in topology")
+        rsvnEtreeElement = opstestfw.XmlGetElementsByTag(
+            self.topology.TOPOLOGY,
+            xpathString)
+        if rsvnEtreeElement is None:
+            # We are not in a good situation, we need to bail
+            opstestfw.LogOutput(
+                'error', "Could not find reservation id tag in topology")
             return None
         rsvnType = rsvnEtreeElement.text
         if rsvnType != 'virtual':
-            #Get the credentials of the workstation from XML file (physical devices)
-            xpathString = ".//device[name='" + self.device + "']/connection/ipAddr"
-            ipNode = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
-            if ipNode == None:
-                opstestfw.LogOutput('error', "Failed to obtain IP address for device " + device )
+            # Get the credentials of the workstation from XML file (physical
+            # devices)
+            xpathString = ".//device[name='" + self.device\
+                + "']/connection/ipAddr"
+            ipNode = opstestfw.XmlGetElementsByTag(
+                self.topology.TOPOLOGY, xpathString)
+            if ipNode is None:
+                opstestfw.LogOutput('error',
+                                    "Failed to obtain IP address for device "
+                                    + self.device)
                 return None
             hostIP = ipNode.text
-            opstestfw.LogOutput ('debug', self.device + " connection IP address:  " + hostIP)
+            opstestfw.LogOutput(
+                'debug',
+                self.device +
+                " connection IP address:  " +
+                hostIP)
             port = 22
 
-            #Open a ssh connection to the host
+            # Open a ssh connection to the host
             transport = paramiko.Transport((hostIP, port))
 
-            #Extract username/password for logging in the workstation
-            xpathString = ".//device[name='" + self.device + "']/login/adminPassword"
-            password = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
-            if password == None:
-                opstestfw.LogOutput('error', "Failed to obtain password for device " + self.device )
+            # Extract username/password for logging in the workstation
+            xpathString = ".//device[name='" + \
+                self.device + "']/login/adminPassword"
+            password = opstestfw.XmlGetElementsByTag(
+                self.topology.TOPOLOGY, xpathString)
+            if password is None:
+                opstestfw.LogOutput(
+                    'error',
+                    "Failed to obtain password for device " +
+                    self.device)
                 return None
             password = password.text
-            xpathString = ".//device[name='" + self.device + "']/login/adminUser"
-            username = opstestfw.XmlGetElementsByTag(self.topology.TOPOLOGY, xpathString)
-            if username == None:
-                opstestfw.LogOutput('error', "Failed to obtain username for device " + self.device )
+            xpathString = ".//device[name='" + \
+                self.device + "']/login/adminUser"
+            username = opstestfw.XmlGetElementsByTag(
+                self.topology.TOPOLOGY, xpathString)
+            if username is None:
+                opstestfw.LogOutput(
+                    'error',
+                    "Failed to obtain username for device " +
+                    self.device)
                 return None
             username = username.text
 
-            transport.connect(username = username, password = password)
+            transport.connect(username=username, password=password)
             sftp = paramiko.SFTPClient.from_transport(transport)
-            #Transfer file
-            try :
+            # Transfer file
+            try:
                 if direction == "get":
-                    sftp.get(filepath,localpath)
+                    sftp.get(filepath, localpath)
                 else:
-                    sftp.put(filepath,localpath)
+                    sftp.put(filepath, localpath)
             except IOError, e:
-                opstestfw.LogOutput("error","file not transferred to workstation")
+                opstestfw.LogOutput(
+                    "error", "file not transferred to workstation")
                 returnCode = 1
                 print e
-            #Close a connection
+            # Close a connection
             sftp.close()
             transport.close()
-        else :
-            opstestfw.LogOutput("info","Topology is virtual **")
-            opstestfw.LogOutput("info","Copy the files from/to docker container")
-            try :
+        else:
+            opstestfw.LogOutput("info", "Topology is virtual **")
+            opstestfw.LogOutput(
+                "info", "Copy the files from/to docker container")
+            try:
                 if direction == "get":
-                    command = "docker cp %s:%s %s"%(self.device,filepath,localpath)
+                    command = "docker cp %s:%s %s" % (
+                        self.device, filepath, localpath)
                 else:
                     #/tmp is a shared folder between VM and docker run instance
-                    command = "cp %s %s"%(filepath, self.topology.testdir+"/"+self.device.split('_')[1]+"/shared/")
+                    command = "cp %s %s" % (filepath, self.topology.testdir
+                              + "/" + self.device.split('_')[1] + "/shared/")
                     os.system(command)
                     file_tobe_copied = filepath.split('/')[-1]
-#                   cpCommand = "cp /shared/rest.tar.gz /root/"
-                    cpCommand = "cp /shared/%s %s"%(file_tobe_copied, localpath)
+                    cpCommand = "cp /shared/%s %s" % (
+                        file_tobe_copied, localpath)
                     retDeviceInt = self.DeviceInteract(command=cpCommand)
                     retCode = retDeviceInt.get('returnCode')
-                    retBuff = retDeviceInt.get('buffer')
-
+                    if retCode != 0:
+                        opstestfw.LogOutput('error',
+                                            'Failed to execute the command : '
+                                            + cpCommand)
+                        returnCode = 1
+                    else:
+                        opstestfw.LogOutput('info', 'Successfully executed \
+                                             the command : '
+                                            + cpCommand)
             except IOError, e:
-                opstestfw.LogOutput("error","file not transferred from/to workstation")
+                opstestfw.LogOutput(
+                    "error", "file not transferred from/to workstation")
                 returnCode = 1
                 print e
             if returnCode != 0:
-                opstestfw.LogOutput('error', "Failed to copy file to/from device --> "+self.device)
+                opstestfw.LogOutput(
+                    'error',
+                    "Failed to copy file to/from device --> " +
+                    self.device)
         return returnCode
 
-
     def CreateRestEnviron(self):
+        """
+        CreateRestEnviron Method
+
+        This method will be used to create REST environment on the host
+        :return: returnStruct Object
+        :rtype: object
+        """
 
         returnCode = 0
         overallBuffer = []
-        opstestfw.LogOutput("info","Creating HostRestEnvironment")
-        tarCommand = "cd "+self.fwbase+"; tar -cvzf "+self.fwbase+"/restEnv/rest.tar.gz restEnv"
+        opstestfw.LogOutput("info", "Creating HostRestEnvironment")
+        tarCommand = "cd " + self.fwbase + "; tar -cvzf " + \
+            self.fwbase + "/restEnv/rest.tar.gz restEnv"
         os.system(tarCommand)
-        self.FileTransfer(self.fwbase+"/restEnv/rest.tar.gz", "/root/rest.tar.gz", "put")
+        self.FileTransfer(
+            self.fwbase +
+            "/restEnv/rest.tar.gz",
+            "/root/rest.tar.gz",
+            "put")
         cdCommand = "cd /root"
         retDeviceInt = self.DeviceInteract(command=cdCommand)
         tarCommand = "tar -xvzf /root/rest.tar.gz"
@@ -929,24 +1112,41 @@ class VHost ( Device ):
         overallBuffer.append(retBuff)
         if retCode != 0:
             opstestfw.LogOutput('error', 'Failed to execute the command : '
-                                 + tarCommand)
+                                + tarCommand)
             returnCode = 1
         else:
             opstestfw.LogOutput('info',
-                                 'Successfully executed the command : '
-                                 + tarCommand)
-        opstestfw.LogOutput("info","Successful in CreateHostRestInfra")
+                                'Successfully executed the command : '
+                                + tarCommand)
+        opstestfw.LogOutput("info", "Successful in CreateHostRestInfra")
         bufferString = ""
         for curLin in overallBuffer:
             bufferString += str(curLin)
-        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = opstestfw.returnStruct(
+            returnCode=returnCode, buffer=bufferString)
         return returnCls
 
-    def RestCmd(self,**kwargs):
+    def RestCmd(self, **kwargs):
+        """
+        RestCmd Method
+
+        This method used to use host as REST client to issue REST request
+        :param switch_ip: REST server IP running on the switch
+        :type switch_ip: string
+        :param url: url or uri of the resource
+        :type url: string
+        :param method: REST method options POST,GET,PUT and DELETE
+        :type method: string
+        :param data: JSON data body for POST or PUT
+        :type data: string
+        :return: returnStruct Object
+        :rtype: object
+        """
+
         ip = kwargs.get('switch_ip')
         url = kwargs.get('url')
         method = kwargs.get('method')
-        data    = kwargs.get('data', None)
+        data = kwargs.get('data', None)
         returnCode = 0
         overallBuffer = []
         bufferString = ""
@@ -955,33 +1155,40 @@ class VHost ( Device ):
             socket.inet_pton(socket.AF_INET, ip)
         except socket.error:
             returnCode = 1
-        if returnCode <> 1:
-            if data <> None:
-               with open(self.fwbase+'/restEnv/restdata', 'wb') as f:
-#                   f.write(str(data))
-                   json.dump(data,f)
-                   f.close()
-                   self.FileTransfer(self.fwbase+"/restEnv/restdata", "/root/restEnv/restdata", "put")
-            restCmd = "python /root/restEnv/resttest.py --ip=%s --url=%s --method=%s" %(ip,url,method)
+        if returnCode != 1:
+            if data is not None:
+                with open(self.fwbase + '/restEnv/restdata', 'wb') as f:
+                    json.dump(data, f)
+                    f.close()
+                    self.FileTransfer(
+                        self.fwbase +
+                        "/restEnv/restdata",
+                        "/root/restEnv/restdata",
+                        "put")
+            restCmd = "python /root/restEnv/resttest.py --ip=%s --url=%s\
+                      --method=%s" % (ip, url, method)
             retDeviceInt = self.DeviceInteract(command=restCmd)
             retCode = retDeviceInt.get('returnCode')
             retBuff = retDeviceInt.get('buffer')
             overallBuffer.append(retBuff)
             if retCode != 0:
                 opstestfw.LogOutput('error', 'Failed to execute the command : '
-                                  + restCmd)
+                                    + restCmd)
                 returnCode = 1
             else:
                 opstestfw.LogOutput('info',
-                                 'Successfully executed the command : '
-                                 + restCmd)
+                                    'Successfully executed the command : '
+                                    + restCmd)
             for curLin in overallBuffer:
                 bufferString += str(curLin)
 
             output = bufferString.split("\n")
             retStruct['http_retcode'] = output[1]
-            print "Http Returned Code "+retStruct['http_retcode']
+            print "Http Returned Code " + retStruct['http_retcode']
             retStruct['response_body'] = output[4]
 
-        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=bufferString, data=retStruct)
+        returnCls = opstestfw.returnStruct(
+            returnCode=returnCode,
+            buffer=bufferString,
+            data=retStruct)
         return returnCls
