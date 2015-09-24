@@ -1,3 +1,19 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+#####################################################################
 import os
 import xml.dom.minidom
 from mininet.net import *
@@ -16,7 +32,6 @@ import re
 import select
 import opstestfw
 import shutil
-#from opstestfw import *
 from opstestfw import gbldata
 
 import shutil
@@ -29,18 +44,42 @@ except ImportError:
 
 
 class Topology (OpsVsiTest):
+
+    """
+    Topology  Class definition
+
+    This Class defines openswitch topology by taking inputs from the topology
+    dictionary defined in the test scripts
+    Inherits the base class OpsVsiTest
+
+    """
+
     def __init__(self, **kwargs):
+        """
+        Topology  init method
+
+        This method generates the Topology object that contains topology
+        information extracted from LogicalTopology.xml .
+        LogicalTopology.xml is built from the topology dictionary as described
+        in the test scripts .
+        This library enables mapping of logical topologies to docker containers/
+        physical devices (switches & hosts)
+
+        :param topoDict : topology dictionary defined in the test case
+        :type topology: dictionary
+        :param runEnv: reference object to testEnviron.py
+        :type runEnv:  Object
+
+        """
+
         self.topoDict = kwargs.get('topoDict', None)
         self.runEnv = kwargs.get('runEnv', None)
-#        self.hostimage = kwargs.get('hostImage', 'ubuntu:latest')a
         self.hostimage = 'ubuntu:latest'
-        #self.topoType = kwargs.get('topoType', None)
-        #self.rsvnId = kwargs.get('rsvnId', None)
         self.topoType = 'virtual'
         # Initialize Structures
         self.LOGICAL_TOPOLOGY = ""
         self.TOPOLOGY = ""
-        
+
         self.topo = dict()
         self.deviceObj = dict()
         self.id = str(os.getpid())
@@ -67,15 +106,17 @@ class Topology (OpsVsiTest):
         self.TopologyXMLWrite()
 
     def setupNet(self, **kwargs):
-        #topoDictionary = kwargs.get('topoDictionary')
+        """
+        This method defines the Mininet object and populates it
+        by using inputs from logical topology defined in testcase
 
-        # Print out topology aspects
-        #self.topoDevices = str(topoDictionary['topoDevices'])
-        #self.topoLinks = str(topoDictionary['topoLinks'])
-        #self.topoFilters = str(topoDictionary['topoFilters'])
+
+        """
 
         # Define Mininet object so we can populate it.
-        self.mntopo = mininet.topo.Topo(hopts=self.getHostOpts(), sopts=self.getSwitchOpts())
+        self.mntopo = mininet.topo.Topo(
+    hopts=self.getHostOpts(),
+     sopts=self.getSwitchOpts())
 
         logicalTopo = dict()
         for curDev in str.split(self.topoDevices):
@@ -96,7 +137,10 @@ class Topology (OpsVsiTest):
                 opstestfw.LogOutput('debug', "Added Switch Device: " + curDev)
                 self.mntopo.addSwitch(curDev)
             elif devCategory == "workstation":
-                opstestfw.LogOutput('debug', "Added Workstation Device: " + curDev)
+                opstestfw.LogOutput(
+    'debug',
+     "Added Workstation Device: " +
+     curDev)
                 self.mntopo.addHost(curDev)
 
         if self.topoLinks != "":
@@ -107,7 +151,6 @@ class Topology (OpsVsiTest):
                 logicalTopo[dev1]['links'][link] = dev2
                 logicalTopo[dev2]['links'][link] = dev1
 
-        # print logicalTopo
         # Configure MiniNet
         self.net = mininet.net.Mininet(topo=self.mntopo,
                            switch=VsiOpenSwitch,
@@ -117,10 +160,12 @@ class Topology (OpsVsiTest):
                            build=True)
         print ""
         # Now we need to query what we have.... to put in the topology
-        # We will not formally have mapping, so we will create the mapping array here.
+        # We will not formally have mapping, so we will create the mapping
+        # array here.
         switches = self.net.switches
         for curSwitch in switches:
-            xmlAddRet = self.VirtualXMLDeviceAdd(name=str(curSwitch.container_name))
+            xmlAddRet = self.VirtualXMLDeviceAdd(
+    name=str(curSwitch.container_name))
             logDevRe = re.match("^\d+_(\S+)", curSwitch.container_name)
             if logDevRe:
                 logicalDevice = logDevRe.group(1)
@@ -128,9 +173,10 @@ class Topology (OpsVsiTest):
                 self.topo[curSwitch.container_name] = logicalDevice
 
         hosts = self.net.hosts
-        # print hosts
+        # hosts
         for curHost in hosts:
-            xmlAddRet = self.VirtualXMLDeviceAdd(name=str(curHost.container_name))
+            xmlAddRet = self.VirtualXMLDeviceAdd(
+                name=str(curHost.container_name))
             logDevRe = re.match("^\d+_(\S+)", curHost.container_name)
             if logDevRe:
                 logicalDevice = logDevRe.group(1)
@@ -151,58 +197,85 @@ class Topology (OpsVsiTest):
             node1Obj = self.searchNetNodes(self.topo[node1])
             node1port = linkInfo['port1']
             node1IntStruct = node1Obj.intfList()
-            #print node1IntStruct
+            # print node1IntStruct
 
             node2 = linkInfo['node2']
             node2Obj = self.searchNetNodes(self.topo[node2])
             node2port = linkInfo['port2']
             node2IntStruct = node2Obj.intfList()
-            #print node2IntStruct
 
             # Add link to Topology XML
             retStruct = self.VirtualXMLLinkAdd(link=linkName,
                                                    device1=self.topo[node1],
-                                                   device1Port=node1IntStruct[node1port],
+                                                   device1Port=node1IntStruct[
+                                                       node1port],
                                                    device2=self.topo[node2],
                                                    device2Port=node2IntStruct[node2port])
             self.topo[linkName] = linkName
 
-
-        # print out topology mapping
-        opstestfw.LogOutput('info', "=====================================================================")
+        # topology mapping
+        opstestfw.LogOutput(
+    'info',
+     "=====================================================================")
         opstestfw.LogOutput('info', "Topology Mapping")
         for curDev in str.split(self.topoDevices):
             outstring = curDev + "  =  " + self.topo[curDev]
             opstestfw.LogOutput('info', outstring)
 
         if self.topoLinks != "":
-            # LEts go and resolve the links
+            # Resolve the links
             for curLink in str.split(self.topoLinks, ','):
                 (link, dev1, dev2) = str.split(curLink, ':')
-                dev1LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev1], link=link)
+                dev1LportStruct = self.InterfaceGetByDeviceLink(
+    device=self.topo[dev1], link=link)
                 if dev1LportStruct.returnCode() != 0:
-                    # didn't get link info
-                    opstestfw.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev1)
+                    opstestfw.LogOutput(
+    'error',
+     "Unable to obtain link information for " +
+     link +
+     " for " +
+     dev1)
                     continue
                 dev1Lport = dev1LportStruct.valueGet()
-                dev2LportStruct = self.InterfaceGetByDeviceLink(device=self.topo[dev2], link=link)
+                dev2LportStruct = self.InterfaceGetByDeviceLink(
+                    device=self.topo[dev2], link=link)
                 if dev2LportStruct.returnCode() != 0:
-                    # didn't get link info
-                    opstestfw.LogOutput('error', "Unable to obtain link information for " + link + " for " + dev2)
+                    # Unable to obtain link information
+                    opstestfw.LogOutput(
+    'error',
+     "Unable to obtain link information for " +
+     link +
+     " for " +
+     dev2)
                     continue
                 dev2Lport = dev2LportStruct.valueGet()
-                outstring = link + "  =  " + self.topo[dev1] + ":" + str(dev1Lport) + " <==> " + self.topo[dev2] + ":" + str(dev2Lport)
+                outstring = link + "  =  " + self.topo[dev1] + ":" + str(
+    dev1Lport) + " <==> " + self.topo[dev2] + ":" + str(dev2Lport)
                 opstestfw.LogOutput('info', outstring)
-        opstestfw.LogOutput('info', "=====================================================================")
+        opstestfw.LogOutput(
+    'info',
+     "=====================================================================")
         self.net.start()
 
-    # Routine to alter link state
     def VirtualLinkModifyStatus(self, **kwargs):
+        """
+        This method identifies Link information from the topology dictionary
+        and modifies its state
+        :param link: Link whose state needs to be modified
+        :type link : string
+
+        :param status : Link status
+        :type status :  string
+
+        """
+
         link = kwargs.get('link', None)
         status = kwargs.get('status', 'down')
-        # Find out who the link belongs to - can do this with the logical topology
+        # Find out who the link belongs to - can do this with the logical
+        # topology
         xpath = "./link[@name='" + str(link) + "']"
-        linkNameElement = opstestfw.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath)
+        linkNameElement = opstestfw.XmlGetElementsByTag(
+    self.LOGICAL_TOPOLOGY, xpath)
 
         linkAttrs = linkNameElement.attrib
         device1 = linkAttrs['device1']
@@ -214,6 +287,12 @@ class Topology (OpsVsiTest):
 
     # Restart Switch
     def RestartSwitch(self, **kwargs):
+        """
+        This method restarts the virtual switch
+        :param switch : Virtual Switch object
+        :type  switch : Object
+
+        """
         switch = kwargs.get('switch', None)
         opstestfw.LogOutput('info', "Restarting Virtual Switch: " + switch)
         switches = self.mininetGlobal.net.switches
@@ -226,10 +305,10 @@ class Topology (OpsVsiTest):
 
         mylogicalDev = self.topo[switch]
 
-        # Lets cleanup the old container
+        # cleanup the old container
         switchObj.terminate()
 
-        # Clean up old directory so we do not run into issues outside of our control
+        # Clean up old directory 
         mydir = switchObj.testdir + "/" + mylogicalDev
         shutil.rmtree(mydir)
 
@@ -241,14 +320,19 @@ class Topology (OpsVsiTest):
         for curLink in str.split(self.topoLinks, ','):
             (link, dev1, dev2) = str.split(curLink, ':')
             if dev1 == mylogicalDev or dev2 == mylogicalDev:
-                # we need to add the link
+                # add the link
                 opstestfw.LogOutput('debug', "Creating Link " + link + " between " + dev1 + " & " + dev2)
                 self.net.addLink(dev1, dev2)
 
         return None
 
-    # Routine to search for Net Node
     def searchNetNodes(self, name):
+        """
+        Routine to search for Net Node
+        :param:name : docker container name 
+        :type :name : string
+    
+        """
         switches = self.net.switches
         hosts = self.net.hosts
 
@@ -263,7 +347,11 @@ class Topology (OpsVsiTest):
         return(None)
 
     def terminate_nodes(self):
-        # gather up all nudes
+        """
+        This routine deletes docker container instances
+
+        """
+        # gather up all nodes
         # Close file desc
         for curDev in str.split(self.topoDevices):
             devObj = self.deviceObjGet(device=curDev)
@@ -294,18 +382,14 @@ class Topology (OpsVsiTest):
             opstestfw.LogOutput('debug', "terminating " + str(curSwitch))
             curSwitch.terminate()
 
-    # Virtual TOPOLOGY XML Routines
     def VirtualXMLCreate(self):
-        # Create Logical Topology based on dictionary - Low PRiority
+        """
+        Virtual TOPOLOGY XML Routines
+        Create virtual topology XML file from topology 
+        Base Topology Tag
+        create reservation header w/ id = virtual
 
-        # Create a Phytsical Topology - High Priority
-        # Need concept of logical topology definition to create base TOPO
-
-        # Create XML Document
-        #  Set up comment
-        #  Here create reservation header w/ id = virtual
-        #  Create out devices in the files
-        # Base Topology Tag
+        """
         self.TOPOLOGY = ET.Element("topology", attrib={'version': "1.0"})
 
         # Reservation Tag
@@ -314,8 +398,13 @@ class Topology (OpsVsiTest):
         reservationUserTag = ET.SubElement(reservationTag, 'user')
         reservationServerTag = ET.SubElement(reservationTag, 'server')
     
-    # VirtualXMLDeviceAdd
     def VirtualXMLDeviceAdd(self, **kwargs):
+        """
+        This routine populates devices to the XML files using device
+        attributes from the topology dictinary 
+
+        """
+        
         name = kwargs.get('name')
         vendor = kwargs.get('vendor', "hp")
         platform = kwargs.get('platform', None)
@@ -408,6 +497,9 @@ class Topology (OpsVsiTest):
     
     
     def VirtualXMLLinkAdd(self,**kwargs):
+        """
+        This routine adds link attributes to XML file 
+        """
         device1 = kwargs.get("device1")
         device2 = kwargs.get("device2")
         link = kwargs.get("link")
@@ -487,9 +579,15 @@ class Topology (OpsVsiTest):
         retCls = opstestfw.returnStruct(returnCode=0)
         return retCls
     
-        # InterfaceGetByDeviceLink(self)
     def InterfaceGetByDeviceLink(self, **kwargs):
+        """
+        This method gets the real interfaces attached to a link 
+        :param device: Device whose link needs to be determined
+        :type device:  string
+        :param link: Device link
+        :type link: string
 
+        """
         device = kwargs.get('device', None)
         link = kwargs.get('link', None)
 
@@ -498,14 +596,19 @@ class Topology (OpsVsiTest):
         retCls = opstestfw.returnStruct(returnCode=0, data=retStruct.text)
         return retCls
     
-    # List Links associated with device.
     def Links(self, **kwargs):
+        """
+        This method makes a list of links associated with a device
+        :param device : Device name
+        :type  device : string
+
+        """
         device = kwargs.get('device', None)
         
         xpath = ".//link"
         linksList = []
         linkElements = opstestfw.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath, allElements=True)
-        #print linkElements
+        # print linkElements
         for curElement in linkElements:
             linkName = curElement.attrib['name']
             device1 = curElement.attrib['device1']
@@ -514,20 +617,30 @@ class Topology (OpsVsiTest):
                 linksList.append(linkName)
         return linksList
     
-    #Get the provisioning targets (Physical devices)
+    # Get the provisioning targets (Physical devices)
     def GetProvisioningTargets(self):
+        """
+        This routine returns the provisioning target switches as defined 
+        in the topology dictionaryi(topotarget) (only for physical switches)
+
+        """
         self.LOGICAL_TOPOLOGY = ET.Element("topology", attrib={'version': "3"})
-        #Get target if there
+        # Get target if there
         self.targets = str(self.topoDict.get('topoTarget', None))
         return self.targets
 
-    #Logical Topology Create
+    # Logical Topology Create
     def LogicalTopologyCreate(self):
+        """
+        This routine creates Logical topologies taking the topology dictionary 
+        described in the test case as an input 
+        
+        """
         self.LOGICAL_TOPOLOGY = ET.Element("topology", attrib={'version': "3"})
 
         # Get target if there
         self.targets = str(self.topoDict.get('topoTarget', None))
-        #self.topoLinks = str(self.topoDict.get)
+        # self.topoLinks = str(self.topoDict.get)
         # create the links
         self.topoLinkFilter = ""
         
@@ -558,7 +671,7 @@ class Topology (OpsVsiTest):
         mytopoFilters = str(self.topoDict['topoFilters'])
         self.topoFilters = re.sub('\s+', '', mytopoFilters) 
         for curFilter in str.split(self.topoFilters, ','):
-            #print curFilter
+            # print curFilter
             (cDev, cAttr, cVal) = str.split(curFilter, ':')
             # Search for the tag in logical topology
             xpath = ".//device[@name='"+cDev+"']"
@@ -571,7 +684,7 @@ class Topology (OpsVsiTest):
         # Now parse through topoLinkFilter statements
         if self.topoLinkFilter != "":
             for curTopoLinkFilter in str.split(self.topoLinkFilter, ','):
-                #print curTopoLinkFilter
+                # print curTopoLinkFilter
                 (cLink, cDev, cFType, CAttr) = str.split(curTopoLinkFilter, ':')
                 # Search for Device in logical Topology 
                 xpath = ".//device[@name='"+cDev+"']"
@@ -586,15 +699,15 @@ class Topology (OpsVsiTest):
         xpath = ".//device/attribute[@value='workstation']/.."
         wrkstonDevsTag = opstestfw.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpath, allElements=True)
         for curTag in wrkstonDevsTag:
-            #print curTag
+            # print curTag
             attribute_list = curTag.iter('attribute')
-            #print "attrList "
-            #print attribute_list
+            # print "attrList "
+            # print attribute_list
             found_profile = 0
             for curAttr in attribute_list:
-                #print "curAttr"
+                # print "curAttr"
                 attrName = curAttr.get('name')
-                #print attrName
+                # print attrName
                 if attrName == "system-profile":
                     found_profile = 1
                     opstestfw.LogOutput('debug', "Found system-profile attribute stated for device - not assuming auto-ubuntu-12-04")
@@ -617,6 +730,10 @@ class Topology (OpsVsiTest):
     
     # Routine to go and create device objects and establish connections
     def CreateDeviceObjects (self):
+        """
+        This routine creates device objects and establishes connections
+
+        """ 
         # Look to the logical topology to 
         xpathString = ".//device"
         deviceEtreeElements = opstestfw.XmlGetElementsByTag(self.LOGICAL_TOPOLOGY, xpathString, allElements=True)
@@ -630,9 +747,9 @@ class Topology (OpsVsiTest):
             attribute_list = curEtree.iter('attribute')
             
             for curAttr in attribute_list:
-                #print "curAttr"
+                # print "curAttr"
                 attrName = curAttr.get('name')
-                #print attrName
+                # print attrName
                 if attrName == "system-category":
                     categoryValue = curAttr.get('value')
                     
@@ -642,9 +759,9 @@ class Topology (OpsVsiTest):
                         switchObj = self.LaunchSwitch(device=self.topo[deviceName])
                         self.deviceObj[deviceName] = switchObj
                         deviceLinks = self.Links(device=deviceName)
-                        #Populate Link dictionary for each device str
+                        # Populate Link dictionary for each device str
                         switchObj.linkPortMapping = dict()
-                        #Populate the name of the switch devices in the topology 
+                        # Populate the name of the switch devices in the topology 
                         switchObj.topo = dict()
 
                         for curLink in deviceLinks:
@@ -667,21 +784,57 @@ class Topology (OpsVsiTest):
                             hostObj.linkPortMapping[curLink] = port
 
     def deviceObjGet(self, **kwargs):
+        """
+        This routine returns the device object
+        :param device: Device name 
+        :type device: string
+        """
+
         device = kwargs.get('device', None)
         return(self.deviceObj[device])
 
     def LaunchSwitch (self,  **kwargs):
+        """
+        This routine launches the VSwitch.py class for the applicable topology
+        :param device: Device name 
+        :type device: string 
+        :param noConnect:
+        :type noConnect : Boolean to flag not actually connecting to the
+                          device
+        """
+
         device = kwargs.get('device')
         noConnect = kwargs.get('noConnect', False)
         switchObj = opstestfw.VSwitch(topology=self, device=device, noConnect=noConnect)
         return switchObj
 
     def LaunchHost (self, **kwargs):
+        """
+        This routine launches the VHost.py class for the applicable topology
+        :param:device: Host name 
+        :type :device: string
+   
+        """
         device = kwargs.get('device')
         hostObj = opstestfw.VHost(topology=self, device=device)
         return hostObj
 
     def inbandSwitchConnectGet(self, **kwargs):
+        """
+        This routine establishes an inband connection to the switch device 
+        using SSH 
+        :param srcObj: Object of the device from which to connect 
+        :type  srcObj: Object 
+        :param targetObj : Switch object 
+        :type targetObj : object
+        :param address : Ip address of switch 
+        :type address : string 
+        :param user: ssh user ID
+        :type user : string 
+        :param sshArgs: ssh parameters 
+        :type sshArgs: string
+  
+        """
         deviceConnFrom = kwargs.get('srcObj', None)
         deviceConnTo = kwargs.get('targetObj', None)
         targetAddress = kwargs.get('address', None)
@@ -718,8 +871,14 @@ class Topology (OpsVsiTest):
 
     # Write out Topology File Physical
     def TopologyXMLWrite(self):
+        """
+
+        This routine writes the physical topology xml file to 
+        results directory corresponding to a particular test run.
+
+        """
         dumpString = ET.tostring(self.TOPOLOGY)
-        #print "topologyDump" + str(dumpString)
+        # print "topologyDump" + str(dumpString)
         myxml = xml.dom.minidom.parseString(dumpString)
         pretty_xml_as_string = myxml.toprettyxml()
         topoFileName = self.runEnv.ResultsDirectory['resultsDir'] + "/physicalTopology.xml"

@@ -14,6 +14,12 @@
 #    under the License.
 #
 
+"""
+The library configures LLDP on switches 
+:param device : Device Object 
+:param enable : string (configures if enable,unconfigures in other case)
+
+"""
 from opstestfw import *
 import re
 import time
