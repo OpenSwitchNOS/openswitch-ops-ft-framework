@@ -1,39 +1,48 @@
-##########################################################################################
-# Name:        opstestfw.switch.CLI.interface.ShowVlan.py
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw.switch.CLI.interface
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Diego Hurtado
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function to show the VLANs.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object.
-#
-# Returns:     returnStruct - return object with the following attributes:
-#               returnCode - integer set to 0 if the function ended up succesfully
-#                            or set to 1 if an error occurred.
-#               data - list of dictionaries, each one with the following keys:
-#                   Status - string set to "up" or "down"
-#                   Reserved - string
-#                   Name - string set to the name of the VLAN
-#                   VLAN - string set to the id of the VLAN
-#                   Reason - string
-#                   Ports - list of strings
-#               buffer - string with the output of the command execution
-#
-##PROC-###################################################################################
-
 import opstestfw
 import re
-import time
+
 
 def ShowVlan(**kwargs):
+
+    """
+    Library function to show the VLANs.
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+    :return: returnStruct Object
+            buffer
+            data keys
+                Status - string set to "up" or "down"
+                Reserved - string
+                Name - string set to the name of the VLAN
+                VLAN - string set to the id of the VLAN
+                Reason - string
+                Ports - list of strings
+    :returnType: object
+    """
     deviceObj = kwargs.get('deviceObj', None)
-    
+
     overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None:
-        opstestfw.LogOutput('error', "Need to pass switch device object deviceObj to this routine")
+        opstestfw.LogOutput('error',
+                            "Need to pass switch device object deviceObj "
+                            "to this routine")
         returnCls = opstestfw.returnStruct(returnCode=1)
         return returnCls
 
@@ -49,19 +58,17 @@ def ShowVlan(**kwargs):
         returnCls = opstestfw.returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
-   
-    command = "show vlan\n"
+    command = "show vlan"
 
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
     temporaryBuffer = returnDevInt['buffer']
     if retCode != 0:
-        opstestfw.LogOutput('error', "Failed to create VLAN."+ command)
+        opstestfw.LogOutput('error', "Failed to create VLAN." + command)
     else:
         opstestfw.LogOutput('debug', "Created VLAN." + command)
-    
-   
+
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -75,11 +82,13 @@ def ShowVlan(**kwargs):
         return returnCls
 
     result = []
-    keys = re.findall(r'\r\n(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\r\n', temporaryBuffer)
+    keys = re.findall(r'\r\n(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\r\n',
+                      temporaryBuffer)
 
     if len(keys) == 1:
         keys = keys[0]
-        vlans = re.findall(r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s+(\(\w+\))\s+([\w\d ,]+)?\r\n', temporaryBuffer)
+        vlans = re.findall(r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s+(\(\w+\))\s+([\w\d ,]+)?\r\n',
+                           temporaryBuffer)
 
         for vlan in vlans:
             dictionary = {}
@@ -90,9 +99,10 @@ def ShowVlan(**kwargs):
                     dictionary[key] = value
             result.append(dictionary)
 
-    #Return results
+    # Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
-    returnCls = opstestfw.returnStruct(returnCode=0, buffer=bufferString, data=result)
+    returnCls = opstestfw.returnStruct(returnCode=0, buffer=bufferString,
+                                       data=result)
     return returnCls
