@@ -341,13 +341,14 @@ class VSwitch(Device):
                 returnCode = 1
             else:
                 connectionBuffer.append(self.expectHndl.before)
+        # Move collecting after buffer until after we flush the buffer
+        # connectionBuffer.append(self.expectHndl.after)
+        self.expectHndl.expect(['$'], timeout=4)
+        connectionBuffer.append(self.expectHndl.before)
         connectionBuffer.append(self.expectHndl.after)
         LogOutput('debug', 
                   "Index = "+ str(index) + " Command = " + command 
                   + "\nOutput\n" + str(connectionBuffer))
-        #self.expectHndl.send('\r')
-        self.expectHndl.expect(['$'], timeout=4)
-
         self.santString = ""
         for curLine in connectionBuffer:
             self.santString += str(curLine)
