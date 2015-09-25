@@ -280,7 +280,6 @@ class VSwitch(Device):
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
-        #time.
         connectionBuffer = []
 
         while bailflag == 0:
@@ -346,8 +345,8 @@ class VSwitch(Device):
         self.expectHndl.expect(['$'], timeout=4)
         connectionBuffer.append(self.expectHndl.before)
         connectionBuffer.append(self.expectHndl.after)
-        LogOutput('debug', 
-                  "Index = "+ str(index) + " Command = " + command 
+        LogOutput('debug',
+                  "Index = " + str(index) + " Command = " + command
                   + "\nOutput\n" + str(connectionBuffer))
         self.santString = ""
         for curLine in connectionBuffer:
