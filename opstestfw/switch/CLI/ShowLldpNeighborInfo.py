@@ -14,26 +14,41 @@
 #    under the License.
 #
 
-"""
-This routine shows LLDP neighbor information on a switch
-@param deviceObj : Device object
-@type  deviceObj : object
-
-@param port      : Device port
-@type  port      : integer 
-
-"""
-import opstestfw.switch
 from opstestfw import *
 import re
-import time
 
 
 def ShowLldpNeighborInfo(**kwargs):
+
+    """
+    This routine shows LLDP neighbor information on a switch
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+    :param port      : Device port (optional)
+    :type  port      : integer
+    :return: returnStruct Object
+             portStats - dictionary of ports, each port is a dictionary
+                     portKeys - Neighbor_Entries_Deleted,
+                                Neighbor_Entries_Dropped
+                                Neighbor_Entries
+                                Neighbor_Chassis-ID
+                                Neighbor_chassisName
+                                Neighbor_chassisDescription
+                                Chassis_Capabilities_Available
+                                Neighbor_Port-ID
+                                Chassis_Capabilities_Enabled
+                                TTL
+             globalStats - dictionary of global statistics
+                                Total_Neighbor_Entries
+                                Total_Neighbor_Entries_Aged-out
+                                Total_Neighbor_Entries_Deleted
+                                Total_Neighbor_Entries_Dropped
+    :returnType: object
+    """
+
     deviceObj = kwargs.get('deviceObj')
     port = kwargs.get('port', None)
-    # if connection is None:
-    #    return False
 
     returnDict = dict()
     overallBuffer = []
@@ -51,7 +66,6 @@ def ShowLldpNeighborInfo(**kwargs):
     # Pass LLDP commands here
     command = "show lldp neighbor-info"
     if port is not None:
-        #command += " " + str(port) + "\r"
         command += " " + str(port)
 
     LogOutput("info", "Show LLDP command ***" + command)
@@ -95,21 +109,24 @@ def ShowLldpNeighborInfo(**kwargs):
                     line)
                 if NeighborEntriesDeleted:
                     portDict[curPort][
-                        'Neighbor_Entries_Deleted'] = NeighborEntriesDeleted.group(1)
+                        'Neighbor_Entries_Deleted'] = \
+                        NeighborEntriesDeleted.group(1)
                     continue
                 NeighborEntriesDropped = re.match(
                     "^Neighbor\s+entries\s+dropped\s+:\s*(\d+)\s*$",
                     line)
                 if NeighborEntriesDropped:
                     portDict[curPort][
-                        'Neighbor_Entries_Dropped'] = NeighborEntriesDropped.group(1)
+                        'Neighbor_Entries_Dropped'] = \
+                        NeighborEntriesDropped.group(1)
                     continue
                 NeighborEntriesAgedOut = re.match(
                     "^Neighbor\s+entries\s+aged-out\s+:\s*(\d+)\s*$",
                     line)
                 if NeighborEntriesAgedOut:
                     portDict[curPort][
-                        'Neighbor_Entries_Aged-out'] = NeighborEntriesAgedOut.group(1)
+                        'Neighbor_Entries_Aged-out'] = \
+                        NeighborEntriesAgedOut.group(1)
                     continue
                 Neighbor_chasisName = re.match(
                     r'Neighbor Chassis-Name\s+:\s*(\S+)\s*$',
@@ -123,7 +140,8 @@ def ShowLldpNeighborInfo(**kwargs):
                     line)
                 if Neighbor_chasisDescrip:
                     portDict[curPort][
-                        'Neighbor_chassisDescription'] = Neighbor_chasisDescrip.group(1)
+                        'Neighbor_chassisDescription'] = \
+                        Neighbor_chasisDescrip.group(1)
                     continue
                 Neighbor_chasisID = re.match(
                     r'Neighbor Chassis-ID :([0-9a-f:]+|\s*)$',
@@ -137,14 +155,16 @@ def ShowLldpNeighborInfo(**kwargs):
                     line)
                 if Chassis_CapAvail:
                     portDict[curPort][
-                        'Chassis_Capabilities_Available'] = Chassis_CapAvail.group(1)
+                        'Chassis_Capabilities_Available'] = \
+                        Chassis_CapAvail.group(1)
                     continue
                 Chassis_CapEnabled = re.match(
                     r'Chassis Capabilities Enabled\s*:\s*(.*)$',
                     line)
                 if Chassis_CapEnabled:
                     portDict[curPort][
-                        'Chassis_Capabilities_Enabled'] = Chassis_CapEnabled.group(1)
+                        'Chassis_Capabilities_Enabled'] = \
+                        Chassis_CapEnabled.group(1)
                     continue
                 Neighbor_portID = re.match(
                     r'Neighbor Port-ID\s*:\s*(.*)$',
@@ -175,21 +195,24 @@ def ShowLldpNeighborInfo(**kwargs):
                     line)
                 if totalNeighEntriesDeleted:
                     globalStatsDict[
-                        'Total_Neighbor_Entries_Deleted'] = totalNeighEntriesDeleted.group(1)
+                        'Total_Neighbor_Entries_Deleted'] = \
+                        totalNeighEntriesDeleted.group(1)
                     continue
                 totalNeighEntriesDropped = re.match(
                     "^Total\s+neighbor\s+entries\s+dropped\s+:\s+(\d+)\s*$",
                     line)
                 if totalNeighEntriesDropped:
                     globalStatsDict[
-                        'Total_Neighbor_Entries_Dropped'] = totalNeighEntriesDropped.group(1)
+                        'Total_Neighbor_Entries_Dropped'] = \
+                        totalNeighEntriesDropped.group(1)
                     continue
                 totalNeighEntriesAgedOut = re.match(
                     "^Total\s+neighbor\s+entries\s+aged-out\s+:\s+(\d+)\s*$",
                     line)
                 if totalNeighEntriesAgedOut:
                     globalStatsDict[
-                        'Total_Neighbor_Entries_Aged-out'] = totalNeighEntriesAgedOut.group(1)
+                        'Total_Neighbor_Entries_Aged-out'] = \
+                        totalNeighEntriesAgedOut.group(1)
                     continue
 
                 # Now lets go through each line
