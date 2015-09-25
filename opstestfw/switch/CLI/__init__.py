@@ -20,6 +20,7 @@ from InterfaceLacpPortIdConfig import *
 from InterfaceLacpPortPriorityConfig import *
 from InterfaceLagShow import *
 from InterfaceLagIdConfig import *
+from InterfaceStatisticsShow import *
 
 from IpRouteConfig import *
 
