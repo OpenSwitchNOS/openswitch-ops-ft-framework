@@ -76,8 +76,8 @@ def lagHeartbeat(**kwargs):
     if lacpFastFlag is False:
         command = "no "
     command += "lacp rate fast"
-    finalReturnCode = deviceObj.DeviceInteract(command=command)
-    returnCode = returnDevInt['returnCode']
+    returnDevInt = deviceObj.DeviceInteract(command=command)
+    finalReturnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
     if finalReturnCode != 0:
         if lacpFastFlag is True:
