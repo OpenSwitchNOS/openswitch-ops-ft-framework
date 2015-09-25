@@ -1,35 +1,53 @@
-##########################################################################################
-# Name:        opstestfw.switch.CLI.interface.InterfaceEnable
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw.switch.CLI.interface
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Vince Mendoza
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function enable / disable interface
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object
-#              interface - interface number context
-#              enable    - True to Enable, False to disable
-#
-# Returns:     JSON structure
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
-#
-##PROC-###################################################################################
+
 from opstestfw import *
-import re
-import time
+
 
 def InterfaceEnable(**kwargs):
+
+    """
+    Library function enable / disable interface
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+    :param interface : interface number context (optional)
+    :type  interface : integer
+    :param vlan      : vlan id (optional)
+    :type  vlan      : integer
+    :param lag       : lag id (optional)
+    :type  lag       : integer
+    :param enable    : True to enable interface, vlan or lag
+                       False to disable interface, vlan or lag
+                       Defaults to True
+    :type enable     : boolean
+    :return: returnStruct Object
+    :returnType: object
+    """
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('interface', None)
     vlan = kwargs.get('vlan', None)
     lag = kwargs.get('lag', None)
     enable = kwargs.get('enable', True)
-    
+
     # If Device object is not passed, we need to error out
     if deviceObj is None:
-        LogOutput('error', "Need to pass switch device object deviceObj to this routine")
+        LogOutput('error',
+                  "Need to pass switch device object deviceObj to this "
+                  "routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
 
@@ -46,7 +64,8 @@ def InterfaceEnable(**kwargs):
     if interface is None and vlan is None and lag is None:
         paramError = 1
     if paramError == 1:
-        LogOutput('error', "Need to only pass interface, vlan or lag into this routine")
+        LogOutput('error',
+                  "Need to only pass interface, vlan or lag into this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
 
@@ -74,7 +93,7 @@ def InterfaceEnable(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Get into the interface context
     if interface is not None:
         command = "interface " + str(interface)
@@ -86,7 +105,8 @@ def InterfaceEnable(**kwargs):
     retCode = returnStructure['returnCode']
     overallBuffer.append(returnStructure['buffer'])
     if retCode != 0:
-        LogOutput('error', "Failed to enter interface context for interface " + str(interface))
+        LogOutput('error', "Failed to enter interface context for interface "
+                  + str(interface))
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
@@ -112,9 +132,9 @@ def InterfaceEnable(**kwargs):
             LogOutput('error', "Failed to disable interface " + str(interface))
         else:
             LogOutput('debug', "Disabled interface " + str(interface))
-    
+
     # Get out of the interface context
-    command = "exit \r"
+    command = "exit"
     returnStructure = deviceObj.DeviceInteract(command=command)
     retCode = returnStructure['returnCode']
     overallBuffer.append(returnStructure['buffer'])
@@ -132,7 +152,7 @@ def InterfaceEnable(**kwargs):
             bufferString += str(curLine)
         returnCls = retStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
-    
+
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -145,10 +165,9 @@ def InterfaceEnable(**kwargs):
         returnCls = retStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
-    #Return results
+    # Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
     returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
-

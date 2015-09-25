@@ -1,30 +1,50 @@
-##########################################################################################
-# Name:        opstestfw.switch.CLI.interface.InterfaceIpConfig
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw.switch.CLI.interface
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Vince Mendoza
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function configure IPv4 address on an interface
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object
-#              interface - interface number context, "mgmt" configures the management interface on DUT
-#              ipv6flag - default is False (ipv4 default).  set True for IPv6 
-#              addr  - address string for Ipv4 address
-#              mask - subnet mask bits
-#              config - True to configure, False to unconfigure
-#              secondary - True for secondary address, False for not
 
-# Returns:     JSON structure
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
-#
-##PROC-###################################################################################
 from opstestfw import *
-import re
-import time
+
 
 def InterfaceIpConfig(**kwargs):
+
+    """
+    Library function configure IPv4 / IPv6 address on an interface, vlan,
+    or lag
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+    :param interface : interface number context (optional)
+    :type  interface : integer
+    :param vlan      : vlan id (optional)
+    :type  vlan      : integer
+    :param lag       : lag id (optional)
+    :type  lag       : integer
+    :param addr      : address string for IPv4 or IPv6 address
+    :type addr       : string
+    :param mask      : subnet mask bit
+    :type maks       : int
+    :param secondary : True for secondary address, False for not
+    :type secondary  : boolean
+    :param config    : True to configure address
+                       False to unconfigure address
+                       Defaults to True
+    :type config     : boolean
+    :return: returnStruct Object
+    :returnType: object
+    """
+
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('interface', None)
     vlan = kwargs.get('vlan', None)
@@ -34,14 +54,15 @@ def InterfaceIpConfig(**kwargs):
     mask = kwargs.get('mask', None)
     secondary = kwargs.get('secondary', False)
     config = kwargs.get('config', True)
-    
+
     overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None:
-        LogOutput('error', "Need to pass switch device object to this routine")
+        LogOutput('error',
+                  "Need to pass switch device object to this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
-    
+
     paramError = 0
     if interface is not None:
         if vlan is not None or lag is not None:
@@ -55,7 +76,8 @@ def InterfaceIpConfig(**kwargs):
     if interface is None and vlan is None and lag is None:
         paramError = 1
     if paramError == 1:
-        LogOutput('error', "Need to only pass interface, vlan or lag into this routine")
+        LogOutput('error',
+                  "Need to only pass interface, vlan or lag into this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
     # Get into vtyshelll
@@ -81,7 +103,7 @@ def InterfaceIpConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Get into the interface context
     if interface is not None:
         command = "interface " + str(interface)
@@ -93,7 +115,8 @@ def InterfaceIpConfig(**kwargs):
     retCode = returnStructure['returnCode']
     overallBuffer.append(returnStructure['buffer'])
     if retCode != 0:
-        LogOutput('error', "Failed to enter interface context for interface " + str(interface))
+        LogOutput('error', "Failed to enter interface context for interface "
+                  + str(interface))
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
@@ -110,24 +133,26 @@ def InterfaceIpConfig(**kwargs):
         else:
             command += "ipv6 "
         if interface == "mgmt":
-            command +=  "static " 
-         
-        if interface != "mgmt" :
-            command += "address "+ str(addr) + "/" + str(mask)
-        else :
+            command += "static "
+
+        if interface != "mgmt":
+            command += "address " + str(addr) + "/" + str(mask)
+        else:
             command += str(addr) + "/" + str(mask)
 
         if secondary is True:
             command += " secondary"
-        command += "\r"
+
         returnStructure = deviceObj.DeviceInteract(command=command)
         retCode = returnStructure['returnCode']
         overallBuffer.append(returnStructure['buffer'])
         if retCode != 0:
-            LogOutput('error', "Failed to configure address command "+ command + " on interface " + str(interface))
+            LogOutput('error', "Failed to configure address command "
+                      + command + " on interface " + str(interface))
         else:
-            LogOutput('debug', "Configured address command " + command + " on interface " + str(interface))
-    
+            LogOutput('debug', "Configured address command "
+                      + command + " on interface " + str(interface))
+
     # Get out of the interface context
     command = "exit \r"
     returnStructure = deviceObj.DeviceInteract(command=command)
@@ -135,8 +160,7 @@ def InterfaceIpConfig(**kwargs):
     overallBuffer.append(returnStructure['buffer'])
     if retCode != 0:
         LogOutput('error', "Failed to exit the interface context")
-        
-    
+
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -148,7 +172,7 @@ def InterfaceIpConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
-    
+
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -161,10 +185,9 @@ def InterfaceIpConfig(**kwargs):
         returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
-    #Return results
+    # Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
     returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
-
