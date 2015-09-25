@@ -121,7 +121,7 @@ def InterfaceLagShow(** kwargs):
         portIdLine = re.match("Port-id\s*\|(.*)\|(.*)", curLine)
         if portIdLine:
             curLocalPort = portIdLine.group(1)
-            curRemotePort = portIdLine.group(2)
+            curRemotePort = portIdLine.group(1)
             localPort['portId'] = curLocalPort
             remotePort['portId'] = curRemotePort
 
