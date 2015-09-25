@@ -82,7 +82,7 @@ def lagHash(**kwargs):
     else:
         command = "hash l2-src-dst"
      
-    finalReturnCode = deviceObj.DeviceInteract(command=command)
+    returnDevInt = deviceObj.DeviceInteract(command=command)
     finalReturnCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
     if finalReturnCode != 0:
