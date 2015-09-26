@@ -14,18 +14,20 @@
 #    under the License.
 #
 
-"""
-The library configures LLDP on switches 
-:param device : Device Object 
-:param enable : string (configures if enable,unconfigures in other case)
-
-"""
 from opstestfw import *
-import re
-import time
 
 
 def LldpConfig(**kwargs):
+
+    """
+    The library configures LLDP on switches
+    :param device : Device Object
+    :param enable : string (configures if enable,unconfigures in other case)
+
+    :return: returnStruct Object
+    :returnType: object
+    """
+
     deviceObj = kwargs.get('deviceObj', None)
     enable = kwargs.get('enable', True)
 
@@ -35,6 +37,7 @@ def LldpConfig(**kwargs):
         returnCls = returnStruct(returnCode=1)
         return returnCls
     overallBuffer = []
+
     # Get into vtyshelll
     returnStructure = deviceObj.VtyshShell(enter=True)
     overallBuffer.append(returnStructure.buffer())

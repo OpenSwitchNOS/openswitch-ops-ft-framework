@@ -13,28 +13,28 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-"""
-Interface level configuration for LLDP
-@param:deviceObj : Device Object 
-@type:deviceObj  : object
-
-@param:interface : Switch Interface
-@type:deviceObj  : integer
-
-@param:transmission : Enables transmission when True
-@type:transmission  : Boolean
-
-@param:reception : enables reception when True
-@type:reception  : Boolean
-
-"""
 
 from opstestfw import *
-import re
-import time
 
 
 def LldpInterfaceConfig(**kwargs):
+
+    """
+    Interface level configuration for LLDP
+
+    :param deviceObj : Device Object
+    :type deviceObj  : object
+    :param interface : Switch Interface
+    :type interface  : integer
+    :param transmission : Enables transmission when True
+    :type transmission  : Boolean
+    :param reception : enables reception when True
+    :type reception  : Boolean
+
+    :return: returnStruct Object
+    :returnType: object
+    """
+
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('interface', None)
     transmission = kwargs.get('transmission', None)
@@ -44,7 +44,8 @@ def LldpInterfaceConfig(**kwargs):
     if deviceObj is None or interface is None:
         LogOutput(
             'error',
-            "Need to pass switch device object deviceObj and interface to this routine")
+            "Need to pass switch device object deviceObj and interface to "
+            "this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
 
@@ -81,7 +82,8 @@ def LldpInterfaceConfig(**kwargs):
     if retCode != 0:
         LogOutput(
             'error',
-            "Failed to enter interface context for interface " + str(interface))
+            "Failed to enter interface context for interface "
+            + str(interface))
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
@@ -97,7 +99,8 @@ def LldpInterfaceConfig(**kwargs):
         if retCode != 0:
             LogOutput(
                 'error',
-                "Failed to enable lldp tranmission on interface " + str(interface))
+                "Failed to enable lldp tranmission on interface "
+                + str(interface))
         else:
             LogOutput(
                 'debug',
@@ -111,7 +114,8 @@ def LldpInterfaceConfig(**kwargs):
         if retCode != 0:
             LogOutput(
                 'error',
-                "Failed to disable lldp transmission on interface " + str(interface))
+                "Failed to disable lldp transmission on interface "
+                + str(interface))
         else:
             LogOutput(
                 'debug',
@@ -125,7 +129,8 @@ def LldpInterfaceConfig(**kwargs):
         if retCode != 0:
             LogOutput(
                 'error',
-                "Failed to enable lldp reception on interface  " + str(interface))
+                "Failed to enable lldp reception on interface  "
+                + str(interface))
         else:
             LogOutput(
                 'debug',
@@ -139,7 +144,8 @@ def LldpInterfaceConfig(**kwargs):
         if retCode != 0:
             LogOutput(
                 'error',
-                "Failed to disable lldp reception on interface  " + str(interface))
+                "Failed to disable lldp reception on interface  "
+                + str(interface))
         else:
             LogOutput(
                 'debug',
