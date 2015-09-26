@@ -1,43 +1,57 @@
-#########################################################################################
-# Name:        opstestfw.host.hostIperfServerStop
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   host
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Diego Hurtado 
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function to process information from traffic received using iperf.
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:         deviceObj - Workstation identifier
-#
-# Returns:          returnCode :- status of command
-#                   data: - Dictionary:
-#                               'Client IP': Server IP address
-#                               'Client port': Client port
-#                               'Server IP': Server IP address
-#                               'Server port': Server port
-#                   buffer: - Raw output
-##PROC-###################################################################################
 
 import opstestfw
 import pexpect
-import time
 import re
 
+
 def hostIperfServerStop(** kwargs):
-    #Params
+
+    """
+    Library function to process information from traffic received using iperf.
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+
+    :return: returnStruct Object
+        data: - Dictionary:
+               'Client IP': Server IP address
+               'Client port': Client port
+               'Server IP': Server IP address
+               'Server port': Server port
+    :returnType: object
+    """
+
+    # Params
     deviceObj = kwargs.get('deviceObj', None)
-    
-    #If device is not passed, we need error message
+
+    # If device is not passed, we need error message
     if deviceObj is None:
         opstestfw.LogOutput('error', "Need to pass device to configure")
         returnJson = opstestfw.returnStruct(returnCode=1)
         return returnJson
-    
+
     deviceObj.expectHndl.expect(['\$', pexpect.TIMEOUT], timeout=1)
 
-    ips_and_ports = re.search('local (.*) port (\d+) connected with (.*) port (\d+)', deviceObj.expectHndl.before)
+    ips_and_ports = re.search('local (.*) port (\d+) connected with (.*) port (\d+)',
+                              deviceObj.expectHndl.before)
 
-    traffic_data = re.findall('sec  ([.\d]+ .*?)  ([.\d]+ .+)\r', deviceObj.expectHndl.before)
+    traffic_data = re.findall('sec  ([.\d]+ .*?)  ([.\d]+ .+)\r',
+                              deviceObj.expectHndl.before)
 
     # If client fails result is None and returnList == []
 
@@ -64,6 +78,8 @@ def hostIperfServerStop(** kwargs):
     deviceObj.expectHndl.send(command)
     deviceObj.expectHndl.expect('#')
 
-    #Compile information to return
-    returnCls = opstestfw.returnStruct(returnCode=0, buffer=deviceObj.expectHndl.before, data=data_dict)
+    # Compile information to return
+    returnCls = opstestfw.returnStruct(returnCode=0,
+                                       buffer=deviceObj.expectHndl.before,
+                                       data=data_dict)
     return returnCls
