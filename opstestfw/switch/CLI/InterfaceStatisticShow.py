@@ -12,34 +12,31 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-###########################################################################
-# Name:        switch.CLI.interface.InterfaceStatisticsShow
-#
-# Namespace:   switch.CLI.interface
-#
-# Author:      Randall Loaiza
-#
-# Purpose:     Library function get statistics for an specific interface
-#
-# Params:      deviceObj - device object
-#              interface - interface number context
-# Returns:     JSON structure
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data:
-#			   {RX:{inputPackets,inputErrors,shortFrame,CRC_FCS,bytes,dropped,overrun}
-#				TX:{outputPackets,inputError,collision,bytes,dropped}}
-#
-##PROC-###################################################################
 
 import opstestfw
 import re
-import time
 
 
 def InterfaceStatisticsShow(**kwargs):
 
-    # Params
+    """
+    Library function get statistics for an specific interface
 
+    :param deviceObj : Device object
+    :type  deviceObj : object
+    :param interface : interface to configure
+    :type  interface : integer
+
+    :return: returnStruct Object
+                 data:
+                   RX: inputPackets,inputErrors,shortFrame,CRC_FCS,bytes,
+                       dropped,overrun
+                   TX: outputPackets,inputError,collision,bytes,dropped
+
+    :returnType: object
+    """
+
+    # Params
     deviceObj = kwargs.get('deviceObj', None)
     interface = kwargs.get('inteface', None)
 
@@ -55,7 +52,8 @@ def InterfaceStatisticsShow(**kwargs):
     data['TX'] = []
 
     if deviceObj is None:
-        opstestfw.LogOutput('error', "Need to pass switch deviceObj to this routine")
+        opstestfw.LogOutput('error',
+                            "Need to pass switch deviceObj to this routine")
         returnCls = opstestfw.returnStruct(returnCode=1)
         return returnCls
 
@@ -71,24 +69,20 @@ def InterfaceStatisticsShow(**kwargs):
         returnCls = opstestfw.returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
-    ###########################################################################
     # Send Command
-    ###########################################################################
     command = "show interface"
-    if interface != None:
+    if interface is not None:
         command += " " + str(interface)
     opstestfw.LogOutput('info', "Show interface statistics.*****" + command)
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
-    temporaryBuffer = returnDevInt['buffer']
+    # temporaryBuffer = returnDevInt['buffer']
 
     if retCode != 0:
         opstestfw.LogOutput('error', "Failed to get information ." + command)
 
-    ###########################################################################
     # Get out of the Shell
-    ###########################################################################
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -101,13 +95,9 @@ def InterfaceStatisticsShow(**kwargs):
         returnCls = opstestfw.returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
-    ###########################################################################
     # End Return Command
-    ###########################################################################
 
-    ###########################################################################
     # Return The Dict responds
-    ###########################################################################
 
     for curLine in overallBuffer:
         bufferString += str(curLine)

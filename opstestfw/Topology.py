@@ -40,7 +40,7 @@ import shutil
 try:
     import rtltestfw
 except ImportError:
-    print "no remote environment"
+    pass
 
 
 class Topology (OpsVsiTest):

@@ -1,31 +1,46 @@
-##########################################################################################
-# Name:        opstestfw.switch.CLI.interface.IpRouteConfig
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw.switch.CLI.interface
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Vince Mendoza
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function configure IPv4 or IPv6 address on an interface
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object
-#              route  - route address to configure
-#              ipv6flag - True for IPv6, False is IPv4.  Default is False
-#              mask - subnet mask bits
-#              nexthop - Can be an ip address or a interface
-#              config - True to configure, False to unconfigure
-#              metric - Range between 1-255 for route metric
-
-# Returns:     JSON structure
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data: 
-#
-##PROC-###################################################################################
 
 from opstestfw import *
-import re
-import time
+
 
 def IpRouteConfig(**kwargs):
+
+    """
+    Library function configure IPv4 or IPv6 address on an interface
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+    :param route     : route address to configure
+    :type  route     : string
+    :param ipv6flag  : True for IPv6, False is IPv4.  Default is False
+    :type  ipv6flag  : boolean
+    :param mask      : subnet mask bits
+    :type  mask      : integer
+    :param nexthop   : Can be an ip address or a interface
+    :type  nexthop   : string
+    :param config    : True to configure, False to unconfigure
+    :type  config    : boolean
+    :param metric    : route address to configure
+    :type  metric    : integer
+
+    :return: returnStruct Object
+    :returnType: object
+    """
+
     deviceObj = kwargs.get('deviceObj', None)
     ipv6flag = kwargs.get('ipv6flag', False)
     route = kwargs.get('route', None)
@@ -33,11 +48,12 @@ def IpRouteConfig(**kwargs):
     config = kwargs.get('config', True)
     nexthop = kwargs.get('nexthop', None)
     metric = kwargs.get('metric', None)
-    
+
     overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None or route is None or mask is None or nexthop is None:
-        LogOutput('error', "Need to pass switch device object deviceObj, route, mask, and nexthop to this routine")
+        LogOutput('error', "Need to pass switch device object deviceObj, "
+                  "route, mask, and nexthop to this routine")
         returnCls = returnStruct(returnCode=1)
         return returnCls
 
@@ -64,7 +80,7 @@ def IpRouteConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Build route command
     command = ""
     if config is False:
@@ -73,20 +89,19 @@ def IpRouteConfig(**kwargs):
         command += "ip "
     else:
         command += "ipv6 "
-    command += "route "+ str(route) + "/" + str(mask) + " " + str(nexthop)
-    
+    command += "route " + str(route) + "/" + str(mask) + " " + str(nexthop)
+
     if metric is not None:
         command += " " + str(metric)
-        
-    command += "\r"
+
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
     if retCode != 0:
-        LogOutput('error', "Failed to configure route command "+ command)
+        LogOutput('error', "Failed to configure route command " + command)
     else:
         LogOutput('debug', "Configured route command " + command)
-    
+
     # Get into config context
     returnStructure = deviceObj.ConfigVtyShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -98,7 +113,7 @@ def IpRouteConfig(**kwargs):
             bufferString += str(curLine)
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
-    
+
     # Get out of vtyshell
     returnStructure = deviceObj.VtyshShell(enter=False)
     returnCode = returnStructure.returnCode()
@@ -111,11 +126,9 @@ def IpRouteConfig(**kwargs):
         returnCls = returnStruct(returnCode=1, buffer=bufferString)
         return returnCls
 
-    #Return results
+    # Return results
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
     returnCls = returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
-    
-
