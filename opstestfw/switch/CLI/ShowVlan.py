@@ -36,7 +36,11 @@ def ShowVlan(**kwargs):
     :returnType: object
     """
     deviceObj = kwargs.get('deviceObj', None)
+<<<<<<< HEAD
 
+=======
+    print "this is it"
+>>>>>>> 757cb2c... Updating ShowVlans lib with new regex fix
     overallBuffer = []
     # If Device object is not passed, we need to error out
     if deviceObj is None:
@@ -82,9 +86,15 @@ def ShowVlan(**kwargs):
         return returnCls
 
     result = []
+<<<<<<< HEAD
     keys = re.findall(r'\r\n(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\r\n',
                       temporaryBuffer)
 
+=======
+    keys = re.findall(r'\r\n(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\r\n', temporaryBuffer)
+    print "kEYS"
+    print keys
+>>>>>>> 757cb2c... Updating ShowVlans lib with new regex fix
     if len(keys) == 1:
         keys = keys[0]
         vlans = re.findall(r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s+(\(\w+\))\s+([\w\d ,]+)?\r\n',
