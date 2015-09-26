@@ -1,25 +1,34 @@
-##########################################################################
-# Name:        opstestfw.GetLinuxInterfaceIp
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
 #
-# Namespace:   opstestfw
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
 #
-# Author:      Srinivasa Krishnappa
+#         http://www.apache.org/licenses/LICENSE-2.0
 #
-# Purpose:     Library function to get the IP address on an eth0 interface
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 #
-# Params:      deviceObj - device object
-#
-# Returns:     
-#              returnCode - status of command(0 for pass , gets errorcodes for failure)
-#              data:
-#
-##PROC-###################################################################
+
 from opstestfw import *
-import re
-import time
 
 
 def GetLinuxInterfaceIp(**kwargs):
+
+    """
+    Library function to get the IP address on an eth0 interface
+
+    :param deviceObj : Device object
+    :type  deviceObj : object
+
+    :return: returnStruct Object
+    :returnType: object
+    """
+
     deviceObj = kwargs.get('deviceObj', None)
     returnCode = 0
     ipAddr = None
@@ -53,9 +62,9 @@ def GetLinuxInterfaceIp(**kwargs):
             if len(inetAddr) > 10:
                 ipAddr = inetAddr[11].split(':')[1]
             else:
-                ipAddr=""
+                ipAddr = ""
         else:
-            ipAddr="" 
+            ipAddr = ""
 
     bufferString = ""
     for curLine in overallBuffer:
