@@ -87,7 +87,7 @@ def ShowVlan(**kwargs):
 
     if len(keys) == 1:
         keys = keys[0]
-        vlans = re.findall(r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s+(\(\w+\))\s+([\w\d ,]+)?\r\n',
+        vlans = re.findall(r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([\w\d ,]+)?\r?\n',
                            temporaryBuffer)
 
         for vlan in vlans:
