@@ -1,32 +1,52 @@
+# (C) Copyright 2015 Hewlett Packard Enterprise Development LP
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+#
+
 import json
 import rest
 import urllib2
 
+
 class RestService(object):
+
     '''
     This is the main class for Halon FW REST API library.
-    Usage:
-    1. Import RestService
-    2. Create object of the RestLib class (Optionall one can pass ip, user and password).
-    3. Import relevant classes (datapath, aprs, stats...) from features.
-    4. Make relevant calls:
-        A>
-            (code, val) = <class_name>.<method_name>(hpclib_object,...OTHER_PARAMS...)
-            code: It is the HTTP response code.
-            val : It has json object representing response or error message if req. fails
-        B>
-            call custom functions // These are found towards end of the file
-            count = <class_name>.<method_name>(hpclib_object)
     '''
 
     def __init__(self, switch_ip='localhost', user='sdn', password='skyline'):
+        """
+        RestService init method
+
+        This method will create a RestService object that will contain all
+        information to interact with the device
+
+        :param switch_ip: management ip of the switch
+        :type switch_ip: string
+        :param user: user name
+        :type user: string
+        :param password: password
+        :type password: string
+
+        """
+
         self.switch_ip = switch_ip
         self.user = user
-        self.password=password
-        self.url = 'https://'+switch_ip+':8091/system'
+        self.password = password
+        self.url = 'http://' + switch_ip + ':8091/rest/v1/system'
         self.token = None
         self.verbose = False
-
 
     def setVerbose(self):
         '''
@@ -52,17 +72,16 @@ class RestService(object):
         '''
         self.url = url
 
-##########################
-# Generic GET
-##########################
     def getResponse(self, reqURL):
         '''
-        getResponse:
-        API to make REST GET request.
-        Takes URL, returns (code, value) pair.
-            code: HTTP response core or 555 (for other errors)
-            value: JSON response object of error string.
+        method calling REST GET request
+
+        :param reqURL: REST resource url
+        :type reqURL: string
+        :return: dictionary containing returnCode and buffer
+        :rtype: dictionary
         '''
+
         if self.verbose:
             print 'Req URL: ', reqURL
         res = rest.get(self.switch_ip, reqURL, self.verbose)
@@ -74,18 +93,15 @@ class RestService(object):
             except:
                 return (res["response"].status, res["response"].reason)
 
-
-##########################
-# Generic POST
-##########################
     def postResponse(self, reqURL, data):
         '''
-        postResponse:
-        API to make REST POST request.
-        Takes URL, and data (generally a json string).
-        Returns (code, value) pair.
-            code: HTTP response core or 555 (for other errors)
-            value: JSON response object of error string.
+        method calling REST POST request
+        :param reqURL: REST resource url
+        :type reqURL: string
+        :param data: data body for the request
+        :type data: JSON format
+        :return: dictionary containing returnCode and buffer
+        :rtype: dictionary
         '''
         if self.verbose:
             print 'Req URL: ', reqURL
@@ -98,18 +114,18 @@ class RestService(object):
             except:
                 return (res["response"].status, res["response"].reason)
 
-##########################
-# Generic PUT
-##########################
     def putResponse(self, reqURL, data):
         '''
-        putResponse:
-        API to make REST PUT request.
-        Takes URL, and data (generally a json string).
-        Returns (code, value) pair.
-            code: HTTP response core or 555 (for other errors)
-            value: JSON response object of error string.
+        method calling REST PUT request
+
+        :param reqURL: REST resource url
+        :type reqURL: string
+        :param data: data body for the request
+        :type data: JSON format
+        :return: dictionary containing returnCode and buffer
+        :rtype: dictionary
         '''
+
         if self.verbose:
             print 'Req URL: ', reqURL
         res = rest.put(self.switch_ip, reqURL, data, self.verbose)
@@ -121,21 +137,21 @@ class RestService(object):
             except:
                 return (res["response"].status, res["response"].reason)
 
-##########################
-# Generic DELETE
-##########################
     def deleteResponse(self, reqURL, data):
         '''
-        daleteResponse:
-        API to make REST DELETE request.
-        Takes URL, and data (generally a json string on None).
-        Returns (code, value) pair.
-            code: HTTP response core or 555 (for other errors)
-            value: JSON response object of error string.
+        method calling REST DELETE request
+
+        :param reqURL: REST resource url
+        :type reqURL: string
+        :param data: data body for the request
+        :type data: JSON format
+        :return: dictionary containing returnCode and buffer
+        :rtype: dictionary
         '''
+
         if self.verbose:
             print 'Req URL: ', reqURL
-        res = rest.delete(self.switch_ip,reqURL, data,self.verbose)
+        res = rest.delete(self.switch_ip, reqURL, data, self.verbose)
         if isinstance(res, urllib2.URLError):
             return (555, res.reason)
         else:
