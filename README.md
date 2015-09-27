@@ -16,7 +16,7 @@ Apache 2.0 license. For more details refer to [COPYING](http://git.openswitch.ne
 
 What other documents are available?
 -----------------------------------
-For answers to common questions, read [FAQ.md](http://git.openswitch.net/cgit/openswitch/ops-vsi/tree/FAQ.md)
+For answers to common questions, read [opstestfw_library_erference.md](http://git.openswitch.net/cgit/openswitch/ops-ft-framework/tree/opsetstfw_library_refreecne.md)
 For the current list of contributors and maintainers, refer to [AUTHORS.md](http://git.openswitch.net/cgit/openswitch/ops-ft-framework/tree/AUTHORS.md)
 
 For general information about OpenSwitch project refer to http://www.openswitch.net

@@ -37,7 +37,7 @@ def InterfaceLagShow(** kwargs):
                                    "distributingFlag","aggregableFlag",
                                    "inSyncFlag","neighborStateFlag",
                                    "individualFlag","outSyncFlag"
-#                     "remotePort":"lagId","systemId","portId","key",
+                     "remotePort":"lagId","systemId","portId","key",
                                    "activeFlag","shortTimeFlag",
                                    "collectingFlag","stateExpiredFlag",
                                    "passiveFlag","longTimeOutFlag",
