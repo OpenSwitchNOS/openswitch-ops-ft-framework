@@ -463,6 +463,18 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Error detected--->" + Error_Code3.group(1))
                 returnCode = 4
+            Error_Code4 = re.match(".*(LAG\s+port\s+doesn't\s+exist)",
+                                   line, re.I)
+            if re.match(".*(LAG\s+port\s+doesn't\s+exist)", line, re.I):
+                LogOutput("error",
+                          "Error detected--->" + Error_Code4.group(1))
+                returnCode = 5
+            Error_Code5 = re.match(".*(no\s+matched\s+command)",
+                                   line, re.I)
+            if re.match(".*(no\s+matched\s+command)", line, re.I):
+                LogOutput("error",
+                          "Error detected--->" + Error_Code5.group(1))
+                returnCode = 6
 
         returnDict['returnCode'] = returnCode
         return returnDict
