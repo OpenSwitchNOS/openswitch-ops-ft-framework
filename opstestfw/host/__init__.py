@@ -13,8 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-from PacketCapture import *
-from SCPFileTransfer import *
+
 from hostIperfClientStart import *
 from hostIperfClientStop import *
 from hostIperfServerStart import *
