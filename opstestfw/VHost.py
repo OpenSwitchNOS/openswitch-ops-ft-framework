@@ -1050,8 +1050,9 @@ class VHost(Device):
                 "info", "Copy the files from/to docker container")
             try:
                 if direction == "get":
-                    command = "docker cp %s:%s %s" % (
-                        self.device, filepath, localpath)
+                    localpath = os.path.dirname(localpath)
+                    command = "docker cp %s:%s %s"%(self.device,filepath,localpath)
+                    returnCode = os.system(command)
                 else:
                     #/tmp is a shared folder between VM and docker run instance
                     command = "cp %s %s" % (filepath, self.topology.testdir
