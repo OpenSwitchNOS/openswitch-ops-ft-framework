@@ -17,7 +17,8 @@ import pytest
 from opstestfw.switch.CLI import *
 from opstestfw import *
 
-topoDict = {"topoDevices": "dut01 wrkston01 wrkston02",
+topoDict = {"topoTarget": "dut01",
+            "topoDevices": "dut01 wrkston01 wrkston02",
             "topoLinks": "lnk01:dut01:wrkston01,\
                           lnk02:dut01:wrkston02",
             "topoFilters": "dut01:system-category:switch,\
