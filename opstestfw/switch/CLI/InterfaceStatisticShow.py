@@ -15,10 +15,10 @@
 
 import opstestfw
 import re
+import pdb
 
 
 def InterfaceStatisticsShow(**kwargs):
-
     """
     Library function get statistics for an specific interface
 
@@ -29,8 +29,8 @@ def InterfaceStatisticsShow(**kwargs):
 
     :return: returnStruct Object
                  data:
-                   RX: inputPackets,inputErrors,shortFrame,CRC_FCS,bytes,
-                       dropped,overrun
+                   RX: inputPackets,inputErrors,CRC_FCS,bytes,
+                       dropped
                    TX: outputPackets,inputError,collision,bytes,dropped
 
     :returnType: object
@@ -38,7 +38,7 @@ def InterfaceStatisticsShow(**kwargs):
 
     # Params
     deviceObj = kwargs.get('deviceObj', None)
-    interface = kwargs.get('inteface', None)
+    interface = kwargs.get('interface', None)
 
     # Variables
     overallBuffer = []
@@ -105,34 +105,36 @@ def InterfaceStatisticsShow(**kwargs):
 
     rx = dict()
     tx = dict()
-    rxExpress = "RX*\n\s*(\d*)\s*input packets\s*(\d*) bytes\s*\n\s*(\d*)\s*input error\s*(\d*)\s*dropped\s*\n\s*(\d*)\s*short frame\s*(\d*)\s*overrun\s*\n\s*(\d*)\s*CRC/FCS"
-    txExpress = "TX*\n\s*(\d*)\s*output packets\s*(\d*)\s*bytes\s*\n\s*(\d*)\s*input error\s*(\d*)\s*dropped\s*\n\s*(\d*)\s*collision"
-
     # Filling up the dictionaries
 
-    rxTokens = re.match(rxExpress, bufferString)
-    txTokens = re.match(txExpress, bufferString)
+    rxTokens = re.findall(
+        r'RX\s*\r\n\s*(\d*)\s*input\s*packets\s*(\d*)\s*bytes\s*\r\n\s*' +
+        '(\d*)\s*input\s*error\s*(\d*)\s*dropped\s*\r\n\s*(\d*)', bufferString)
+    txTokens = re.findall(
+        r'RX\s*\r\n\s*(\d*)\s*input\s*packets\s*(\d*)\s*bytes\s*\r\n\s*' +
+        '(\d*)\s*input\s*error\s*(\d*)\s*dropped\s*\r\n\s*(\d*)', bufferString)
     if rxTokens:
-        rx['inputPackets'] = rxTokens.group(1)
-        rx['bytes'] = rxTokens.group(2)
-        rx['inputErrors'] = rxTokens.group(3)
-        rx['dropped'] = rxTokens.group(4)
-        rx['shortFrame'] = rxTokens.group(5)
-        rx['overrun'] = rxTokens.group(6)
-        rx['CRC_FCS'] = rxTokens.group(7)
+        rx['inputPackets'] = rxTokens[0][0]
+        rx['bytes'] = rxTokens[0][1]
+        rx['inputErrors'] = rxTokens[0][2]
+        rx['dropped'] = rxTokens[0][3]
+        rx['CRC_FCS'] = rxTokens[0][4]
     else:
         returnCode = 1
         opstestfw.LogOutput('error', "Failed to get information ." + command)
 
     if txTokens:
-        rx['outputPackets'] = txTokens.group(1)
-        rx['bytes'] = txTokens.group(2)
-        rx['inputErrors'] = txTokens.group(3)
-        rx['dropped'] = txTokens.group(4)
-        rx['collision'] = txTokens.group(5)
+        tx['outputPackets'] = txTokens[0][0]
+        tx['bytes'] = txTokens[0][1]
+        tx['inputErrors'] = txTokens[0][2]
+        tx['dropped'] = txTokens[0][3]
+        tx['collision'] = txTokens[0][4]
     else:
         returnCode = 1
         opstestfw.LogOutput('error', "Failed to get information ." + command)
+
+    data['RX'] = rx
+    data['TX'] = tx
 
     # Return results
     bufferString = ""
