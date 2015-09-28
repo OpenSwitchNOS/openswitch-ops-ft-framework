@@ -277,9 +277,20 @@ class VSwitch(Device):
         retStruct['returnCode'] = 1
         retStruct['buffer'] = []
 
+        # Clear out buffer
+        try:
+            LogOutput('debug', "Flushing buffer")
+            buf = self.expectHndl.read_nonblocking(128, 0)
+            LogOutput('debug', "Buffer data \n"+ buf)
+        except pexpect.TIMEOUT:
+            pass
+        except pexpect.EOF:
+            pass
+
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
+        time.sleep(1)
         connectionBuffer = []
 
         while bailflag == 0:
