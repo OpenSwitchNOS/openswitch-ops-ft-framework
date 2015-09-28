@@ -1,8 +1,6 @@
 opstestfw Library Reference 
 =======
 
-<!--Provide the name of the grouping of commands, for example, LLDP commands-->
-
  [TOC]
 
 
