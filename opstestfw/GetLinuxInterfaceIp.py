@@ -57,12 +57,18 @@ def GetLinuxInterfaceIp(**kwargs):
             "Success to ifconfig on eth0 interface for the device")
         print buf
         if buf.find("inet addr:") != -1:
-            inetAddr = buf.split('\n')[1].split(' ')
-            print inetAddr
-            if len(inetAddr) > 10:
-                ipAddr = inetAddr[11].split(':')[1]
-            else:
-                ipAddr = ""
+            inetAddr = buf.split('\n')
+            listSize = len(inetAddr)
+            for i in range(0, listSize-1):
+                if inetAddr[i].find("inet addr:") != -1:
+                    ipAddrList = inetAddr[i].split(' ')
+                    ipAddrItem = ipAddrList[11].split(':')
+                    if len(ipAddrItem) > 1:
+                        ipAddr = ipAddrItem[1]
+                    else:
+                        ipAddr = ""
+                else:
+                    ipAddr = ""
         else:
             ipAddr = ""
 
