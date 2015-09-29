@@ -889,8 +889,10 @@ class VHost(Device):
             try:
                 socket.inet_pton(socket.AF_INET, destNetwork)
                 if destNetwork == '0.0.0.0':
-                    route_command = 'route %s %s gw %s dev %s metric %d' \
-                        % (routeOperation, 'default', gateway, eth, metric)
+                    route_command = 'route %s %s gw %s' \
+                        % (routeOperation, 'default', gateway)
+                    if eth is not None:
+                        route_command += ' dev ' + eth
                 else:
                     route_command = 'route %s -net %s/%d gw %s' \
                         % (routeOperation, destNetwork, netMask, gateway)
