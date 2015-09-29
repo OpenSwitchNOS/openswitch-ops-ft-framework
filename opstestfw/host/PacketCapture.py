@@ -75,15 +75,16 @@ class PacketCapture():
 
         returnStruct = connection.DeviceInteract(command=command)
         returnCode = returnStruct.get('returnCode')
+        buffer = returnStruct.get('buffer')
         if returnCode != 0:
             LogOutput(
                 'error',
                 "Failed to start capture on the device->" +
                 self.device)
-            returnJson = common.ReturnJSONCreate(
+            returnCls = opstestfw.returnStruct(
                 returnCode=returnCode,
-                data=self.returnDict)
-            return returnJson
+                buffer=buffer)
+            return returnCls
 
     # Parse packets captured on the workstation
     def ParseCapture(self, connection, **kwargs):
