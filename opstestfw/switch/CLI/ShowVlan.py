@@ -15,7 +15,6 @@
 #
 import opstestfw
 import re
-import pdb
 
 
 def ShowVlan(**kwargs):
@@ -87,14 +86,13 @@ def ShowVlan(**kwargs):
                       temporaryBuffer)
 
     temporaryBuffer = temporaryBuffer.encode('string-escape')
-    #pdb.set_trace()
     if len(keys) == 1:
         keys = keys[0]
-        vlans = re.findall(r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([\w\d ,]+)?',
-            temporaryBuffer)
+        rgx = r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([\w\d ,]+)?'
+        vlans = \
+            re.findall(rgx, temporaryBuffer)
 
         for vlan in vlans:
-            #pdb.set_trace()
             dictionary = {}
             for key, value in zip(keys, vlan):
                 if key == 'Ports':

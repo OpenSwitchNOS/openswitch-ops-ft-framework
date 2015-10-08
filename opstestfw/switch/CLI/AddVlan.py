@@ -129,7 +129,7 @@ def AddVlan(**kwargs):
     for curLine in overallBuffer:
         bufferString += str(curLine)
     if resultCode == 3:
-       returnCls = opstestfw.returnStruct(returnCode=3, buffer=bufferString)
-       return resultCode 
+        returnCls = opstestfw.returnStruct(returnCode=3, buffer=bufferString)
+        return resultCode
     returnCls = opstestfw.returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
