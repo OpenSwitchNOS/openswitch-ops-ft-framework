@@ -20,7 +20,6 @@ from Topology import Topology
 from Device import Device
 from opstestfw import *
 
-
 class VSwitch(Device):
 
     """
@@ -486,6 +485,13 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Error detected--->" + Error_Code5.group(1))
                 returnCode = 6
+            #ssh error codes
+            Error_Code7 = re.match(".*(Permission denied)",
+                                   line, re.I)
+            if re.match(".*(Permission denied)", line, re.I):
+                LogOutput("error",
+                          "Error detected--->" + Error_Code7.group(1))
+                returnCode = 7 
 
         returnDict['returnCode'] = returnCode
         return returnDict
