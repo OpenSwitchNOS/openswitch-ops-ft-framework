@@ -38,6 +38,7 @@ def AddVlan(**kwargs):
     config = kwargs.get('config', True)
 
     overallBuffer = []
+    resultCode = 0
     # If Device object is not passed, we need to error out
     if deviceObj is None or vlanId is None:
         opstestfw.LogOutput('error',
@@ -80,15 +81,16 @@ def AddVlan(**kwargs):
     returnDevInt = deviceObj.DeviceInteract(command=command)
     retCode = returnDevInt['returnCode']
     overallBuffer.append(returnDevInt['buffer'])
+    bufferString = ""
     if retCode != 0:
         if config:
             opstestfw.LogOutput('error',
                                 "Failed to create VLAN or failed to get "
                                 "into VLAN context." + command)
+            resultCode = 3
         else:
             opstestfw.LogOutput('error', "Failed to delete VLAN." + command)
         returnCls = opstestfw.returnStruct(returnCode=1, buffer=bufferString)
-        return returnCls
     else:
         if config:
             opstestfw.LogOutput('debug',
@@ -126,5 +128,8 @@ def AddVlan(**kwargs):
     bufferString = ""
     for curLine in overallBuffer:
         bufferString += str(curLine)
+    if resultCode == 3:
+       returnCls = opstestfw.returnStruct(returnCode=3, buffer=bufferString)
+       return resultCode 
     returnCls = opstestfw.returnStruct(returnCode=0, buffer=bufferString)
     return returnCls
