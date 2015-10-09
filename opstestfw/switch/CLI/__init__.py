@@ -38,6 +38,7 @@ from lacpAggregatesShow import *
 from LldpConfig import *
 from LldpInterfaceConfig import *
 from ShowLldpNeighborInfo import *
+from ShowLldpStatistics import *
 
 from AddVlan import *
 from AddPortToVlan import *
