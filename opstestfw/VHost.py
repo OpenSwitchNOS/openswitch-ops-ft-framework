@@ -234,6 +234,15 @@ class VHost(Device):
         retStruct = dict()
         retStruct['returnCode'] = 1
         retStruct['buffer'] = []
+        # Clear out buffer
+        try:
+            opstestfw.LogOutput('debug', "Flushing buffer")
+            buf = self.expectHndl.read_nonblocking(128, 0)
+            opstestfw.LogOutput('debug', "Buffer data \n"+ buf)
+        except pexpect.TIMEOUT:
+            pass
+        except pexpect.EOF:
+            pass
 
         # Send the command
         self.expectHndl.send(command)
