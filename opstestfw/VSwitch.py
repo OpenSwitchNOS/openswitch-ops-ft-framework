@@ -492,6 +492,14 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Error detected--->" + Error_Code7.group(1))
                 returnCode = 7 
+            #User add/remove error codes
+            Error_Code8 = re.match(".*(user [A-Za-z0-9]+ already exists)",
+                                   line, re.I)
+            if Error_Code8:
+                LogOutput("error",
+                          "Detected--->" + Error_Code8.group(1))
+                returnCode = 8
+
 
         returnDict['returnCode'] = returnCode
         return returnDict
