@@ -45,7 +45,7 @@ import opstestfw.gbldata
 import re
 import collections
 from opstestfw import *
-
+import pdb
 
 class PacketCapture():
     returnDict = dict()
@@ -89,15 +89,17 @@ class PacketCapture():
     # Parse packets captured on the workstation
     def ParseCapture(self, connection, **kwargs):
         overallBuffer = []
+        #Result Dictionary declaration
+        returnDictionary = dict() 
         self.FrameDetails = dict()
-        # FrameDetails = collections.defaultdict(dict)
-        # Parse the captured output from the pcap files captured using tshark
-        # Kill the tshark processes running on VM
+        #self.FrameDetails = collections.defaultdict(dict)
+        #Parse the captured output from the pcap files captured using tshark
+        #Kill the tshark processes running on VM
         LogOutput(
             'info',
             "Kill the tshark processes running on the workstation")
         command = "ps -ef | grep tshark | grep -v grep | awk '{print $2}' | xargs kill -9"
-        # command = "/usr/bin/killall -w \"tshark\""
+        #command = "/usr/bin/killall -w \"tshark\""
         returnDict = connection.DeviceInteract(
             connection=connection, command=command)
         returnCode = returnDict.get('returnCode')
@@ -151,13 +153,10 @@ class PacketCapture():
                     if Protocol:
                         if Protocol not in self.FrameDetails.get(frameCount, {}):
                             self.FrameDetails[frameCount] = dict()
+                            VlanNameTLVList = []
                             self.FrameDetails[frameCount][
                                 'Protocol'] = Protocol.group(1)
-                            LogOutput(
-                                "info",
-                                "Protocol detected -->" +
-                                self.FrameDetails[
-                                    frameCount][
+                            LogOutput("info","Protocol detected -->" + self.FrameDetails[frameCount][
                                         'Protocol'])
                     # System Name
                     LldpSystemName = re.match(
@@ -196,20 +195,19 @@ class PacketCapture():
                     # Vlan Name
                     VlanName = re.match(r'VLAN Name: (.*)', line)
                     if VlanName:
-                        if VlanName not in self.FrameDetails.get(frameCount, {}):
-                            self.FrameDetails[frameCount][
-                                'VlanName'] = VlanName.group(1)
+                            VlanNameTLVList.append(VlanName.group(1))
+                            self.FrameDetails[frameCount]['VlanNameTLV'] = VlanNameTLVList
                     # Port Description
                     PortDescr = re.match(r'Port Description = (.*)', line)
                     if PortDescr:
                         if PortDescr not in self.FrameDetails.get(frameCount, {}):
                             self.FrameDetails[frameCount][
                                 'PortDescr'] = PortDescr.group(1)
-
+                    # Dump the results in Dictionar(returnDictionary)
+                    returnDictionary['LLDPFrames'] = self.FrameDetails
     #<Block ends here ***>>
-            # Frame parsing ends
+    #Frame parsing ends
 
-            # Dump the results in Dictionary(self.FrameDetails)
             # Delete the pcap file from workstation in /tmp folder
             filepath = "/tmp/" + self.filename
             command = "rm -f %s" % (filepath)
@@ -227,14 +225,14 @@ class PacketCapture():
                     buffer=overallBuffer)
                 return returnCls
             # Return results(makes a json structure of the
-            # dictionary(returnDict) and return code)
+            # dictionary(returnDictionary) and return code)
             bufferString = ""
             for curLine in overallBuffer:
                 bufferString += str(curLine)
             returnCls = opstestfw.returnStruct(
                 returnCode=returnCode,
                 buffer=bufferString,
-                data=self.FrameDetails)
+                data=returnDictionary)
             return returnCls
         else:
             LogOutput("info", "No Frames captured *** ")
