@@ -79,6 +79,14 @@ def UserAddRemove(** kwargs):
                   pexpect.TIMEOUT]
     # Add user block
     time.sleep(1)
+    # Clear out buffer
+    try:
+        buf = deviceObj.expectHndl.read_nonblocking(128, 0)
+    except pexpect.TIMEOUT:
+        pass
+    except pexpect.EOF:
+        pass
+
     if action == "add":
         command = 'user add ' + user
         opstestfw.LogOutput(
