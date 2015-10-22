@@ -499,7 +499,24 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Detected--->" + Error_Code8.group(1))
                 returnCode = 8
-
+            Error_Code9 = re.match(".*(Passwords do not match)",
+                                   line, re.I)
+            if Error_Code9:
+                LogOutput("error",
+                          "Detected--->" + Error_Code9.group(1))
+                returnCode = 9
+            Error_Code10 = re.match(".*(Unknown user:)",
+                                   line, re.I)
+            if Error_Code10:
+                LogOutput("error",
+                          "Detected--->" + Error_Code10.group(1))
+                returnCode = 10
+            Error_Code11 = re.match(".*(Cannot delete the last user:)",
+                                   line, re.I)
+            if Error_Code11:
+                LogOutput("error",
+                          "Detected--->" + Error_Code11.group(1))
+                returnCode = 11
 
         returnDict['returnCode'] = returnCode
         return returnDict
