@@ -20,6 +20,7 @@ from Topology import Topology
 from Device import Device
 from opstestfw import *
 
+
 class VSwitch(Device):
 
     """
@@ -51,6 +52,7 @@ class VSwitch(Device):
         self.memberDefaults()
         if self.noConnect is False:
             self.Connect()
+            self.defaultContextEnter()
 
     def memberDefaults(self):
         """
@@ -77,6 +79,33 @@ class VSwitch(Device):
         # vtyShell
         # vtyShellConfig
         self.deviceContext = ""
+        self.defaultContext = "vtyShell"
+
+    def defaultContextEnter(self):
+        """
+        defaultContextEnter method
+
+        This method will get you to the appropriate context needed
+        """
+        if self.defaultContext == "vtyShell":
+            if self.deviceContext == "linux":
+                retStruct = self.VtyshShell(enter=True)
+            elif self.defaultContext == "vtyShellConfig":
+                retstruct = self.ConfigVtyShell(enter=False)
+        elif self.defaultContext == "linux":
+            if self.deviceContext == "vtyShell":
+                retStruct = self.VtyshShell(enter=False)
+            elif self.defaultContext == "vtyShellConfig":
+                retstruct = self.ConfigVtyShell(enter=False)
+                retStruct = self.VtyshShell(enter=False)
+        elif self.defaultContext == "vtyShellConfig":
+            if self.deviceContext == "linux":
+                retStruct = self.VtyshShell(enter=True)
+                retstruct = self.ConfigVtyShell(enter=True)
+            elif self.defaultContext == "vtyShell":
+                retstruct = self.ConfigVtyShell(enter=True)
+
+        return retStruct
 
     def cmdVtysh(self, **kwargs):
         """
@@ -160,7 +189,7 @@ class VSwitch(Device):
         self.expectHndl = pexpect.spawn(telnetString,
                                         echo=False,
                                         logfile=DeviceLogger(expectLogFile))
-        self.expectHndl.delaybeforesend = .50
+        # self.expectHndl.delaybeforesend = .50
 
         # Lets go and detect our connection - this will get us to a context
         # we know about
@@ -280,7 +309,7 @@ class VSwitch(Device):
         try:
             LogOutput('debug', "Flushing buffer")
             buf = self.expectHndl.read_nonblocking(128, 0)
-            LogOutput('debug', "Buffer data \n"+ buf)
+            LogOutput('debug', "Buffer data \n" + buf)
         except pexpect.TIMEOUT:
             pass
         except pexpect.EOF:
@@ -289,7 +318,7 @@ class VSwitch(Device):
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
-        time.sleep(1)
+        # time.sleep(1)
         connectionBuffer = []
 
         while bailflag == 0:
@@ -352,7 +381,7 @@ class VSwitch(Device):
                 connectionBuffer.append(self.expectHndl.before)
         # Move collecting after buffer until after we flush the buffer
         # connectionBuffer.append(self.expectHndl.after)
-        self.expectHndl.expect(['$'], timeout=4)
+        self.expectHndl.expect(['$'], timeout=1)
         connectionBuffer.append(self.expectHndl.before)
         connectionBuffer.append(self.expectHndl.after)
         LogOutput('debug',
@@ -485,14 +514,14 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Error detected--->" + Error_Code5.group(1))
                 returnCode = 6
-            #ssh error codes
+            # ssh error codes
             Error_Code7 = re.match(".*(Permission denied)",
                                    line, re.I)
             if re.match(".*(Permission denied)", line, re.I):
                 LogOutput("error",
                           "Error detected--->" + Error_Code7.group(1))
-                returnCode = 7 
-            #User add/remove error codes
+                returnCode = 7
+            # User add/remove error codes
             Error_Code8 = re.match(".*(user [A-Za-z0-9]+ already exists)",
                                    line, re.I)
             if Error_Code8:
@@ -506,13 +535,13 @@ class VSwitch(Device):
                           "Detected--->" + Error_Code9.group(1))
                 returnCode = 9
             Error_Code10 = re.match(".*(Unknown user:)",
-                                   line, re.I)
+                                    line, re.I)
             if Error_Code10:
                 LogOutput("error",
                           "Detected--->" + Error_Code10.group(1))
                 returnCode = 10
             Error_Code11 = re.match(".*(Cannot delete the last user:)",
-                                   line, re.I)
+                                    line, re.I)
             if Error_Code11:
                 LogOutput("error",
                           "Detected--->" + Error_Code11.group(1))
@@ -584,6 +613,10 @@ class VSwitch(Device):
             returnCls = returnStruct(returnCode=0, buffer=bufferString)
             return returnCls
         else:
+            if self.defaultContext == "vtyShell":
+                returnCls = returnStruct(returnCode=0)
+                return returnCls
+
             # Exit vtysh shell
             LogOutput("debug", "Vtysh shell Exit")
             command = "exit"
@@ -666,6 +699,10 @@ class VSwitch(Device):
                     returnCls = returnStruct(returnCode=0, buffer=bufferString)
                     return returnCls
         else:
+            if self.defaultContext == "vtyShellConfig":
+                returnCls = returnStruct(returnCode=0)
+                return returnCls
+
             if self.deviceContext == "vtyShellConfig":
                 # Exit vtysh shell
                 LogOutput("debug", "vtysh config context exit")
