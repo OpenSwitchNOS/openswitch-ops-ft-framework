@@ -95,7 +95,6 @@ def UserAddRemove(** kwargs):
         index = deviceObj.expectHndl.expect(expectList,
                                             timeout=5)
         bufferString += str(deviceObj.expectHndl.before)
-        print index
         # Entering passwords for the user
         if index == 0:
             command = password
