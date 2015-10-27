@@ -517,6 +517,13 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Detected--->" + Error_Code11.group(1))
                 returnCode = 11
+            Error_Code12 = re.match(".*(user [A-Za-z0-9_]+ is currently used by process)",
+                                   line, re.I)
+            if Error_Code12:
+                LogOutput("error",
+                          "Detected--->" + Error_Code12.group(1))
+                returnCode = 12
+
 
         returnDict['returnCode'] = returnCode
         return returnDict

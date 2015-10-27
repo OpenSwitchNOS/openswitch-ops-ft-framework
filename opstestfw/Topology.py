@@ -1032,7 +1032,6 @@ class Topology (OpsVsiTest):
             errCheckRetStr = newSwitchObj.ErrorCheckCLI(buffer=self.santString)
             returnCode = errCheckRetStr['returnCode']
             sshRetCode = returnCode
-            print sshRetCode
         else:
             sshReturn = newHostObj.DeviceInteract(command=sshCommand)
             sshRetCode = sshReturn.get('returnCode')
