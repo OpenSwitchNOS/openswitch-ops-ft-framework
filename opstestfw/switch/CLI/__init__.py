@@ -39,7 +39,6 @@ from LldpConfig import *
 from LldpInterfaceConfig import *
 from ShowLldpNeighborInfo import *
 from ShowLldpStatistics import *
-
 from AddVlan import *
 from AddPortToVlan import *
 from ShowVlan import *
@@ -47,3 +46,4 @@ from VlanDescription import *
 from VlanStatus import *
 from UserAddRemove import *
 from LogoutInbandSshSession import *
+from mgmtInterfaceConfig import *
