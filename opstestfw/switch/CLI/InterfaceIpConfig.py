@@ -37,6 +37,8 @@ def InterfaceIpConfig(**kwargs):
     :type maks       : int
     :param secondary : True for secondary address, False for not
     :type secondary  : boolean
+    :param routing  : If the interface needs to used as L3
+    :type routing    : string
     :param config    : True to configure address
                        False to unconfigure address
                        Defaults to True
@@ -54,6 +56,7 @@ def InterfaceIpConfig(**kwargs):
     mask = kwargs.get('mask', None)
     secondary = kwargs.get('secondary', False)
     config = kwargs.get('config', True)
+    routing = kwargs.get('routing', None)
 
     overallBuffer = []
     # If Device object is not passed, we need to error out
@@ -124,7 +127,9 @@ def InterfaceIpConfig(**kwargs):
         return returnCls
 
     # Need to get into the Interface context
+    command_formed = False
     if addr is not None and mask is not None:
+        command_formed = True
         command = ""
         if config is False:
             command += "no "
@@ -143,6 +148,14 @@ def InterfaceIpConfig(**kwargs):
         if secondary is True:
             command += " secondary"
 
+    if routing is not None:
+        command_formed = True
+        command = ""
+        if config is False:
+            command += "no "
+        command += "routing"
+
+    if command_formed is True:
         returnStructure = deviceObj.DeviceInteract(command=command)
         retCode = returnStructure['returnCode']
         overallBuffer.append(returnStructure['buffer'])
