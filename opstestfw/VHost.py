@@ -56,6 +56,7 @@ class VHost(Device):
                                      '\[root@\S+.*\]#',
                                      'root@\S+#',
                                      '\(yes/no\)?',
+                                     'password:',
                                      pexpect.EOF,
                                      pexpect.TIMEOUT]
         self.initExtMembers()
@@ -154,7 +155,6 @@ class VHost(Device):
         """
 
         bailflag = 0
-
         self.expectHndl.send('\r')
         connectionBuffer = []
         sanitizedBuffer = ""
@@ -162,7 +162,7 @@ class VHost(Device):
             time.sleep(1)
             index = self.expectHndl.expect(self.expectDefaultPrompts,
                                            timeout=30)
-
+            opstestfw.LogOutput('debug', "Got index ->" + str(index))
             if index == 0:
                 # Need to send login string
                 connectionBuffer.append(self.expectHndl.before)
@@ -187,10 +187,15 @@ class VHost(Device):
                 self.expectHndl.send("\r")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
+                # Need to send password string
+                connectionBuffer.append(self.expectHndl.before)
+                self.expectHndl.send("procurve")
+                self.expectHndl.send("\r")
+            elif index == 6:
                 # Got EOF
                 opstestfw.LogOutput('error', "Telnet to host failed")
                 return None
-            elif index == 6:
+            elif index == 7:
                 # Got a Timeout
                 opstestfw.LogOutput('error', "Connection timed out")
                 return None
@@ -238,7 +243,7 @@ class VHost(Device):
         try:
             opstestfw.LogOutput('debug', "Flushing buffer")
             buf = self.expectHndl.read_nonblocking(128, 0)
-            opstestfw.LogOutput('debug', "Buffer data \n"+ buf)
+            opstestfw.LogOutput('debug', "Buffer data \n" + buf)
         except pexpect.TIMEOUT:
             pass
         except pexpect.EOF:
@@ -280,12 +285,17 @@ class VHost(Device):
                     self.expectHndl.send("no")
                 self.expectHndl.send("\r")
             elif index == 5:
+                # Need to send password string
+                connectionBuffer.append(self.expectHndl.before)
+                self.expectHndl.send("procurve")
+                self.expectHndl.send("\r")
+            elif index == 6:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "reached EOF")
                 returnCode = 1
-            elif index == 6:
+            elif index == 7:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
@@ -949,7 +959,7 @@ class VHost(Device):
         localLinkElements = []
         command = 'ip -6 neighbour show'
 
-       # Send the command
+        # Send the command
         retDevInt = self.DeviceInteract(command=command)
         retCode = retDevInt.get('returnCode')
         retBuff = retDevInt.get('buffer')
@@ -1062,12 +1072,16 @@ class VHost(Device):
             try:
                 if direction == "get":
                     localpath = os.path.dirname(localpath)
-                    command = "docker cp %s:%s %s"%(self.device,filepath,localpath)
+                    command = "docker cp %s:%s %s" % (self.device, filepath,
+                                                    localpath)
                     returnCode = os.system(command)
                 else:
-                    #/tmp is a shared folder between VM and docker run instance
+                    # /tmp is a shared folder between VM and docker
+                    # run instance
                     command = "cp %s %s" % (filepath, self.topology.testdir
-                              + "/" + self.device.split('_')[1] + "/shared/")
+                                            + "/"
+                                            + self.device.split('_')[1]
+                                            + "/shared/")
                     os.system(command)
                     file_tobe_copied = filepath.split('/')[-1]
                     cpCommand = "cp /shared/%s %s" % (

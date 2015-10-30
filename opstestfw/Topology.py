@@ -27,6 +27,7 @@ from subprocess import *
 from subprocess import *
 from opsvsi.docker import *
 from opsvsi.opsvsitest import *
+from subprocess import *
 import xml.etree.ElementTree as ET
 import re
 import select
@@ -34,7 +35,6 @@ import opstestfw
 import shutil
 from opstestfw import gbldata
 import time
-import shutil
 import pexpect
 
 try:
@@ -62,8 +62,8 @@ class Topology (OpsVsiTest):
         information extracted from LogicalTopology.xml .
         LogicalTopology.xml is built from the topology dictionary as described
         in the test scripts .
-        This library enables mapping of logical topologies to docker containers/
-        physical devices (switches & hosts)
+        This library enables mapping of logical topologies to docker 
+        containers physical devices (switches & hosts)
 
         :param topoDict : topology dictionary defined in the test case
         :type topology: dictionary
@@ -146,7 +146,28 @@ class Topology (OpsVsiTest):
         if self.topoLinks != "":
             for curLink in str.split(self.topoLinks, ','):
                 (link, dev1, dev2) = str.split(curLink, ':')
+                # linkFilterMatch = 0
+                # if self.topoLinkFilter != "":
+                #    for curLinkFilter in str.split(self.topoLinkFilter, ','):
+                #        (lfLink, lfDev, lfIntTag, lfInt) =\
+                #            str.split(curLinkFilter, ':')
+                #        if lfLink == link:
+                #            linkFilterMatch = 1
+                #            break
+                # if linkFilterMatch == 0:
                 linkKey = self.mntopo.addLink(dev1, dev2, key=link)
+                # else:
+                #    linkKey = self.mntopo.addLink(dev1, dev2, key=link)
+                #    if lfInt == "eth0":
+                #        intIndex = "eth0"
+                #    else:
+                #        intIndex = lfInt
+                #    if lfDev == dev1:
+                #        linkKey = self.mntopo.addLink(dev1, dev2, key=link,
+                #                                      port1=intIndex)
+                #    else:
+                #        linkKey = self.mntopo.addLink(dev1, dev2, key=link,
+                #                                      port2=intIndex)
                 # Add to Link Logical Topology
                 logicalTopo[dev1]['links'][link] = dev2
                 logicalTopo[dev2]['links'][link] = dev1
@@ -175,8 +196,8 @@ class Topology (OpsVsiTest):
         hosts = self.net.hosts
         # hosts
         for curHost in hosts:
-            xmlAddRet = self.VirtualXMLDeviceAdd(
-                name=str(curHost.container_name))
+            xmlAddRet =\
+                self.VirtualXMLDeviceAdd(name=str(curHost.container_name))
             logDevRe = re.match("^\d+_(\S+)", curHost.container_name)
             if logDevRe:
                 logicalDevice = logDevRe.group(1)
@@ -187,10 +208,7 @@ class Topology (OpsVsiTest):
         topoLinkMininet = self.mntopo.iterLinks(withKeys=True, withInfo=True)
         for curLink in topoLinkMininet:
             linkName = curLink[2]
-            print curLink
-            # linkstatus = curLink.status
-            # print "Current Line: " + str(linkName) +"status = "+ str(linkstatus)
-            # print linkName
+            # print "current link = " + str(curLink)
             linkInfo = curLink[3]
             # print linkInfo
             node1 = linkInfo['node1']
@@ -205,18 +223,17 @@ class Topology (OpsVsiTest):
             node2IntStruct = node2Obj.intfList()
 
             # Add link to Topology XML
-            retStruct = self.VirtualXMLLinkAdd(link=linkName,
-                                               device1=self.topo[node1],
-                                               device1Port=node1IntStruct[
-                                               node1port],
-                                               device2=self.topo[node2],
-                                               device2Port=node2IntStruct[node2port])
+            retStruct =\
+                self.VirtualXMLLinkAdd(link=linkName,
+                                       device1=self.topo[node1],
+                                       device1Port=node1IntStruct[node1port],
+                                       device2=self.topo[node2],
+                                       device2Port=node2IntStruct[node2port])
             self.topo[linkName] = linkName
 
         # topology mapping
-        opstestfw.LogOutput(
-            'info',
-            "=====================================================================")
+        opstestfw.LogOutput('info', "========================================"
+                            "=============================")
         opstestfw.LogOutput('info', "Topology Mapping")
         for curDev in str.split(self.topoDevices):
             outstring = curDev + "  =  " + self.topo[curDev]
@@ -249,12 +266,12 @@ class Topology (OpsVsiTest):
                         dev2)
                     continue
                 dev2Lport = dev2LportStruct.valueGet()
-                outstring = link + "  =  " + self.topo[dev1] + ":" + str(
-                    dev1Lport) + " <==> " + self.topo[dev2] + ":" + str(dev2Lport)
+                outstring = link + "  =  " + self.topo[dev1] + ":"\
+                    + str(dev1Lport) + " <==> " + self.topo[dev2] + ":"\
+                    + str(dev2Lport)
                 opstestfw.LogOutput('info', outstring)
-        opstestfw.LogOutput(
-            'info',
-            "=====================================================================")
+        opstestfw.LogOutput('info', "======================================="
+                            "==============================")
         self.net.start()
 
     def VirtualLinkModifyStatus(self, **kwargs):
@@ -312,8 +329,8 @@ class Topology (OpsVsiTest):
         mydir = switchObj.testdir + "/" + mylogicalDev
         shutil.rmtree(mydir)
 
-        # We actually really need to add the switch again in order to get everything
-        # properly setup to as it was before.
+        # We actually really need to add the switch again in order to get
+        # everything properly setup to as it was before.
         self.net.addSwitch(
             mylogicalDev,
             testid=str(self.id),
@@ -375,8 +392,19 @@ class Topology (OpsVsiTest):
         self.shell = 1
         self.net.stop()
         self.setLogLevel('output')
+        # Validate if hosts are still there
+        host_list = self.net.hosts
+        for curHost in host_list:
+            pid_cmd1 = ["docker", "ps", "\-a"]
+            pid_cmd2 = ["grep",  str(curHost)]
+            docker_ps = Popen(pid_cmd1, stdout=PIPE)
+            grep_cmd = Popen(pid_cmd2, stdin=docker_ps.stdout,
+                             stdout=PIPE)
+            ps_out = grep_cmd.communicate()[0]
+            opstestfw.LogOutput('debug', str(ps_out))
+
         # Work around to kill workstations that hang around
-        tmp_topo = SingleSwitchTopo(k=1, hopts=self.getHostOpts(),
+        tmp_topo = SingleSwitchTopo(k=1, h=0, hopts=self.getHostOpts(),
                                     sopts=self.getSwitchOpts())
         tmpnet = Mininet(tmp_topo, switch=VsiOpenSwitch,
                          host=Host, link=OpsVsiLink,
@@ -719,13 +747,11 @@ class Topology (OpsVsiTest):
             self.topoLinks = re.sub('\s+', '', mytopoLinks)
             for curLink in str.split(self.topoLinks, ','):
                 (link, dev1, dev2) = str.split(curLink, ':')
-                linkTag = ET.SubElement(
-                    self.LOGICAL_TOPOLOGY,
-                    'link',
-                    attrib={'name': link,
-                            'device1': dev1,
-                            'device2': dev2,
-                            'rate': "any"})
+                linkTag = ET.SubElement(self.LOGICAL_TOPOLOGY,
+                                        'link',
+                                        attrib={'name': link, 'device1': dev1,
+                                                'device2': dev2,
+                                                'rate': "any"})
 
             # now search for topoLinkFilter in the dictionary
             if "topoLinkFilter" in self.topoDict:
@@ -763,7 +789,7 @@ class Topology (OpsVsiTest):
                     deviceTag,
                     'attribute',
                     attrib={'name': cAttr,
-                                            'value': cVal})
+                            'value': cVal})
             if cAttr == "docker-image":
                 self.hostimage = cVal
 
@@ -809,12 +835,13 @@ class Topology (OpsVsiTest):
                     found_profile = 1
                     opstestfw.LogOutput(
                         'debug',
-                        "Found system-profile attribute stated for device - not assuming auto-ubuntu-12-04")
+                        "Found system-profile attribute stated for device "
+                        "- not assuming auto-ubuntu-12-04")
             if found_profile == 0:
                 # Need to add subelements
                 opstestfw.LogOutput(
                     'debug',
-                    "No system-profile attribute found, defaulting to auto-ubuntu-12-04")
+                    "No system-profile attribute, default auto-ubuntu-12-04")
                 deviceTag = ET.SubElement(
                     curTag,
                     'attribute',
@@ -978,8 +1005,11 @@ class Topology (OpsVsiTest):
         targetUser = kwargs.get('user', "root")
         sshArgs = kwargs.get('args', "-o StrictHostkeyChecking=no")
         sshPassword = kwargs.get('sshPassword', None)
+
         # Create the new how object and then connect.
-        newHostObj = self.LaunchHost(device=deviceConnFrom.device)
+        newHostObj = self.LaunchHost(device=deviceConnFrom.device,
+                                     factoryDefaultCheck=False,
+                                     sshCon=True)
         newSwitchObj = self.LaunchSwitch(noConnect=True)
         newSwitchObj.expectHndl = newHostObj.expectHndl
         newSwitchObj.deviceContext = "linux"
@@ -999,17 +1029,19 @@ class Topology (OpsVsiTest):
                                pexpect.EOF,
                                pexpect.TIMEOUT]
 
-            newSwitchObj.expectHndl.sendline(sshCommand)
+            newSwitchObj.expectHndl.send(sshCommand)
+            newSwitchObj.expectHndl.send('\r')
             while bailflag == 0:
                 index = newSwitchObj.expectHndl.expect(self.expectList,
-                                                       timeout=200)
+                                                       timeout=30)
                 if index == 0 or index == 1:
                     opstestfw.LogOutput("debug", "Prompt received")
                     connectionBuffer.append(newSwitchObj.expectHndl.before)
                     bailflag = 1
                 elif index == 4:
                     opstestfw.LogOutput("debug", "Sending password")
-                    newSwitchObj.expectHndl.sendline(sshPassword)
+                    newSwitchObj.expectHndl.send(sshPassword)
+                    newSwitchObj.expectHndl.send('\n')
                     connectionBuffer.append(newSwitchObj.expectHndl.before)
                 elif index == 6:
                     # Got EOF
@@ -1035,7 +1067,7 @@ class Topology (OpsVsiTest):
         else:
             sshReturn = newHostObj.DeviceInteract(command=sshCommand)
             sshRetCode = sshReturn.get('returnCode')
-            sshBuffer = sshReturn.get('buffer')
+            # sshBuffer = sshReturn.get('buffer')
 
         if sshRetCode != 0:
             opstestfw.LogOutput(

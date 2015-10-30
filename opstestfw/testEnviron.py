@@ -216,7 +216,7 @@ class testEnviron ():
                             "test ")
 
         LogOutput('info', "", datastamp=True)
-        LogOutput('info' , "Physical Topology is: " + str(self.rsvnId))
+        LogOutput('info', "Physical Topology is: " + str(self.rsvnId))
 
         # Read in the Topology
         if self.rsvnId == "virtual":
@@ -482,7 +482,7 @@ def FileCreate(DirPath, fileName):
             retDataStruct['returnCode'] = 0
     except Exception as Err:
         print Err
-        raise Exception("FILE NOT CREATED:: "+fileName)
+        raise Exception("FILE NOT CREATED:: " + fileName)
         retDataStruct['returnCode'] = 1
     return retDataStruct
 
@@ -570,21 +570,8 @@ class DeviceLogger(object):
             filebase, fileext = os.path.splitext(fullFilePath)
             fileList = glob.glob(filebase + "*")
 
-            if len(fileList) == 1:
-                newFileBase = filebase + "_1"
-            elif len(fileList) > 1:
-                # This means we have multiple connections going we need
-                # to extract the index
-                curListIndex = len(fileList) - 1
-                fileIndexRegExp = re.match("^.*_(\d+).log",
-                                           fileList[curListIndex])
-                if fileIndexRegExp:
-                    index = fileIndexRegExp.group(1)
-                    index = int(index) + 1
-                    newFileBase = filebase + "_" + str(index)
-                else:
-                    index = 1
-                    newFileBase = filebase + "_" + str(index)
+            numFiles = len(fileList)
+            newFileBase = filebase + "_" + str(numFiles)
             newFileFullPath = newFileBase + fileext
             ExpectFileName = os.path.basename(newFileFullPath)
         retCode = FileCreate(opstestfw.gbldata.ResultsDirectory,
