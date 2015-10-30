@@ -47,3 +47,5 @@ from VlanStatus import *
 from UserAddRemove import *
 from LogoutInbandSshSession import *
 from mgmtInterfaceConfig import *
+from SwitchCpuLoad import *
+from MgmtInterfaceUpDown import *
