@@ -393,15 +393,34 @@ class Topology (OpsVsiTest):
         self.net.stop()
         self.setLogLevel('output')
         # Validate if hosts are still there
+        extraKillCodeExecute = 0
         host_list = self.net.hosts
         for curHost in host_list:
             pid_cmd1 = ["docker", "ps", "\-a"]
             pid_cmd2 = ["grep",  str(curHost)]
+            pid_cmd3 = ["tr",  "'\n'", "''"]
             docker_ps = Popen(pid_cmd1, stdout=PIPE)
             grep_cmd = Popen(pid_cmd2, stdin=docker_ps.stdout,
                              stdout=PIPE)
-            ps_out = grep_cmd.communicate()[0]
+            tr_cmd = Popen(pid_cmd2, stdin=grep_cmd.stdout,
+                             stdout=PIPE)
+            ps_out = tr_cmd.communicate()[0]
             opstestfw.LogOutput('debug', str(ps_out))
+            if ps_out.find("Up"):
+                curHost.onKillList = 1
+                opstestfw.LogOutput('debug', "Detected "
+                                    + curHost.container_name
+                                    + " is still active")
+                extraKillCodeExecute = 1
+            else:
+                curHost.onKillList = 0
+                opstestfw.LogOutput('debug', "Detected "
+                                    + curHost.container_name
+                                    + " is no longer active")
+
+        # If all hosts are done, then we exit
+        if extraKillCodeExecute == 0:
+            return
 
         # Work around to kill workstations that hang around
         tmp_topo = SingleSwitchTopo(k=1, h=0, hopts=self.getHostOpts(),
@@ -416,6 +435,8 @@ class Topology (OpsVsiTest):
         switch_list = self.net.switches
         host_list = self.net.hosts
         for curHost in host_list:
+            if curHost.onKillList == 0:
+                continue
             opstestfw.LogOutput('debug', "terminating " + str(curHost))
             curHost.terminate()
             curHost.cleanup()
