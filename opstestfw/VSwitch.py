@@ -51,6 +51,7 @@ class VSwitch(Device):
         self.memberDefaults()
         if self.noConnect is False:
             self.Connect()
+            self.defaultContextEnter()
 
     def memberDefaults(self):
         """
@@ -77,6 +78,47 @@ class VSwitch(Device):
         # vtyShell
         # vtyShellConfig
         self.deviceContext = ""
+        self.defaultContext = "linux"
+
+    def setDefaultContext(self, **kwargs):
+        self.defaultContext = kwargs.get('context', "linux")
+
+        #if self.defaultContext != "linux" or self.defaultContext != "vtyShell" or self.defaultContext != "vtyShellConfig":
+            # Got an invalid entry, thus set to linux
+        #    self.defaultContext = "linux"
+        LogOutput('info', "Default switch context = " + self.defaultContext)
+        self.defaultContextEnter()
+
+    def defaultContextEnter(self):
+        """
+        defaultContextEnter method
+
+        This method will get you to the appropriate context needed
+        """
+        if self.defaultContext == "":
+            self.defaultContext = "linux"
+
+        retstruct = None
+
+        if self.defaultContext == "vtyShell":
+            if self.deviceContext == "linux":
+                retstruct = self.VtyshShell(enter=True)
+            elif self.defaultContext == "vtyShellConfig":
+                retstruct = self.ConfigVtyShell(enter=False)
+        elif self.defaultContext == "linux":
+            if self.deviceContext == "vtyShell":
+                retstruct = self.VtyshShell(enter=False)
+            elif self.defaultContext == "vtyShellConfig":
+                retstruct = self.ConfigVtyShell(enter=False)
+                retstruct = self.VtyshShell(enter=False)
+        elif self.defaultContext == "vtyShellConfig":
+            if self.deviceContext == "linux":
+                retstruct = self.VtyshShell(enter=True)
+                retstruct = self.ConfigVtyShell(enter=True)
+            elif self.defaultContext == "vtyShell":
+                retstruct = self.ConfigVtyShell(enter=True)
+        return retstruct
+
 
     def cmdVtysh(self, **kwargs):
         """
@@ -160,7 +202,7 @@ class VSwitch(Device):
         self.expectHndl = pexpect.spawn(telnetString,
                                         echo=False,
                                         logfile=DeviceLogger(expectLogFile))
-        self.expectHndl.delaybeforesend = .50
+        # self.expectHndl.delaybeforesend = .50
 
         # Lets go and detect our connection - this will get us to a context
         # we know about
@@ -280,16 +322,18 @@ class VSwitch(Device):
         try:
             LogOutput('debug', "Flushing buffer")
             buf = self.expectHndl.read_nonblocking(128, 0)
-            LogOutput('debug', "Buffer data \n"+ buf)
+            LogOutput('debug', "Buffer data \n" + buf)
         except pexpect.TIMEOUT:
-            pass
+            # pass
+            LogOutput('debug', "Timeout on clear buffer read")
         except pexpect.EOF:
-            pass
+            # pass
+            LogOutput('debug', "EOF on clear buffer read")
 
         # Send the command
         self.expectHndl.send(command)
         self.expectHndl.send('\r')
-        time.sleep(1)
+        # time.sleep(1)
         connectionBuffer = []
 
         while bailflag == 0:
@@ -352,7 +396,7 @@ class VSwitch(Device):
                 connectionBuffer.append(self.expectHndl.before)
         # Move collecting after buffer until after we flush the buffer
         # connectionBuffer.append(self.expectHndl.after)
-        self.expectHndl.expect(['$'], timeout=4)
+        self.expectHndl.expect(['$'], timeout=1)
         connectionBuffer.append(self.expectHndl.before)
         connectionBuffer.append(self.expectHndl.after)
         LogOutput('debug',
@@ -591,6 +635,10 @@ class VSwitch(Device):
             returnCls = returnStruct(returnCode=0, buffer=bufferString)
             return returnCls
         else:
+            if self.defaultContext == "vtyShell":
+                returnCls = returnStruct(returnCode=0)
+                return returnCls
+
             # Exit vtysh shell
             LogOutput("debug", "Vtysh shell Exit")
             command = "exit"
@@ -673,6 +721,10 @@ class VSwitch(Device):
                     returnCls = returnStruct(returnCode=0, buffer=bufferString)
                     return returnCls
         else:
+            if self.defaultContext == "vtyShellConfig":
+                returnCls = returnStruct(returnCode=0)
+                return returnCls
+
             if self.deviceContext == "vtyShellConfig":
                 # Exit vtysh shell
                 LogOutput("debug", "vtysh config context exit")

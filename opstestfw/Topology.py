@@ -74,6 +74,7 @@ class Topology (OpsVsiTest):
 
         self.topoDict = kwargs.get('topoDict', None)
         self.runEnv = kwargs.get('runEnv', None)
+        self.defaultSwitchContext = kwargs.get('defSwitchContext', "linux")
         self.hostimage = 'ubuntu:latest'
         self.topoType = 'virtual'
         # Initialize Structures
@@ -935,6 +936,9 @@ class Topology (OpsVsiTest):
                                 device=self.topo[deviceName])
                             port = portStruct.valueGet()
                             switchObj.linkPortMapping[curLink] = port
+
+                        # Set up default Context
+                        switchObj.setDefaultContext(context=self.defaultSwitchContext)
 
                     if categoryValue == "workstation":
                         # Do logic to spawn host off

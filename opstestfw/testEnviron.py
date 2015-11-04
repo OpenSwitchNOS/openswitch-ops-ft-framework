@@ -45,6 +45,7 @@ class testEnviron ():
 
         """
         self.topoDict = kwargs.get('topoDict')
+        self.defaultSwitchContext = kwargs.get('defSwitchContext', "linux")
 
         self.rsvnId = None
         self.topoObj = None
@@ -224,7 +225,8 @@ class testEnviron ():
             LogOutput('info', "Topology is virtual - creating environment "
                       "specified in the test case topoDict structure")
             # Create a topology object
-            self.topoObj = Topology(topoDict=self.topoDict, runEnv=self)
+            self.topoObj = Topology(topoDict=self.topoDict, runEnv=self,
+                                    defSwitchContext=self.defaultSwitchContext)
         elif str.isdigit(self.rsvnId) is True:
             self.topoType = "physical"
             try:
@@ -239,7 +241,8 @@ class testEnviron ():
             self.topoObj = rtltestfw.RTL_Topology(topoDict=self.topoDict,
                                                   topoType="physical",
                                                   rsvnId=self.rsvnId,
-                                                  runEnv=self)
+                                                  runEnv=self,
+                                                  defSwitchContext=self.defaultSwitchContext)
 
     def topoObjGet(self):
 

@@ -304,7 +304,9 @@ class Test_ft_framework_basics:
     def setup_class(cls):
 
         # Create Topology object and connect to devices
-        Test_ft_framework_basics.testObj = testEnviron(topoDict=topoDict)
+        Test_ft_framework_basics.testObj = testEnviron(topoDict=topoDict,
+                                                       defSwitchContext=\
+                                                        "vtyShell")
         Test_ft_framework_basics.topoObj = \
             Test_ft_framework_basics.testObj.topoObjGet()
 

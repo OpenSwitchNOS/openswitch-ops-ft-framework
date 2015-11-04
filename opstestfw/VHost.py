@@ -57,6 +57,7 @@ class VHost(Device):
                                      'root@\S+#',
                                      '\(yes/no\)?',
                                      'password:',
+                                     'Connection closed by foreign host.',
                                      pexpect.EOF,
                                      pexpect.TIMEOUT]
         self.initExtMembers()
@@ -132,7 +133,7 @@ class VHost(Device):
         self.expectHndl = pexpect.spawn(telnetString,
                                         echo=False,
                                         logfile=opstestfw.DeviceLogger(expLog))
-        self.expectHndl.delaybeforesend = .05
+        # self.expectHndl.delaybeforesend = .05
 
         # Lets go and detect our connection - this will get us to a context
         # we know about
@@ -192,10 +193,15 @@ class VHost(Device):
                 self.expectHndl.send("procurve")
                 self.expectHndl.send("\r")
             elif index == 6:
-                # Got EOF
+                # Need to send password string
+                connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "Telnet to host failed")
                 return None
             elif index == 7:
+                # Got EOF
+                opstestfw.LogOutput('error', "Telnet to host failed")
+                return None
+            elif index == 8:
                 # Got a Timeout
                 opstestfw.LogOutput('error', "Connection timed out")
                 return None
@@ -290,12 +296,17 @@ class VHost(Device):
                 self.expectHndl.send("procurve")
                 self.expectHndl.send("\r")
             elif index == 6:
+                # Need to send password string
+                connectionBuffer.append(self.expectHndl.before)
+                opstestfw.LogOutput('error', "Connection closed")
+                returnCode = 1
+            elif index == 7:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "reached EOF")
                 returnCode = 1
-            elif index == 7:
+            elif index == 8:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
@@ -305,7 +316,7 @@ class VHost(Device):
                 connectionBuffer.append(self.expectHndl.before)
 
         connectionBuffer.append(self.expectHndl.after)
-        self.expectHndl.expect(['$'], timeout=3)
+        self.expectHndl.expect(['$'], timeout=1)
         santString = ""
         for curLine in connectionBuffer:
             santString += str(curLine)
