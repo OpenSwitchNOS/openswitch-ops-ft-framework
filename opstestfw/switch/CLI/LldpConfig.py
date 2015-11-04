@@ -63,7 +63,7 @@ def LldpConfig(**kwargs):
         return returnCls
 
     if enable is True:
-        command = "feature lldp\r"
+        command = "lldp enable\r"
         returnDevInt = deviceObj.DeviceInteract(command=command)
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
@@ -77,7 +77,7 @@ def LldpConfig(**kwargs):
         else:
             LogOutput('debug', "Enabled lldp on device " + deviceObj.device)
     else:
-        command = "no feature lldp\r"
+        command = "no lldp enable\r"
         returnDevInt = deviceObj.DeviceInteract(command=command)
         retCode = returnDevInt['returnCode']
         overallBuffer.append(returnDevInt['buffer'])
