@@ -20,7 +20,6 @@ import opstestfw
 
 
 def lagpGlobalSystemShow(**kwargs):
-
     """
     Function to extract Global LACP configuration
 
@@ -44,7 +43,7 @@ def lagpGlobalSystemShow(**kwargs):
     command = ""
 
     # Dictionary initialization
-    data['System-id'] = 0
+    data['System-id'] = ""
     data['System-priority'] = 0
 
     # If Device object is not passed, we need to error out
@@ -98,9 +97,10 @@ def lagpGlobalSystemShow(**kwargs):
     # Fill dictionary out
     for curLine in bufferString.split('\r\n'):
         print curLine
-        showLine1 = re.match(r'System-id \s*:\s*(\d+)', curLine)
+        showLine1 = re.match(
+            r'System-id\s*:\s*(([A-Za-z0-9]{2}:?){6})', curLine)
         if showLine1:
-            data['System-id'] = int(showLine1.group(1))
+            data['System-id'] = showLine1.group(1)
             continue
 
         showLine2 = re.match(r'System-priority \s*:\s*(\d+)', curLine)
