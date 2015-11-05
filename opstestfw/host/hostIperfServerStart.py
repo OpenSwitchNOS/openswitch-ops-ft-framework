@@ -110,6 +110,7 @@ def hostIperfServerStart(** kwargs):
                 opstestfw.LogOutput('error', "Unknown error on device")
                 return opstestfw.returnStruct(returnCode=1,
                                               buffer=bufferString)
+            return opstestfw.returnStruct(returnCode=1, buffer=bufferString)
         else:
             index = deviceObj.expectHndl.expect(
                 ['# ', pexpect.TIMEOUT], timeout=5)

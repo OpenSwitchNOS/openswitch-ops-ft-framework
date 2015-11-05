@@ -38,6 +38,9 @@ def hostIperfServerStop(** kwargs):
     # Params
     deviceObj = kwargs.get('deviceObj', None)
 
+    #Variable initialization
+    retBuffer = ''
+
     # If device is not passed, we need error message
     if deviceObj is None:
         opstestfw.LogOutput('error', "Need to pass device to configure")
@@ -45,6 +48,7 @@ def hostIperfServerStop(** kwargs):
         return returnJson
 
     deviceObj.expectHndl.expect(['# ', pexpect.TIMEOUT], timeout=1)
+    retBuffer = deviceObj.expectHndl.before
 
     ips_and_ports = re.search(
         'local (.*) port (\d+) connected with (.*) port (\d+)',
@@ -74,12 +78,13 @@ def hostIperfServerStop(** kwargs):
     data_dict['Client port'] = client_port
     data_dict['Traffic data'] = traffic_data
 
-    command = r'\003'
+    command = '\003'
     deviceObj.expectHndl.send(command)
     deviceObj.expectHndl.expect('#')
+    retBuffer += deviceObj.expectHndl.before
 
     # Compile information to return
     returnCls = opstestfw.returnStruct(returnCode=0,
-                                       buffer=deviceObj.expectHndl.before,
+                                       buffer=retBuffer,
                                        data=data_dict)
     return returnCls
