@@ -111,7 +111,7 @@ def InterfaceStatisticsShow(**kwargs):
         r'RX\s*\r\n\s*(\d*)\s*input\s*packets\s*(\d*)\s*bytes\s*\r\n\s*' +
         '(\d*)\s*input\s*error\s*(\d*)\s*dropped\s*\r\n\s*(\d*)', bufferString)
     txTokens = re.findall(
-        r'RX\s*\r\n\s*(\d*)\s*input\s*packets\s*(\d*)\s*bytes\s*\r\n\s*' +
+        r'TX\s*\r\n\s*(\d*)\s*output\s*packets\s*(\d*)\s*bytes\s*\r\n\s*' +
         '(\d*)\s*input\s*error\s*(\d*)\s*dropped\s*\r\n\s*(\d*)', bufferString)
     if rxTokens:
         rx['inputPackets'] = rxTokens[0][0]
