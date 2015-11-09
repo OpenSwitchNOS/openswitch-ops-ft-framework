@@ -16,7 +16,6 @@
 import opstestfw
 import re
 
-
 def ShowVlan(**kwargs):
 
     """
@@ -82,16 +81,20 @@ def ShowVlan(**kwargs):
         return returnCls
 
     result = []
+    print "Buffer: " + temporaryBuffer
     keys = re.findall(r'\r\n(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\r\n',
                       temporaryBuffer)
-
+	
     temporaryBuffer = temporaryBuffer.encode('string-escape')
+    print "Keys: " + str(keys)
+    print "Buffer: " + temporaryBuffer
     if len(keys) == 1:
         keys = keys[0]
         rgx = r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([\w\d ,]+)?'
         vlans = \
             re.findall(rgx, temporaryBuffer)
 
+        print "vlans: " + str(vlans)
         for vlan in vlans:
             dictionary = {}
             for key, value in zip(keys, vlan):
