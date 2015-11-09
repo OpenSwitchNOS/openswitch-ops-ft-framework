@@ -69,8 +69,11 @@ class VSwitch(Device):
                            '\(config\)#',
                            '\(config-\S+\)#\s*$',
                            'ONIE:/\s+#\s*$',
-                           'telnet: Unable to connect to remote host:'
+                           'telnet: Unable to connect to remote host:',
                            'Connection refused',
+                           '--More--',
+                           'Password:',
+                           'switch:~[#$]\s*$',
                            pexpect.EOF,
                            pexpect.TIMEOUT]
         # Device Contexts
@@ -79,6 +82,12 @@ class VSwitch(Device):
         # vtyShellConfig
         self.deviceContext = ""
         self.defaultContext = "linux"
+        self.loginUser = "root"
+        self.loginPassword = ""
+
+    def setSwitchAuthentication(self, **kwargs):
+        self.loginUser = kwargs.get('username', "root")
+        self.loginPassword = kwargs.get('password', "")
 
     def setDefaultContext(self, **kwargs):
         self.defaultContext = kwargs.get('context', "linux")
@@ -229,7 +238,8 @@ class VSwitch(Device):
         sanitizedBuffer = ""
         while bailflag == 0:
             index = self.expectHndl.expect(self.expectList,
-                                           timeout=200)
+                                           timeout=30)
+            LogOutput('debug', "Index -> " + str(index))
             if index == 0:
                 # Need to send login string
                 LogOutput("debug", "Login required::")
@@ -243,7 +253,7 @@ class VSwitch(Device):
             elif index == 2:
                 # Got prompt.  We should be good
                 bailflag = 1
-                LogOutput("debug", "Root prompt detected: Virtual")
+                LogOutput("debug", "Root bash prompt detected: Virtual")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
                 LogOutput("debug", "vtysh prompt detected: Revert to root")
@@ -256,7 +266,7 @@ class VSwitch(Device):
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
                 LogOutput("debug",
-                          "vtysh config interface prompt detected:"
+                          "vtysh config subcontext prompt detected:"
                           " Revert to root")
                 self.expectHndl.send('exit \r')
                 connectionBuffer.append(self.expectHndl.before)
@@ -270,9 +280,17 @@ class VSwitch(Device):
                 return None
             elif index == 8:
                 # Got EOF
-                LogOutput('error', "Telnet to switch failed")
+                LogOutput('error', "Connection Refused")
                 return None
             elif index == 9:
+                # Got EOF
+                LogOutput('debug', "More prompt")
+                self.expectHndl.send(' ')
+            elif index == 10:
+                # Got EOF
+                LogOutput('error', "Telnet to switch failed")
+                return None
+            elif index == 11:
                 # Got a Timeout
                 LogOutput('error', "Connection timed out")
                 return None
@@ -339,9 +357,10 @@ class VSwitch(Device):
         while bailflag == 0:
             index = self.expectHndl.expect(self.expectList,
                                            timeout=120)
+            LogOutput('debug', "Index ->" + str(index))
             if index == 0:
                 # Need to send login string
-                self.expectHndl.send("root \r")
+                self.expectHndl.sendline(self.loginUser)
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
                 # root prompt
@@ -364,7 +383,7 @@ class VSwitch(Device):
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 5:
                 # Got vtysh config interface prompts
-                LogOutput('debug', "config interface prompt")
+                LogOutput('debug', "config subcontext prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
@@ -387,6 +406,29 @@ class VSwitch(Device):
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
             elif index == 9:
+                # more prompt
+                connectionBuffer.append(self.expectHndl.before)
+                LogOutput('debug', "saw more prompt")
+                self.expectHndl.send(" \r")
+            elif index == 10:
+                # Password prompt
+                connectionBuffer.append(self.expectHndl.before)
+                LogOutput('debug', "saw password prompt")
+                #if self.loginUser == "admin":
+                #    self.expectHndl.sendline("admin")
+                self.expectHndl.sendline(self.loginPassword)
+            elif index == 11:
+                # Password prompt
+                connectionBuffer.append(self.expectHndl.before)
+                LogOutput('debug', "saw start shell prompt")
+                bailflag = 1
+            elif index == 12:
+                # got EOF
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+                LogOutput('error', "connection closed to console")
+                returnCode = 1
+            elif index == 13:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
