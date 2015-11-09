@@ -58,6 +58,7 @@ class VHost(Device):
                                      '\(yes/no\)?',
                                      'password:',
                                      'Connection closed by foreign host.',
+                                     'Login incorrect',
                                      pexpect.EOF,
                                      pexpect.TIMEOUT]
         self.initExtMembers()
@@ -199,9 +200,13 @@ class VHost(Device):
                 return None
             elif index == 7:
                 # Got EOF
-                opstestfw.LogOutput('error', "Telnet to host failed")
+                opstestfw.LogOutput('error', "Login incorrect error")
                 return None
             elif index == 8:
+                # Got EOF
+                opstestfw.LogOutput('error', "Telnet to host failed")
+                return None
+            elif index == 9:
                 # Got a Timeout
                 opstestfw.LogOutput('error', "Connection timed out")
                 return None
@@ -300,13 +305,20 @@ class VHost(Device):
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "Connection closed")
                 returnCode = 1
+                bailflag = 1
             elif index == 7:
+                # Need to send password string
+                connectionBuffer.append(self.expectHndl.before)
+                opstestfw.LogOutput('error', "Login incorrect")
+                returnCode = 1
+                bailflag = 1
+            elif index == 8:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "reached EOF")
                 returnCode = 1
-            elif index == 8:
+            elif index == 9:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
