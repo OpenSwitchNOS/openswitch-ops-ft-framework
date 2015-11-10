@@ -82,8 +82,8 @@ def ShowVlan(**kwargs):
 
     result = []
     opstestfw.LogOutput('info', "Buffer: " + temporaryBuffer)
-    keys = re.findall(r'\r\n(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\r\n',
-                      temporaryBuffer)
+    rgx = r'(VLAN|vlan|Vlan)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)'
+    keys = re.findall(rgx, temporaryBuffer)
 
     temporaryBuffer = temporaryBuffer.encode('string-escape')
     opstestfw.LogOutput('info', "Keys: " + str(keys))
