@@ -63,9 +63,9 @@ class Device ():
         retStruct = self.DeviceInteract(command=cmd)
         returnCode = retStruct.get('returnCode')
         if returnCode != 0:
-            LogOutput('error',
-                      "Failed to send command " + cmd + " to device"
-                      + self.device)
+            opstestfw.LogOutput('error',
+                                "Failed to send command " + cmd + " to device"
+                                + self.device)
             return None
         returnBuffer = retStruct.get('buffer')
         return returnBuffer
@@ -80,8 +80,8 @@ class Device ():
                                                xpathString)
         if rsvnEtreeElement is None:
             # We are not in a good situation, we need to bail
-            LogOutput('error',
-                      "Could not find reservation id tag in topology")
+            opstestfw.LogOutput('error',
+                                "Could not find reservation id tag in topology")
             return None
 
         rsvnType = rsvnEtreeElement.text
@@ -93,8 +93,8 @@ class Device ():
                                            xpathString)
         if etreeElement is None:
             # We are not in a good situation, we need to bail
-            LogOutput('error', "Could not find device " + self.device + " in \
-                      topology")
+            opstestfw.LogOutput('error', "Could not find device "
+                                + self.device + " in topology")
             return None
         if rsvnType == 'virtual':
             # Code for virtual
@@ -104,8 +104,9 @@ class Device ():
             virtualConn = XmlGetElementsByTag(self.topology.TOPOLOGY,
                                               xpathString)
             if virtualConn is None:
-                LogOutput('error', "Failed to virtual connection for \
-                          " + self.device)
+                opstestfw.LogOutput('error',
+                                    "Failed to virtual connection for "
+                                    + self.device)
                 return None
             telnetString = "docker exec -ti " + self.device + " /bin/bash"
         else:
@@ -114,28 +115,28 @@ class Device ():
             xpthStr = ".//device[name='" + self.device + "']/connection/ipAddr"
             ipNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpthStr)
             if ipNode is None:
-                LogOutput('error',
-                          "Failed to obtain IP address for \
-                          device " + self.device)
+                opstestfw.LogOutput('error',
+                                    "Failed to obtain IP address for device "
+                                    + self.device)
                 return None
 
             self.ipAddress = ipNode.text
-            LogOutput('debug',
-                      self.device + " connection \
-                      IP address:  " + self.ipAddress)
+            opstestfw.LogOutput('debug', self.device
+                                + " connection IP address:  "
+                                + self.ipAddress)
 
             # Grab Port from etree
             xpathStr = ".//device[name='" + self.device + "']/connection/port"
             portNode = XmlGetElementsByTag(self.topology.TOPOLOGY, xpathStr)
             if portNode is None:
-                LogOutput('error',
-                          "Failed to obtain Port for \
-                          device " + self.device)
+                opstestfw.LogOutput('error',
+                                    "Failed to obtain Port for device "
+                                    + self.device)
                 return None
 
             self.port = portNode.text
-            LogOutput('debug',
-                      self.device + " connection port:  " + self.port)
+            opstestfw.LogOutput('debug', self.device + " connection port:  "
+                                + self.port)
 
             # Grab a connetion element - not testing this since this should
             # exist since we obtained things before us
@@ -154,13 +155,14 @@ class Device ():
             ExpectInstance = opstestfw.ExpectLog.DeviceLogger(FS)
             expectLogFile = ExpectInstance.OpenExpectLog(expectFileString)
             if expectLogFile == 1:
-                LogOutput('error', "Unable to create expect log file")
+                opstestfw.LogOutput('error',
+                                    "Unable to create expect log file")
                 exit(1)
             # Opening an expect connection to the device with the specified
             # log file
-            LogOutput('debug',
-                      "Opening an expect connection to the device with the \
-                      specified log file" + expectFileString)
+            opstestfw.LogOutput('debug', "Opening an expect connection to "
+                                "the device with the specified log file"
+                                + expectFileString)
             if rsvnType == 'virtual':
                 logFile = opstestfw.ExpectLog.DeviceLogger(expectLogFile)
                 self.expectHndl = pexpect.spawn(telnetString,
@@ -177,9 +179,8 @@ class Device ():
             # we know about
             retVal = self.DetectConnection()
             if retVal is None:
-                LogOutput('error',
-                          "Failed to detect connection for device - looking \
-                          to reset console")
+                opstestfw.LogOutput('error', "Failed to detect connection "
+                                    "for device - looking to reset console")
                 # Connect to the console
                 conDevConn = console.Connect(self.ipAddress)
                 # now lets logout the port we are trying to connect to
@@ -214,25 +215,25 @@ class Device ():
                                            timeout=200)
             if index == 0:
                 # Need to send login string
-                LogOutput("debug", "Login required::")
+                opstestfw.LogOutput("debug", "Login required::")
                 self.expectHndl.sendline("root")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 1:
                 bailflag = 1
-                LogOutput("debug", "Root prompt detected:")
+                opstestfw.LogOutput("debug", "Root prompt detected:")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 2:
                 # Got prompt.  We should be good
                 bailflag = 1
-                LogOutput("debug", "Root prompt detected: Virtual")
+                opstestfw.LogOutput("debug", "Root prompt detected: Virtual")
                 connectionBuffer.append(self.expectHndl.before)
             elif index == 3:
                 # Got EOF
-                LogOutput('error', "Telnet to switch failed")
+                opstestfw.LogOutput('error', "Telnet to switch failed")
                 return None
             elif index == 4:
                 # Got a Timeout
-                LogOutput('error', "Connection timed out")
+                opstestfw.LogOutput('error', "Connection timed out")
                 return None
             else:
                 connectionBuffer.append(self.expectHndl.before)
@@ -242,7 +243,7 @@ class Device ():
         # Now lets put in the topology the expect handle
         for curLine in connectionBuffer:
             sanitizedBuffer += curLine
-        LogOutput('debug', sanitizedBuffer)
+        opstestfw.LogOutput('debug', sanitizedBuffer)
         return self.expectHndl
 
     def DeviceInteract(self, **kwargs):
@@ -294,13 +295,13 @@ class Device ():
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                LogOutput('error', "connection closed to console")
+                opstestfw.LogOutput('error', "connection closed to console")
                 returnCode = 1
             elif index == 4:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
-                LogOutput('error', "command timeout")
+                opstestfw.LogOutput('error', "command timeout")
                 returnCode = 1
             else:
                 connectionBuffer.append(self.expectHndl.before)
@@ -316,18 +317,18 @@ class Device ():
         # commands.  The following portion checks for Errors for OVS commands
         if errorCheck is True and returnCode == 0 and ErrorFlag is None:
             # Dump the buffer the the debug log
-            LogOutput('debug',
-                      "Sent and received from device: \n" + santString + "\n")
+            opstestfw.LogOutput('debug', "Sent and received from device: \n"
+                                + santString + "\n")
 
         # The following portion checks for Errors in CLI commands
         if ErrorFlag == 'CLI':
-            LogOutput('debug', "CLI ErrorCode")
+            opstestfw.LogOutput('debug', "CLI ErrorCode")
         if ErrorFlag == 'Onie':
-            LogOutput('debug', "NEED TO FIX")
+            opstestfw.LogOutput('debug', "NEED TO FIX")
 
         # Return dictionary
-        LogOutput('debug',
-                  "Sent and received from device: \n" + santString + "\n")
+        opstestfw.LogOutput('debug', "Sent and received from device: \n"
+                            + santString + "\n")
         retStruct['returnCode'] = returnCode
         retStruct['buffer'] = santString
         return retStruct
@@ -360,8 +361,8 @@ class Device ():
             buffer += self.expectHndl.before
             buffer += self.expectHndl.after
         else:
-            LogOutput('error',
-                      "Received timeout in opstestfw.switch.ErrorCheck")
+            opstestfw.LogOutput('error',  "Received timeout in "
+                                "opstestfw.switch.ErrorCheck")
             retStruct['returnCode'] = 1
             return retStruct
 
