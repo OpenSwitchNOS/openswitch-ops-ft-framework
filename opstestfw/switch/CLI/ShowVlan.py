@@ -81,20 +81,20 @@ def ShowVlan(**kwargs):
         return returnCls
 
     result = []
-    opstestfw.LogOutput('info', "Buffer: " + temporaryBuffer)
+    opstestfw.LogOutput('debug', "Buffer: " + temporaryBuffer)
     rgx = r'(VLAN|vlan|Vlan)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(\w+)'
     keys = re.findall(rgx, temporaryBuffer)
 
     temporaryBuffer = temporaryBuffer.encode('string-escape')
-    opstestfw.LogOutput('info', "Keys: " + str(keys))
-    opstestfw.LogOutput('info', "Buffer: " + temporaryBuffer)
+    opstestfw.LogOutput('debug', "Keys: " + str(keys))
+    opstestfw.LogOutput('debug', "Buffer: " + temporaryBuffer)
     if len(keys) == 1:
         keys = keys[0]
         rgx = r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([\w\d ,]+)?'
         vlans = \
             re.findall(rgx, temporaryBuffer)
 
-        opstestfw.LogOutput('info', "Vlans: " + str(vlans))
+        opstestfw.LogOutput('debug', "Vlans: " + str(vlans))
         for vlan in vlans:
             dictionary = {}
             for key, value in zip(keys, vlan):
