@@ -19,7 +19,6 @@ from opstestfw import *
 
 
 def InterfaceLacpPortIdConfig(**kwargs):
-
     """
     Library function to configure LAG parameters on an interface
 
@@ -115,13 +114,15 @@ def InterfaceLacpPortIdConfig(**kwargs):
     command = "lacp port-id " + str(lacpPortId)
     returnDict = deviceObj.DeviceInteract(command=command)
     retCode = returnDict['returnCode']
+    result = retCode
     overallBuffer.append(returnDict['buffer'])
     if retCode != 0:
         opstestfw.LogOutput('error',
-                            "Failed to configure the LACP port ID"
-                            + str(interface))
+                            "Failed to configure the LACP port ID "
+                            + str(lacpPortId))
     else:
-        opstestfw.LogOutput('debug', "LACP port ID assigned" + str(interface))
+        opstestfw.LogOutput('debug',
+                            "LACP port ID assigned " + str(lacpPortId))
 
     ###########################################################################
     # Process of return to the Root context
@@ -161,6 +162,7 @@ def InterfaceLacpPortIdConfig(**kwargs):
         return returnCls
     bufferString = ""
     for curLine in overallBuffer:
-            bufferString += str(curLine)
-    returnCls = returnStruct(returnCode=0, buffer=bufferString, data=retStruct)
+        bufferString += str(curLine)
+    returnCls = returnStruct(returnCode=result,
+                             buffer=bufferString, data=retStruct)
     return returnCls
