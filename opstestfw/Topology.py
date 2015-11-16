@@ -430,7 +430,7 @@ class Topology (OpsVsiTest):
                          host=Host, link=OpsVsiLink,
                          controller=None, build=True)
         tmpnet.start()
-        time.sleep(5)
+        time.sleep(2)
         tmpnet.stop()
 
         switch_list = self.net.switches

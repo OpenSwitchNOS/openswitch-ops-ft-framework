@@ -319,6 +319,7 @@ class Test_ft_framework_basics:
 
         LogOutput('info', "Reboot the switch")
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
+        dut01Obj.commandErrorCheck = 0
         devRebootRetStruct = switch_reboot(dut01Obj)
         if devRebootRetStruct.returnCode() != 0:
             LogOutput('error', "Failed to reboot Switch")
@@ -331,6 +332,7 @@ class Test_ft_framework_basics:
         LogOutput('info', "Configure and ping to switch")
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
         wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
+        wrkston01Obj.commandErrorCheck = 0
         pingSwitchRetStruct = ping_to_switch(dut01Obj, wrkston01Obj)
         if pingSwitchRetStruct.returnCode() != 0:
             LogOutput('error', "Failed to ping to the switch")
@@ -344,6 +346,7 @@ class Test_ft_framework_basics:
         dut01Obj = self.topoObj.deviceObjGet(device="dut01")
         wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
         wrkston02Obj = self.topoObj.deviceObjGet(device="wrkston02")
+        wrkston02Obj.commandErrorCheck = 0
         pingSwitchRetStruct = ping_through_switch(dut01Obj, wrkston01Obj,
                                                   wrkston02Obj)
         if pingSwitchRetStruct.returnCode() != 0:

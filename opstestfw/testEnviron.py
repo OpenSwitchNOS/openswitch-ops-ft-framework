@@ -381,10 +381,7 @@ class returnStruct():
         localDict['data'] = self.data
         self.jsonData = json.dumps(localDict, indent=3)
 
-# -------------------------------------------------------------
 # General / Common library routines
-# -------------------------------------------------------------
-
 
 def CreateDirectory(dirName):
 

@@ -84,6 +84,7 @@ class VSwitch(Device):
         self.defaultContext = "linux"
         self.loginUser = "root"
         self.loginPassword = ""
+        self.commandErrorCheck = 1
 
     def setSwitchAuthentication(self, **kwargs):
         self.loginUser = kwargs.get('username', "root")
@@ -338,9 +339,9 @@ class VSwitch(Device):
 
         # Clear out buffer
         try:
-            LogOutput('debug', "Flushing buffer")
+            #LogOutput('debug', "Flushing buffer")
             buf = self.expectHndl.read_nonblocking(128, 0)
-            LogOutput('debug', "Buffer data \n" + buf)
+            #LogOutput('debug', "Buffer data \n" + buf)
         except pexpect.TIMEOUT:
             # pass
             LogOutput('debug', "Timeout on clear buffer read")
@@ -366,45 +367,53 @@ class VSwitch(Device):
                 # root prompt
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
+                break
             elif index == 2:
                 # Got bash prompt - virtual
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
+                break
             elif index == 3:
                 LogOutput("debug", "vtysh prompt detected")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
+                break
             elif index == 4:
                 # Got vtysh config prompts
                 LogOutput('debug', "config prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
+                break
             elif index == 5:
                 # Got vtysh config interface prompts
                 LogOutput('debug', "config subcontext prompt")
                 ErrorFlag = "CLI"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
+                break
             elif index == 6:
                 # Got ONIE prompt - reboot and get to where we need to be
                 LogOutput('debug', "Got Onie prompt")
                 ErrorFlag = "Onie"
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
+                break
             elif index == 7:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
+                break
             elif index == 8:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
+                break
             elif index == 9:
                 # more prompt
                 connectionBuffer.append(self.expectHndl.before)
@@ -422,28 +431,31 @@ class VSwitch(Device):
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('debug', "saw start shell prompt")
                 bailflag = 1
+                break
             elif index == 12:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
+                break
             elif index == 13:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "command timeout")
                 returnCode = 1
+                break
             else:
                 connectionBuffer.append(self.expectHndl.before)
         # Move collecting after buffer until after we flush the buffer
         # connectionBuffer.append(self.expectHndl.after)
-        self.expectHndl.expect(['$'], timeout=1)
+        self.expectHndl.expect(['$'], timeout=0.05)
         connectionBuffer.append(self.expectHndl.before)
         connectionBuffer.append(self.expectHndl.after)
-        LogOutput('debug',
-                  "Index = " + str(index) + " Command = " + command
-                  + "\nOutput\n" + str(connectionBuffer))
+        #LogOutput('debug',
+        #          "Index = " + str(index) + " Command = " + command
+        #          + "\nOutput\n" + str(connectionBuffer))
         self.santString = ""
         for curLine in connectionBuffer:
             self.santString += str(curLine)
@@ -452,25 +464,26 @@ class VSwitch(Device):
         # There are seperate Error check libraries for CLI,OVS and
         # REST commands.
         # The following portion checks for Errors for OVS commands
-        if errorCheck is True and returnCode == 0 and ErrorFlag is None:
+        #if errorCheck is True and returnCode == 0 and ErrorFlag is None:
             # Dump the buffer the the debug log
-            LogOutput('debug',
-                      "Sent and received from "
-                      "device: \n" + self.santString + "\n")
+        LogOutput('debug',
+                  "Sent and received from "
+                  "device: \n" + self.santString + "\n")
         # The following portion checks for Errors in CLI commands
-        if ErrorFlag == 'CLI':
-            LogOutput('debug', "Doing error check for CLI prompt in vtysh")
-            errCheckRetStr = self.ErrorCheckCLI(buffer=self.santString)
-            returnCode = errCheckRetStr['returnCode']
-        if ErrorFlag == 'Onie':
-            errCheckRetStr = self.ErrorCheckOnie(connection=self.expectHndl,
-                                                 buffer=self.santString)
-            returnCode = errCheckRetStr['returnCode']
-            LogOutput('debug', "Doing error check for Onie prompt")
+        if self.commandErrorCheck == 1:
+            if ErrorFlag == 'CLI':
+                LogOutput('debug', "Doing error check for CLI prompt in vtysh")
+                errCheckRetStr = self.ErrorCheckCLI(buffer=self.santString)
+                returnCode = errCheckRetStr['returnCode']
+            if ErrorFlag == 'Onie':
+                errCheckRetStr = self.ErrorCheckOnie(connection=self.expectHndl,
+                                                     buffer=self.santString)
+                returnCode = errCheckRetStr['returnCode']
+                LogOutput('debug', "Doing error check for Onie prompt")
 
         # Return dictionary
-        LogOutput('debug', "Sent and received from "
-                  "device: \n" + self.santString + "\n")
+        #LogOutput('debug', "Sent and received from "
+        #          "device: \n" + self.santString + "\n")
         retStruct['returnCode'] = returnCode
         retStruct['buffer'] = self.santString
         return retStruct
@@ -650,13 +663,13 @@ class VSwitch(Device):
         overallBuffer = []
         if configOption == "config" or option is True:
             if self.deviceContext == "vtyShell":
-                LogOutput('debug', "Already in vtysh context")
+                # LogOutput('debug', "Already in vtysh context")
                 returnCls = returnStruct(returnCode=0)
                 return returnCls
             if self.deviceContext == "linux":
                 # Enter vtysh shell when configOption is config
                 command = "vtysh"
-                LogOutput("debug", "Enter vtysh Shell***")
+                # LogOutput("debug", "Enter vtysh Shell***")
                 # Get the device response buffer as json return structure here
                 devIntRetStruct = self.DeviceInteract(command=command,
                                                       CheckError='CLI')
@@ -682,7 +695,7 @@ class VSwitch(Device):
                 return returnCls
 
             # Exit vtysh shell
-            LogOutput("debug", "Vtysh shell Exit")
+            # LogOutput("debug", "Vtysh shell Exit")
             command = "exit"
             # Get the device response buffer as json return structure here
             devIntRetStruct = self.DeviceInteract(command=command,

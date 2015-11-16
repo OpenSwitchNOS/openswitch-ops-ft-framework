@@ -73,6 +73,7 @@ class VHost(Device):
         """
         self.expectHndl = ""
         self.connectStringBase = "docker exec -ti "
+        self.commandErrorCheck = 1
 
     def initExtMembers(self):
         """
@@ -334,8 +335,8 @@ class VHost(Device):
             santString += str(curLine)
 
         returnCode = 0
-        if errorCheck is True and returnCode == 0:
-            time.sleep(1)
+        if errorCheck is True and returnCode == 0 and self.commandErrorCheck == 1:
+            # time.sleep(1)
             errorCheckRetStruct = self.ErrorCheck(buffer=santString)
             returnCode = errorCheckRetStruct['returnCode']
         # Dump the buffer the the debug log
