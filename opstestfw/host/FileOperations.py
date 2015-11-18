@@ -47,7 +47,7 @@ def MoveFile(** kwargs):
         return returnJson
 
     # Move files on workstation to destination path
-    command = "mv -f " + sourceFilePath + " " + destinationFilePath
+    command = "mv -f " + str(sourceFilePath) + " " + str(destinationFilePath)
     returnStruct = deviceObj.DeviceInteract(command=command)
     returnCode = returnStruct.get('returnCode')
     buffer = returnStruct.get('buffer')
@@ -93,7 +93,7 @@ def FileEdit(** kwargs):
     stringEdit = kwargs.get('stringEdit', None)
     filename = kwargs.get('filename', None)
     overallBuffer = []
-    command = "echo " + str(stringEdit) + " > " + filename
+    command = "echo  " + str(stringEdit) + " > " + filename
     returnStruct = deviceObj.DeviceInteract(command=command)
     returnCode = returnStruct.get('returnCode')
     buffer = returnStruct.get('buffer')

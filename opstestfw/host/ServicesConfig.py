@@ -55,6 +55,9 @@ def ServicesConfig(** kwargs):
     elif service == "freeradius":
     # freeradius service on Ubuntu workstation
         server_service = "freeradius"
+    elif service == "tftp" :
+    #tftpd service for ubuntu
+        server_service = "tftpd-hpa"
     command = "service %s %s" % (server_service, action)
 
     returnStruct = deviceObj.DeviceInteract(command=command)

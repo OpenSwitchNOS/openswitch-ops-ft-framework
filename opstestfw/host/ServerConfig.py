@@ -15,7 +15,7 @@
 #
 
 import opstestfw
-
+import pdb
 
 def ServerConfig(** kwargs):
     """
@@ -71,6 +71,39 @@ def ServerConfig(** kwargs):
     if service == "dhcpd":
         serverConfigFile = "/etc/dhcp/dhcpd.conf"
         backupFile = "/etc/dhcp/dhcpd_bkup.conf"
+    elif service == "tftp" :
+        serverConfigFile = "/etc/default/tftpd-hpa"
+        backupFile = "/etc/default/tftpd-hpa_bkup"
+    #Configuring TFTP server 
+    if service == "tftp" :
+     #Configure Tftp server configure 
+     serverConfigs = """ 'TFTP_USERNAME="'tftp'"\nTFTP_DIRECTORY="'/var/lib/tftpboot'"\nTFTP_ADDRESS="'0.0.0.0:69'"\nTFTP_OPTIONS="'\--secure \-c'"' """
+     #Appropriate permissions to the /var/lib/tftpboot directory 
+     command = "chmod 777 /var/lib/tftpboot/"
+     returnStruct = deviceObj.DeviceInteract(command=command)
+     returnCode = returnStruct.get('returnCode')
+     buffer = returnStruct.get('buffer')
+     if returnCode != 0:
+        opstestfw.LogOutput('error', " command %s not send on workstation" %
+                            (command))
+        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=buffer)
+        return returnCls
+     else:
+        opstestfw.LogOutput('info', "command %s executed " %
+                            (command))
+
+     command = "sudo chown -R nobody /var/lib/tftpboot/"
+     returnStruct = deviceObj.DeviceInteract(command=command)
+     returnCode = returnStruct.get('returnCode')
+     buffer = returnStruct.get('buffer')
+     if returnCode != 0:
+        opstestfw.LogOutput('error', " command %s not send on workstation" %
+                            (command))
+        returnCls = opstestfw.returnStruct(returnCode=returnCode, buffer=buffer)
+        return returnCls
+     else:
+        opstestfw.LogOutput('info', "command %s executed " %
+                            (command))
 
     if action == "config":
     # Configure the server
@@ -105,8 +138,7 @@ def ServerConfig(** kwargs):
         overallBuffer.append(buffer)
         if returnCode != 0:
             opstestfw.LogOutput(
-                'error', "Failed to edit server file %s ->" %
-                s(serverConfigFile, deviceObj.device))
+                'error', "Failed to edit server file %s ->" %(serverConfigFile))
             returnCls = opstestfw.returnStruct(
                 returnCode=returnCode,
                 buffer=buffer)
