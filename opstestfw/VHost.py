@@ -202,7 +202,7 @@ class VHost(Device):
             elif index == 7:
                 # Got EOF
                 opstestfw.LogOutput('error', "Login incorrect error")
-                return None
+                #return None
             elif index == 8:
                 # Got EOF
                 opstestfw.LogOutput('error', "Telnet to host failed")
@@ -311,8 +311,8 @@ class VHost(Device):
                 # Need to send password string
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "Login incorrect")
-                returnCode = 1
-                bailflag = 1
+                #returnCode = 1
+                # bailflag = 1
             elif index == 8:
                 # got EOF
                 bailflag = 1
