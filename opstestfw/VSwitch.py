@@ -622,6 +622,12 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Detected--->" + Error_Code12.group(1))
                 returnCode = 12
+            Error_Code13 = re.match(".*(Cannot add more interfaces to LAG. Maximum interface count is reached)",
+                                   line, re.I)
+            if Error_Code13:
+                LogOutput("error",
+                          "Detected--->" + Error_Code13.group(1))
+                returnCode = 13
 
 
         returnDict['returnCode'] = returnCode
