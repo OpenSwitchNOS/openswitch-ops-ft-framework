@@ -340,9 +340,9 @@ class VHost(Device):
             errorCheckRetStruct = self.ErrorCheck(buffer=santString)
             returnCode = errorCheckRetStruct['returnCode']
         # Dump the buffer the the debug log
-        opstestfw.LogOutput('debug',
-                            "Sent and received from device:"
-                            " \n" + santString + "\n")
+        #opstestfw.LogOutput('debug',
+        #                    "Sent and received from device:"
+        #                    " \n" + santString + "\n")
 
         # Return dictionary
         retStruct['returnCode'] = returnCode
@@ -998,6 +998,7 @@ class VHost(Device):
                 localLinkElements.append(localLinkDict.copy())
         return localLinkElements
 
+
     def FileTransfer(self, filepath, localpath, direction):
         """
         FileTransfer Method
@@ -1011,7 +1012,7 @@ class VHost(Device):
         :type direction: string
         :return: returnStruct Object
         :rtype: object
-        """
+       """
 
         returnCode = 0
         paramiko.util.log_to_file('/tmp/paramiko.log')
@@ -1078,10 +1079,17 @@ class VHost(Device):
             # Transfer file
             try:
                 if direction == "get":
-                    sftp.get(filepath, localpath)
+                    try:
+                        sftp.stat(localpath)
+                    except IOError as e:
+                        #                        if e[0] == 2:
+                        opstestfw.LogOutput(
+                            "error", "File " + localpath + " not exists")
+                        return True
+                    sftp.get(localpath, filepath)
                 else:
                     sftp.put(filepath, localpath)
-            except IOError, e:
+            except IOError as e:
                 opstestfw.LogOutput(
                     "error", "file not transferred to workstation")
                 returnCode = 1
@@ -1095,17 +1103,48 @@ class VHost(Device):
                 "info", "Copy the files from/to docker container")
             try:
                 if direction == "get":
-                    localpath = os.path.dirname(localpath)
-                    command = "docker cp %s:%s %s" % (self.device, filepath,
-                                                    localpath)
-                    returnCode = os.system(command)
+                    command = 'ls ' + localpath
+                    retDeviceInt = self.DeviceInteract(
+                        command=command, errorCheck=False)
+                    retCode = retDeviceInt.get('returnCode')
+                    if retCode != 0:
+                        opstestfw.LogOutput('error',
+                                            'Failed to execute the command : '
+                                            + command)
+                        returnCode = 1
+                    else:
+                        opstestfw.LogOutput('info', 'Successfully executed \
+                                             the command : '
+                                            + command)
+
+                    retBuff = retDeviceInt.get('buffer')
+                    if retBuff.find('No such file or directory') == -1:
+                        file_tobe_copied = filepath.split('/')[-1]
+                        cpCommand = "cp %s /shared/%s" % (
+                            localpath, file_tobe_copied)
+                        retDeviceInt = self.DeviceInteract(command=cpCommand)
+                        retCode = retDeviceInt.get('returnCode')
+                        if retCode != 0:
+                            opstestfw.LogOutput(
+                                'error', 'Failed to execute the command : '
+                                + cpCommand)
+                            returnCode = 1
+                        else:
+                            opstestfw.LogOutput('info', 'Successfully \
+                                      executed the command : '
+                                                + cpCommand)
+                        command = "cp %s %s" % (self.topology.testdir + "/"
+                                   + self.device.split('_')[1] + "/shared/"
+                                   + file_tobe_copied, filepath)
+                        os.system(command)
+                    else:
+                        opstestfw.LogOutput(
+                           "error", "File " + localpath + " not exists")
+                        return True
                 else:
-                    # /tmp is a shared folder between VM and docker
-                    # run instance
+                    #/tmp is a shared folder between VM and docker run instance
                     command = "cp %s %s" % (filepath, self.topology.testdir
-                                            + "/"
-                                            + self.device.split('_')[1]
-                                            + "/shared/")
+                               + "/" + self.device.split('_')[1] + "/shared/")
                     os.system(command)
                     file_tobe_copied = filepath.split('/')[-1]
                     cpCommand = "cp /shared/%s %s" % (
@@ -1113,15 +1152,15 @@ class VHost(Device):
                     retDeviceInt = self.DeviceInteract(command=cpCommand)
                     retCode = retDeviceInt.get('returnCode')
                     if retCode != 0:
-                        opstestfw.LogOutput('error',
-                                            'Failed to execute the command : '
-                                            + cpCommand)
+                        opstestfw.LogOutput(
+                            'error', 'VSI : Failed to execute the command : '
+                            + cpCommand)
                         returnCode = 1
                     else:
-                        opstestfw.LogOutput('info', 'Successfully executed \
-                                             the command : '
+                        opstestfw.LogOutput('info', 'VSI : Successfully \
+                                  executed the command : '
                                             + cpCommand)
-            except IOError, e:
+            except IOError as e:
                 opstestfw.LogOutput(
                     "error", "file not transferred from/to workstation")
                 returnCode = 1
@@ -1132,6 +1171,7 @@ class VHost(Device):
                     "Failed to copy file to/from device --> " +
                     self.device)
         return returnCode
+
 
     def CreateRestEnviron(self):
         """
