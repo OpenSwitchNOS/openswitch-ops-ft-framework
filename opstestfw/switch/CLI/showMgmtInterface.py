@@ -128,8 +128,8 @@ def mgmtInterfaceDetails(**kwargs):
         returnCode = returnStructure.returnCode()
         if returnCode != 0:
             LogOutput('error', "Failed to exit vtysh prompt")
-        returnCls = returnStruct(returnCode=returnCode)
-        return returnCls
+            returnCls = returnStruct(returnCode=returnCode)
+            return returnCls
 
        # Return results
         bufferString = ""

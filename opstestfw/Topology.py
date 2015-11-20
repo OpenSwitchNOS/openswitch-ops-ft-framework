@@ -1047,6 +1047,7 @@ class Topology (OpsVsiTest):
             connectionBuffer = []
             self.expectList = ['[A-Za-z0-9]+#',
                                '[\[\]A-Za-z0-9@~\s]+#',
+                               'ssh_exchange_identification: Connection closed by remote host',
                                '\(config\)#',
                                '\(config-\S+\)#\s*$',
                                '.*password:',
@@ -1056,6 +1057,7 @@ class Topology (OpsVsiTest):
 
             newSwitchObj.expectHndl.send(sshCommand)
             newSwitchObj.expectHndl.send('\r')
+            sshRetCode = 0
             while bailflag == 0:
                 index = newSwitchObj.expectHndl.expect(self.expectList,
                                                        timeout=30)
@@ -1063,16 +1065,20 @@ class Topology (OpsVsiTest):
                     opstestfw.LogOutput("debug", "Prompt received")
                     connectionBuffer.append(newSwitchObj.expectHndl.before)
                     bailflag = 1
-                elif index == 4:
+                elif index == 2 :
+                    opstestfw.LogOutput("debug", "Prompt received")
+                    connectionBuffer.append(newSwitchObj.expectHndl.before)
+                    sshRetCode = 1591
+                elif index == 5:
                     opstestfw.LogOutput("debug", "Sending password")
                     newSwitchObj.expectHndl.send(sshPassword)
                     newSwitchObj.expectHndl.send('\n')
                     connectionBuffer.append(newSwitchObj.expectHndl.before)
-                elif index == 6:
+                elif index == 7:
                     # Got EOF
                     opstestfw.LogOutput('error', "Telnet to switch failed")
                     return None
-                elif index == 7:
+                elif index == 8:
                     # Got a Timeout
                     opstestfw.LogOutput('error', "Connection timed out")
                     return None
@@ -1085,10 +1091,11 @@ class Topology (OpsVsiTest):
             for curLine in connectionBuffer:
                 self.santString += str(curLine)
             # Do an error check on the new inband connection
-            opstestfw.LogOutput('debug', "Doing error check at DUT")
-            errCheckRetStr = newSwitchObj.ErrorCheckCLI(buffer=self.santString)
-            returnCode = errCheckRetStr['returnCode']
-            sshRetCode = returnCode
+            if sshRetCode == 0:
+               opstestfw.LogOutput('debug', "Doing error check at DUT")
+               errCheckRetStr = newSwitchObj.ErrorCheckCLI(buffer=self.santString)
+               returnCode = errCheckRetStr['returnCode']
+               sshRetCode = returnCode
         else:
             sshReturn = newHostObj.DeviceInteract(command=sshCommand)
             sshRetCode = sshReturn.get('returnCode')
@@ -1099,7 +1106,7 @@ class Topology (OpsVsiTest):
                 'error',
                 "ssh connection to " + str(
                     targetAddress) + " failed")
-            return returnCode
+            return sshRetCode
         else:
             opstestfw.LogOutput(
                 'debug',
