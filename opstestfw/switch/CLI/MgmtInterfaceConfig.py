@@ -18,7 +18,7 @@ import re
 import time
 
 
-def mgmtInterfaceConfig(**kwargs):
+def MgmtInterfaceConfig(**kwargs):
 
     """
     Library function configure/unconfigure IPv4 / IPv6 address, gateway, nameserver on management interface, 

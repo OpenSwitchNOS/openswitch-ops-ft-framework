@@ -17,7 +17,7 @@ from opstestfw import *
 import re
 
 
-def mgmtInterfaceDetails(**kwargs):
+def MgmtInterfaceShow(**kwargs):
         """
         Library function to return management interface details
         :param deviceObj	: Device object

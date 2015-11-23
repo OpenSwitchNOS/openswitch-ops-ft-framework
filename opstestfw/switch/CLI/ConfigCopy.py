@@ -17,7 +17,7 @@ import opstestfw.switch
 from opstestfw import *
 
 
-def configCopy(**kwargs):
+def ConfigCopy(**kwargs):
     """
     Library function to copy files between two different place
 
