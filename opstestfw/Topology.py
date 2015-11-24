@@ -145,33 +145,39 @@ class Topology (OpsVsiTest):
                 self.mntopo.addHost(curDev)
 
         if self.topoLinks != "":
+            dockerLinks = dict()
             for curLink in str.split(self.topoLinks, ','):
                 (link, dev1, dev2) = str.split(curLink, ':')
-                # linkFilterMatch = 0
-                # if self.topoLinkFilter != "":
-                #    for curLinkFilter in str.split(self.topoLinkFilter, ','):
-                #        (lfLink, lfDev, lfIntTag, lfInt) =\
-                #            str.split(curLinkFilter, ':')
-                #        if lfLink == link:
-                #            linkFilterMatch = 1
-                #            break
-                # if linkFilterMatch == 0:
-                linkKey = self.mntopo.addLink(dev1, dev2, key=link)
-                # else:
-                #    linkKey = self.mntopo.addLink(dev1, dev2, key=link)
-                #    if lfInt == "eth0":
-                #        intIndex = "eth0"
-                #    else:
-                #        intIndex = lfInt
-                #    if lfDev == dev1:
-                #        linkKey = self.mntopo.addLink(dev1, dev2, key=link,
-                #                                      port1=intIndex)
-                #    else:
-                #        linkKey = self.mntopo.addLink(dev1, dev2, key=link,
-                #                                      port2=intIndex)
+                linkFilterMatch = 0
+                if self.topoLinkFilter != "":
+                    for curLinkFilter in str.split(self.topoLinkFilter, ','):
+                        (lfLink, lfDev, lfIntTag, lfInt) =\
+                            str.split(curLinkFilter, ':')
+                        if lfLink == link:
+                            linkFilterMatch = 1
+                            break
+
+                if linkFilterMatch == 0:
+                    # No link filters detected, we will just add the link
+                    linkKey = self.mntopo.addLink(dev1, dev2, key=link)
+                else:
+                    # We are seeing a link filter, lets see if interface is
+                    # eth0
+                    if lfInt == "eth0":
+                        intIndex = "eth0"
+                        opstestfw.LogOutput('info', "Virtual out of band "
+                                            "test.  Out of band link "
+                                            "internal to Docker.")
+                        dockerLinks[link] = dict()
+                        dockerLinks[link]['node1'] = dev1
+                        dockerLinks[link]['node2'] = dev2
+                        dockerLinks[link]['port1'] = "eth0"
+                        dockerLinks[link]['port2'] = "eth0"
+
                 # Add to Link Logical Topology
                 logicalTopo[dev1]['links'][link] = dev2
                 logicalTopo[dev2]['links'][link] = dev1
+                # print logicalTopo
 
         # Configure MiniNet
         self.net = mininet.net.Mininet(topo=self.mntopo,
@@ -232,12 +238,30 @@ class Topology (OpsVsiTest):
                                        device2Port=node2IntStruct[node2port])
             self.topo[linkName] = linkName
 
+        # Now lets look for docker links since they will not be part of mininet
+        for curLink in dockerLinks.keys():
+            linkName = curLink
+            node1 = dockerLinks[curLink]['node1']
+            port1 = dockerLinks[curLink]['port1']
+            node2 = dockerLinks[curLink]['node2']
+            port2 = dockerLinks[curLink]['port2']
+            # Add link to Topology XML
+            retStruct =\
+                self.VirtualXMLLinkAdd(link=linkName,
+                                       device1=self.topo[node1],
+                                       device1Port=port1,
+                                       device2=self.topo[node2],
+                                       device2Port=port2)
+            self.topo[linkName] = linkName
+
         # topology mapping
         opstestfw.LogOutput('info', "========================================"
                             "=============================")
         opstestfw.LogOutput('info', "Topology Mapping")
         for curDev in str.split(self.topoDevices):
-            outstring = curDev + "  =  " + self.topo[curDev]
+            #outstring = curDev + "  =  " + self.topo[curDev]
+            outstring = "%-12s" % curDev + " =\t%-12s"\
+                        % self.topo[curDev]
             opstestfw.LogOutput('info', outstring)
 
         if self.topoLinks != "":
@@ -267,9 +291,12 @@ class Topology (OpsVsiTest):
                         dev2)
                     continue
                 dev2Lport = dev2LportStruct.valueGet()
-                outstring = link + "  =  " + self.topo[dev1] + ":"\
-                    + str(dev1Lport) + " <==> " + self.topo[dev2] + ":"\
+                outstring = "%-12s" % link + " =\t" + self.topo[dev1] + ":"\
+                    + str(dev1Lport) + " <===> " + self.topo[dev2] + ":"\
                     + str(dev2Lport)
+                #outstring = "%-12s" % linkName + " =\t" + self.topo[d1Name]\
+                #        + ":" + str(dev1Lport) + " <===> "\
+                #        + self.topo[d2Name] + ":" + str(dev2Lport)
                 opstestfw.LogOutput('info', outstring)
         opstestfw.LogOutput('info', "======================================="
                             "==============================")
@@ -709,8 +736,8 @@ class Topology (OpsVsiTest):
         device = kwargs.get('device', None)
         link = kwargs.get('link', None)
 
-        xpath = ".//device[name='" + device + \
-            "']/link[name='" + link + "']/localInterface"
+        xpath = ".//device[name='" + str(device) + \
+            "']/link[name='" + str(link) + "']/localInterface"
         retStruct = opstestfw.XmlGetElementsByTag(self.TOPOLOGY, xpath)
         retCls = opstestfw.returnStruct(returnCode=0, data=retStruct.text)
         return retCls
