@@ -108,9 +108,9 @@ class Topology (OpsVsiTest):
 
     def setupNet(self, **kwargs):
         """
+
         This method defines the Mininet object and populates it
         by using inputs from logical topology defined in testcase
-
 
         """
 
@@ -145,17 +145,29 @@ class Topology (OpsVsiTest):
                 self.mntopo.addHost(curDev)
 
         if self.topoLinks != "":
+            # The dockerLinks is a local dictionary to identify what links have
+            # topoLinkFilters associated with them
             dockerLinks = dict()
             for curLink in str.split(self.topoLinks, ','):
+                #print "looking at link " + curLink
                 (link, dev1, dev2) = str.split(curLink, ':')
                 linkFilterMatch = 0
                 if self.topoLinkFilter != "":
+                    tmpLinkDict = dict()
                     for curLinkFilter in str.split(self.topoLinkFilter, ','):
+                        #print "examing linkfilter " + curLinkFilter
                         (lfLink, lfDev, lfIntTag, lfInt) =\
                             str.split(curLinkFilter, ':')
-                        if lfLink == link:
+                        if lfLink.strip(' ') == link:
+                            #print "linkfilter for " + link
                             linkFilterMatch = 1
-                            break
+                            # break
+                            if 'dev1' in tmpLinkDict:
+                                tmpLinkDict['dev2'] = lfDev
+                                tmpLinkDict['dev2Port'] = lfInt
+                            else:
+                                tmpLinkDict['dev1'] = lfDev
+                                tmpLinkDict['dev1Port'] = lfInt
 
                 if linkFilterMatch == 0:
                     # No link filters detected, we will just add the link
@@ -169,11 +181,35 @@ class Topology (OpsVsiTest):
                                             "test.  Out of band link "
                                             "internal to Docker.")
                         dockerLinks[link] = dict()
+                        dockerLinks[link]['mininetLink'] = False
                         dockerLinks[link]['node1'] = dev1
                         dockerLinks[link]['node2'] = dev2
                         dockerLinks[link]['port1'] = "eth0"
                         dockerLinks[link]['port2'] = "eth0"
-
+                    else:
+                        # Means we have a numeric port
+                        #print "tmpLinkDict"
+                        #print tmpLinkDict
+                        if 'dev1' in tmpLinkDict and 'dev2' in tmpLinkDict:
+                            dev1Port = tmpLinkDict['dev1Port']
+                            dev2Port = tmpLinkDict['dev2Port']
+                            dockerLinks[link] = dict()
+                            dockerLinks[link]['mininetLink'] = True
+                            dockerLinks[link]['node1'] = dev1
+                            dockerLinks[link]['node2'] = dev2
+                            dockerLinks[link]['port1'] = int(dev1Port)
+                            dockerLinks[link]['port2'] = int(dev2Port)
+                            linkKey = self.mntopo.addLink(dev1, dev2, key=link,
+                                                          port1=int(dev1Port),
+                                                          port2=int(dev2Port))
+                        else:
+                            dev1Port = tmpLinkDict['dev1Port']
+                            dockerLinks[link] = dict()
+                            dockerLinks[link]['mininetLink'] = True
+                            dockerLinks[link]['node1'] = dev1
+                            dockerLinks[link]['port1'] = int(dev1Port)
+                            linkKey = self.mntopo.addLink(dev1, dev2, key=link,
+                                                          port1=int(dev1Port))
                 # Add to Link Logical Topology
                 logicalTopo[dev1]['links'][link] = dev2
                 logicalTopo[dev2]['links'][link] = dev1
@@ -214,7 +250,11 @@ class Topology (OpsVsiTest):
         # Query Links and update the XML
         topoLinkMininet = self.mntopo.iterLinks(withKeys=True, withInfo=True)
         for curLink in topoLinkMininet:
+            # print curLink
             linkName = curLink[2]
+            linkFilter = 0
+            if linkName in dockerLinks:
+                linkFilter = 1
             # print "current link = " + str(curLink)
             linkInfo = curLink[3]
             # print linkInfo
@@ -222,13 +262,52 @@ class Topology (OpsVsiTest):
             node1Obj = self.searchNetNodes(self.topo[node1])
             node1port = linkInfo['port1']
             node1IntStruct = node1Obj.intfList()
-            # print node1IntStruct
+            if linkFilter == 1:
+                # Look for node1 in the dockerLink
+                linkFilterInfo = dockerLinks[linkName]
+                linkNode1 = linkFilterInfo.get('node1', None)
+                linkNode2 = linkFilterInfo.get('node2', None)
+                if node1 == linkNode1:
+                    linkPort1 = linkFilterInfo.get('port1', None)
+                    # Find the index of the port and replace it.
+                    for curIndex in range(0, len(node1IntStruct)):
+                        if str(node1IntStruct[curIndex]) == str(linkPort1):
+                            node1port = curIndex
+                            break
+                elif node1 == linkNode2:
+                    linkPort2 = linkFilterInfo.get('port2', None)
+                    # Find the index of the port and replace it.
+                    for curIndex in range(0, len(node1IntStruct)):
+                        if str(node1IntStruct[curIndex]) == str(linkPort2):
+                            node1port = curIndex
+                            break
 
             node2 = linkInfo['node2']
             node2Obj = self.searchNetNodes(self.topo[node2])
             node2port = linkInfo['port2']
+            # print node2port
             node2IntStruct = node2Obj.intfList()
-
+            #print node2IntStruct
+            if linkFilter == 1:
+                # Look for node1 in the dockerLink
+                linkFilterInfo = dockerLinks[linkName]
+                linkNode1 = linkFilterInfo.get('node1', None)
+                linkNode2 = linkFilterInfo.get('node2', None)
+                if node2 == linkNode1:
+                    linkPort1 = linkFilterInfo.get('port1', None)
+                    # Find the index of the port and replace it.
+                    for curIndex in range(0, len(node2IntStruct)):
+                        # print curIndex
+                        if str(node2IntStruct[curIndex]) == str(linkPort1):
+                            node2port = curIndex
+                            break
+                elif node2 == linkNode2:
+                    linkPort2 = linkFilterInfo.get('port2', None)
+                    # Find the index of the port and replace it.
+                    for curIndex in range(0, len(node2IntStruct)):
+                        if str(node2IntStruct[curIndex]) == str(linkPort2):
+                            node2port = curIndex
+                            break
             # Add link to Topology XML
             retStruct =\
                 self.VirtualXMLLinkAdd(link=linkName,
@@ -236,11 +315,17 @@ class Topology (OpsVsiTest):
                                        device1Port=node1IntStruct[node1port],
                                        device2=self.topo[node2],
                                        device2Port=node2IntStruct[node2port])
+            #opstestfw.LogOutput('info', "Link info\n"+self.topo[node1]
+            #                    +" "+str(node1IntStruct[node1Index])
+            #                    + " "+self.topo[node2] + " "+str(node2IntStruct[node2Index]))
             self.topo[linkName] = linkName
 
         # Now lets look for docker links since they will not be part of mininet
         for curLink in dockerLinks.keys():
             linkName = curLink
+            if dockerLinks[curLink]['mininetLink'] is True:
+                # if this is a link we created in mininet, then continue
+                continue
             node1 = dockerLinks[curLink]['node1']
             port1 = dockerLinks[curLink]['port1']
             node2 = dockerLinks[curLink]['node2']
@@ -294,9 +379,6 @@ class Topology (OpsVsiTest):
                 outstring = "%-12s" % link + " =\t" + self.topo[dev1] + ":"\
                     + str(dev1Lport) + " <===> " + self.topo[dev2] + ":"\
                     + str(dev2Lport)
-                #outstring = "%-12s" % linkName + " =\t" + self.topo[d1Name]\
-                #        + ":" + str(dev1Lport) + " <===> "\
-                #        + self.topo[d2Name] + ":" + str(dev2Lport)
                 opstestfw.LogOutput('info', outstring)
         opstestfw.LogOutput('info', "======================================="
                             "==============================")
