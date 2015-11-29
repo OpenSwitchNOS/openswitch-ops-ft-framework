@@ -144,10 +144,11 @@ class Topology (OpsVsiTest):
                     curDev)
                 self.mntopo.addHost(curDev)
 
+        dockerLinks = dict()
         if self.topoLinks != "":
             # The dockerLinks is a local dictionary to identify what links have
             # topoLinkFilters associated with them
-            dockerLinks = dict()
+
             for curLink in str.split(self.topoLinks, ','):
                 #print "looking at link " + curLink
                 (link, dev1, dev2) = str.split(curLink, ':')
