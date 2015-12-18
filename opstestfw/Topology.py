@@ -503,56 +503,12 @@ class Topology (OpsVsiTest):
         self.shell = 1
         self.net.stop()
         self.setLogLevel('output')
-        # Validate if hosts are still there
-        extraKillCodeExecute = 0
-        host_list = self.net.hosts
-        for curHost in host_list:
-            pid_cmd1 = ["docker", "ps", "\-a"]
-            pid_cmd2 = ["grep",  str(curHost)]
-            pid_cmd3 = ["tr",  "'\n'", "''"]
-            docker_ps = Popen(pid_cmd1, stdout=PIPE)
-            grep_cmd = Popen(pid_cmd2, stdin=docker_ps.stdout,
-                             stdout=PIPE)
-            tr_cmd = Popen(pid_cmd2, stdin=grep_cmd.stdout,
-                             stdout=PIPE)
-            ps_out = tr_cmd.communicate()[0]
-            opstestfw.LogOutput('debug', str(ps_out))
-            if ps_out.find("Up"):
-                curHost.onKillList = 1
-                opstestfw.LogOutput('debug', "Detected "
-                                    + curHost.container_name
-                                    + " is still active")
-                extraKillCodeExecute = 1
-            else:
-                curHost.onKillList = 0
-                opstestfw.LogOutput('debug', "Detected "
-                                    + curHost.container_name
-                                    + " is no longer active")
-
-        # If all hosts are done, then we exit
-        if extraKillCodeExecute == 0:
-            return
-
-        # Work around to kill workstations that hang around
-        tmp_topo = SingleSwitchTopo(k=1, h=0, hopts=self.getHostOpts(),
-                                    sopts=self.getSwitchOpts())
-        tmpnet = Mininet(tmp_topo, switch=VsiOpenSwitch,
-                         host=Host, link=OpsVsiLink,
-                         controller=None, build=True)
-        tmpnet.start()
-        time.sleep(2)
-        tmpnet.stop()
-
         switch_list = self.net.switches
         host_list = self.net.hosts
         for curHost in host_list:
-            if curHost.onKillList == 0:
-                continue
             opstestfw.LogOutput('debug', "terminating " + str(curHost))
             curHost.terminate()
             curHost.cleanup()
-            dockerRmlCmd = "docker rm -f -v " + curHost.container_name
-            os.system(dockerRmlCmd)
 
         for curSwitch in switch_list:
             opstestfw.LogOutput('debug', "terminating " + str(curSwitch))
@@ -924,6 +880,11 @@ class Topology (OpsVsiTest):
                             'value': cVal})
             if cAttr == "docker-image":
                 self.hostimage = cVal
+                attributeTag = ET.SubElement(
+                    deviceTag,
+                    'attribute',
+                    attrib={'name': cAttr,
+                            'value': cVal})
 
         # Now parse through topoLinkFilter statements
         if self.topoLinkFilter != "":
@@ -951,14 +912,16 @@ class Topology (OpsVsiTest):
         # Need to inspect ETREE to see if profile is specific.  If not, lets
         # assume auto-ubuntu-12-04 for workstations
         xpath = ".//device/attribute[@value='workstation']/.."
+        #xpath = ".//device"
         wrkstonDevsTag = opstestfw.XmlGetElementsByTag(
             self.LOGICAL_TOPOLOGY, xpath, allElements=True)
         for curTag in wrkstonDevsTag:
-            # print curTag
-            attribute_list = curTag.iter('attribute')
+            #print curTag
+            attribute_list = curTag.findall('attribute')
             # print "attrList "
             # print attribute_list
             found_profile = 0
+            found_docker = 0
             for curAttr in attribute_list:
                 # print "curAttr"
                 attrName = curAttr.get('name')
@@ -969,6 +932,12 @@ class Topology (OpsVsiTest):
                         'debug',
                         "Found system-profile attribute stated for device "
                         "- not assuming auto-ubuntu-12-04")
+                if attrName == "docker-image":
+                    found_docker = 1
+                    found_profile = 1
+                    opstestfw.LogOutput('debug',
+                                        "Found docker-image attribute. "
+                                        "Adding CentOS profile")
             if found_profile == 0:
                 # Need to add subelements
                 opstestfw.LogOutput(
@@ -980,6 +949,15 @@ class Topology (OpsVsiTest):
                     attrib={
                         'name': "system-profile",
                         'value': "auto-ubuntu-12-04"})
+            if found_docker == 1:
+                opstestfw.LogOutput('debug',
+                                    "Found docker image, need to boot centos")
+                deviceTag = ET.SubElement(
+                    curTag,
+                    'attribute',
+                    attrib={
+                        'name': "system-profile",
+                        'value': "CentOS"})
 
         dumpString = ET.tostring(self.LOGICAL_TOPOLOGY)
 
@@ -991,6 +969,35 @@ class Topology (OpsVsiTest):
         topologyXMLFile = open(topoFileName, 'w+')
         topologyXMLFile.write(pretty_xml_as_string)
         topologyXMLFile.close()
+
+    # Logical device attributes
+    def LogicalDeviceAttrsGet(self, **kwargs):
+        """
+        Topology LogicalDeviceAttributesGet method
+
+        This method will query to logical topology for device attributes
+        associated with the device passed
+
+        :param device: logical device name
+        :type device: string
+        :return: dictionary
+
+        """
+
+        deviceName = kwargs.get('device', None)
+        xpath = ".//device[@name=" + deviceName + "]"
+        #xpath = ".//device"
+        deviceTag = opstestfw.XmlGetElementsByTag(
+            self.LOGICAL_TOPOLOGY, xpath, allElements=True)
+
+        attribute_list = deviceTag.findall('attribute')
+        retDict = dict()
+
+        for curAttr in attribute_list:
+            attrName = curAttr.get('name')
+            attrValue = curAttr.get('value')
+            retDict[attrName] = attrValue
+        return retDict
 
     # Routine to go and create device objects and establish connections
     def CreateDeviceObjects(self):

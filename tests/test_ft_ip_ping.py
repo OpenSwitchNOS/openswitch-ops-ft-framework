@@ -23,7 +23,9 @@ topoDict = {"topoTarget": "dut01",
                           lnk02:dut01:wrkston02",
             "topoFilters": "dut01:system-category:switch,\
                             wrkston01:system-category:workstation,\
-                            wrkston02:system-category:workstation"}
+                            wrkston01:docker-image:openswitch/ubuntutest,\
+                            wrkston02:system-category:workstation,\
+                            wrkston02:docker-image:openswitch/ubuntutest"}
 
 
 def switch_reboot(dut01):

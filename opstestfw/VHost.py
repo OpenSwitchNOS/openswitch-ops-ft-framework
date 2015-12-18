@@ -201,7 +201,7 @@ class VHost(Device):
                 return None
             elif index == 7:
                 # Got EOF
-                opstestfw.LogOutput('error', "Login incorrect error")
+                opstestfw.LogOutput('debug', "Login incorrect error")
                 #return None
             elif index == 8:
                 # Got EOF
@@ -245,6 +245,7 @@ class VHost(Device):
         command = kwargs.get('command')
         yesPromptResp = kwargs.get('yesPrompt', "yes")
         errorCheck = kwargs.get('errorCheck', True)
+        timeout = kwargs.get('timeout', 30)
 
         # Local variables
         bailflag = 0
@@ -268,7 +269,8 @@ class VHost(Device):
 
         while bailflag == 0:
             index = self.expectHndl.expect(self.expectDefaultPrompts,
-                                           timeout=30)
+                                           timeout=timeout)
+            opstestfw.LogOutput('debug', "index = " + str(index))
             if index == 0:
                 # Need to send login string
                 self.expectHndl.send("root")
@@ -340,9 +342,9 @@ class VHost(Device):
             errorCheckRetStruct = self.ErrorCheck(buffer=santString)
             returnCode = errorCheckRetStruct['returnCode']
         # Dump the buffer the the debug log
-        #opstestfw.LogOutput('debug',
-        #                    "Sent and received from device:"
-        #                    " \n" + santString + "\n")
+        opstestfw.LogOutput('debug',
+                            "Sent and received from device:"
+                            " \n" + santString + "\n")
 
         # Return dictionary
         retStruct['returnCode'] = returnCode

@@ -26,7 +26,7 @@ ability to connect to the device along with interacting with the device
 """
 
 
-class Device ():
+class Device (object):
     """
     This is the base class for any device.
     """
