@@ -19,11 +19,12 @@ from opstestfw.switch.CLI import *
 from opstestfw import *
 
 topoDict = {"topoTarget": "dut01",
-            "topoDevices": "dut01 wrkston01",
-            "topoLinks": "lnk01:dut01:wrkston01",
+            "topoDevices": "dut01 wrkston01 wrkston02",
+            "topoLinks": "lnk01:dut01:wrkston01,lnk02:dut01:wrkston02",
             "topoFilters": "dut01:system-category:switch,\
                             wrkston01:system-category:workstation,\
-                            wrkston01:docker-image:openswitch/ubuntutest"}
+                            wrkston01:docker-image:openswitch/ubuntutest,\
+                            wrkston02:system-category:workstation"}
 
 def ping_to_switch(dut01, wrkston01):
 

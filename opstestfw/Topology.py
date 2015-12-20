@@ -42,6 +42,16 @@ try:
 except ImportError:
     pass
 
+class FTOpsVsiHost(OpsVsiHost):
+
+    def __init__(self, name, **kwargs):
+        kwargs['nodetype'] = "OpsVsiHost"
+        print ""
+        host_image_dict = kwargs.pop('HostImageDict')
+        #image = kwargs.pop('HostImage')
+        image = host_image_dict[name]
+        opstestfw.LogOutput('info', name + " docker image: " + image)
+        super(OpsVsiHost, self).__init__(name, image, **kwargs)
 
 class Topology (OpsVsiTest):
 
@@ -105,6 +115,13 @@ class Topology (OpsVsiTest):
         self.setHostImageOpts(self.hostimage)
         self.setupNet()
         self.TopologyXMLWrite()
+
+    def getHostOpts(self):
+        opts = self.getNodeOpts()
+        opts.update({'mounts': self.hostmounts})
+        opts.update({'HostImage': self.hostimage})
+        opts.update({'HostImageDict': self.topo_wrkston_image_dict})
+        return opts
 
     def setupNet(self, **kwargs):
         """
@@ -219,7 +236,7 @@ class Topology (OpsVsiTest):
         # Configure MiniNet
         self.net = mininet.net.Mininet(topo=self.mntopo,
                                        switch=VsiOpenSwitch,
-                                       host=OpsVsiHost,
+                                       host=FTOpsVsiHost,
                                        link=OpsVsiLink,
                                        controller=None,
                                        build=True)
@@ -911,12 +928,17 @@ class Topology (OpsVsiTest):
 
         # Need to inspect ETREE to see if profile is specific.  If not, lets
         # assume auto-ubuntu-12-04 for workstations
+        self.topo_wrkston_image_dict = dict()
         xpath = ".//device/attribute[@value='workstation']/.."
         #xpath = ".//device"
         wrkstonDevsTag = opstestfw.XmlGetElementsByTag(
             self.LOGICAL_TOPOLOGY, xpath, allElements=True)
         for curTag in wrkstonDevsTag:
             #print curTag
+            wrkston_name = curTag.get('name')
+            # Default to default image
+            self.topo_wrkston_image_dict[wrkston_name] = "ubuntu:latest"
+            # =" + wrkston_name
             attribute_list = curTag.findall('attribute')
             # print "attrList "
             # print attribute_list
@@ -938,6 +960,8 @@ class Topology (OpsVsiTest):
                     opstestfw.LogOutput('debug',
                                         "Found docker-image attribute. "
                                         "Adding CentOS profile")
+                    attrValue = curAttr.get('value')
+                    self.topo_wrkston_image_dict[wrkston_name] = attrValue
             if found_profile == 0:
                 # Need to add subelements
                 opstestfw.LogOutput(
