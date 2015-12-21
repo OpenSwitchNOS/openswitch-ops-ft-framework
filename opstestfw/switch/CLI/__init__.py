@@ -14,6 +14,8 @@
 #    under the License.
 #
 from InterfaceEnable import *
+from LoopbackInterfaceEnable import *
+from Dot1qEncapsulation import *
 from InterfaceIpConfig import *
 from InterfaceLacpAggKeyConfig import *
 from InterfaceLacpPortIdConfig import *
