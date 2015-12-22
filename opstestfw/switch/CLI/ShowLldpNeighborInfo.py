@@ -35,6 +35,7 @@ def ShowLldpNeighborInfo(**kwargs):
                                 Neighbor_Chassis-ID
                                 Neighbor_chassisName
                                 Neighbor_chassisDescription
+                                Neighbor_Management_Address
                                 Chassis_Capabilities_Available
                                 Neighbor_Port-ID
                                 Chassis_Capabilities_Enabled
@@ -149,6 +150,13 @@ def ShowLldpNeighborInfo(**kwargs):
                 if Neighbor_chasisID:
                     portDict[curPort][
                         'Neighbor_chasisID'] = Neighbor_chasisID.group(1)
+                    continue
+                Management_address = re.match(
+                    r'Neighbor Management-Address\s+:\s*(.*)$',
+                    line)
+                if Management_address:
+                    portDict[curPort][
+                        'Neighbor_Management_address'] = Management_address.group(1)
                     continue
                 Chassis_CapAvail = re.match(
                     r'Chassis Capabilities Available\s*:\s*(.*)$',
