@@ -74,6 +74,7 @@ class VSwitch(Device):
                            '--More--',
                            'Password:',
                            'switch:~[#$]\s*$',
+                           '\(yes/no\)?',
                            pexpect.EOF,
                            pexpect.TIMEOUT]
         # Device Contexts
@@ -329,6 +330,7 @@ class VSwitch(Device):
         command = kwargs.get('command')
         errorCheck = kwargs.get('errorCheck', True)
         ErrorFlag = kwargs.get('CheckError')
+        yesPromptResp = kwargs.get('yesPrompt', "yes")
 
         # Local variables
         bailflag = 0
@@ -433,13 +435,23 @@ class VSwitch(Device):
                 bailflag = 1
                 break
             elif index == 12:
+                # yes / no prompt
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+                if yesPromptResp == "yes":
+                    self.expectHndl.send("yes")
+                else:
+                    self.expectHndl.send("no")
+                self.expectHndl.send("\r")
+                break
+            elif index == 13:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
                 break
-            elif index == 13:
+            elif index == 14:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
