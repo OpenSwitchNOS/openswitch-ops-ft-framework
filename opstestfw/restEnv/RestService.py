@@ -44,7 +44,7 @@ class RestService(object):
         self.switch_ip = switch_ip
         self.user = user
         self.password = password
-        self.url = 'http://' + switch_ip + ':8091/rest/v1/system'
+        self.url = 'https://' + switch_ip + ':443/rest/v1/system'
         self.token = None
         self.verbose = False
 
