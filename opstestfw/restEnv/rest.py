@@ -45,11 +45,15 @@ def genericREST(method, ip, url, data, debug=False):
         print debugLabel + "url:          " + str(url)
         print debugLabel + "data:         " + str(data)
         print ""
-    server_port = 8091
+
+    server_port = 443
     headers = {"Content-type": "application/json", "Accept": "text/plain"}
     json_data = json.dumps(data)
+
     try:
-        conn = httplib.HTTPConnection(ip, server_port)
+        conn = httplib.HTTPSConnection(ip, server_port,
+                                       key_file="/root/restEnv/server-private.key",
+                                       cert_file="/root/restEnv/server.crt")
     except Exception as e:
         print e
         return {"response": e, "data": None}
