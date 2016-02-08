@@ -110,7 +110,7 @@ def InterfaceEnable(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = retStruct(returnCode=retCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=retCode, buffer=bufferString)
         return returnCls
 
     # Need to get into the Interface context
@@ -150,7 +150,7 @@ def InterfaceEnable(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = retStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     # Get out of vtyshell
@@ -162,7 +162,7 @@ def InterfaceEnable(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = retStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     # Return results

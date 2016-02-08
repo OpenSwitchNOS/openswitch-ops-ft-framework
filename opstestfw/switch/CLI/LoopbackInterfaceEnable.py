@@ -99,7 +99,7 @@ def LoopbackInterfaceEnable(**kwargs):
             bufferString = ""
             for curLine in overallBuffer:
                 bufferString += str(curLine)
-            returnCls = retStruct(returnCode=retCode, buffer=bufferString)
+            returnCls = returnStruct(returnCode=retCode, buffer=bufferString)
             return returnCls
 
     no_inter_check = command1
@@ -141,7 +141,7 @@ def LoopbackInterfaceEnable(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = retStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     # Get out of vtyshell
@@ -153,7 +153,7 @@ def LoopbackInterfaceEnable(**kwargs):
         bufferString = ""
         for curLine in overallBuffer:
             bufferString += str(curLine)
-        returnCls = retStruct(returnCode=returnCode, buffer=bufferString)
+        returnCls = returnStruct(returnCode=returnCode, buffer=bufferString)
         return returnCls
 
     # Return results
