@@ -47,5 +47,5 @@ setup(
         'mininet',
         'opsvsi'
     ],
-    package_data = {},
+    package_data = {'': ['*.crt', '*.key']},
 )
