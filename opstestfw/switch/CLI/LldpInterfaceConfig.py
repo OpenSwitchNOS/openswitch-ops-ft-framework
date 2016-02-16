@@ -92,7 +92,7 @@ def LldpInterfaceConfig(**kwargs):
 
     # Need to get into the Interface context
     if transmission is True:
-        command = "lldp transmission\r"
+        command = "lldp transmit\r"
         returnDict = deviceObj.DeviceInteract(command=command)
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
@@ -107,7 +107,7 @@ def LldpInterfaceConfig(**kwargs):
                 "Enabled lldp transmission on interface " + str(interface))
 
     if transmission is False:
-        command = "no lldp transmission\r"
+        command = "no lldp transmit\r"
         returnDict = deviceObj.DeviceInteract(command=command)
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
@@ -122,7 +122,7 @@ def LldpInterfaceConfig(**kwargs):
                 "Disabled lldp transmission on interface " + str(interface))
 
     if reception is True:
-        command = "lldp reception\r"
+        command = "lldp receive\r"
         returnDict = deviceObj.DeviceInteract(command=command)
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
@@ -137,7 +137,7 @@ def LldpInterfaceConfig(**kwargs):
                 "Enabled lldp reception on interface " + str(interface))
 
     if reception is False:
-        command = "no lldp reception\r"
+        command = "no lldp receive\r"
         returnDict = deviceObj.DeviceInteract(command=command)
         retCode = returnDict['returnCode']
         overallBuffer.append(returnDict['buffer'])
