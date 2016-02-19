@@ -130,7 +130,7 @@ def ShowLldpNeighborInfo(**kwargs):
                         NeighborEntriesAgedOut.group(1)
                     continue
                 Neighbor_chasisName = re.match(
-                    r'Neighbor Chassis-Name\s+:\s*(\S+)\s*$',
+                    r'Neighbor Chassis-Name\s+:\s*(.*)$',
                     line)
                 if Neighbor_chasisName:
                     portDict[curPort][
