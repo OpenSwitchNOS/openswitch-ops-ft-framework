@@ -59,3 +59,7 @@ from ConfigCopy import *
 from MgmtInterfaceShow import *
 from showRun import *
 from showInterface import *
+from AAAConfig import *
+from RadiusConfig import *
+from ShowAAA import *
+from ShowRadius import *
