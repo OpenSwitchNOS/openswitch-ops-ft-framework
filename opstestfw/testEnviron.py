@@ -56,6 +56,12 @@ class testEnviron ():
         # We should have a topoObj by now
         self.topoObj.CreateDeviceObjects()
 
+        # Tuntap failure check
+        if self.rsvnId == 'virtual':
+            if self.topoObj.tuntap_failure:
+                self.topoObj.terminate_nodes()
+                pytest.fail("Failure adding tuntap interfaces")
+
         # Provisioning block starts here
         # Provision the physical devices if targetBuild flag is present in
         # the environment
@@ -227,6 +233,7 @@ class testEnviron ():
             # Create a topology object
             self.topoObj = Topology(topoDict=self.topoDict, runEnv=self,
                                     defSwitchContext=self.defaultSwitchContext)
+
         elif str.isdigit(self.rsvnId) is True:
             self.topoType = "physical"
             try:
