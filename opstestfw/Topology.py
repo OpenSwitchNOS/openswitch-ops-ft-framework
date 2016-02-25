@@ -401,6 +401,17 @@ class Topology (OpsVsiTest):
         opstestfw.LogOutput('info', "======================================="
                             "==============================")
         self.net.start()
+        for switch in self.net.switches:
+            if isinstance(switch, VsiOpenSwitch) and switch.tuntap_failed:
+                self.printSyslogOnFailure()
+                self.net.stop()
+                pytest.fail("Failure adding tuntap interfaces")
+
+    def printSyslogOnFailure(self):
+        tail_syslog_cmd = ['tail', '-n', '200', '/var/log/syslog']
+        tail_cmd = Popen(tail_syslog_cmd, stdout=PIPE)
+        out = tail_cmd.communicate()[0]
+        print "Last 200 lines of /var/log/syslog :\n" + str(out)
 
     def VirtualLinkModifyStatus(self, **kwargs):
         """
