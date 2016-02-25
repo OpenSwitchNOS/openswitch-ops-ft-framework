@@ -90,6 +90,7 @@ class Topology (OpsVsiTest):
         # Initialize Structures
         self.LOGICAL_TOPOLOGY = ""
         self.TOPOLOGY = ""
+        self.tuntap_failure = False
 
         self.topo = dict()
         self.deviceObj = dict()
