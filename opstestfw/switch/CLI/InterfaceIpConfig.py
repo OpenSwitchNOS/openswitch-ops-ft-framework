@@ -113,7 +113,7 @@ def InterfaceIpConfig(**kwargs):
     elif vlan is not None:
         command = "interface vlan" + str(vlan)
     elif lag is not None:
-        command = "interface lag" + str(lag)
+        command = "interface lag " + str(lag)
     returnStructure = deviceObj.DeviceInteract(command=command)
     retCode = returnStructure['returnCode']
     overallBuffer.append(returnStructure['buffer'])
