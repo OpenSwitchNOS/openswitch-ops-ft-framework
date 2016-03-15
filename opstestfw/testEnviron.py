@@ -127,7 +127,7 @@ class testEnviron ():
             # Means we need to create the results structure
             # currentDir = GetCurrentDirectory()
             ts = time.time()
-            timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%b-%d'
+            timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%Y%b%d'
                                                                      '_%H%M%S')
 
             if os.path.isdir("/tmp/opsTest-results") is False:
@@ -136,12 +136,16 @@ class testEnviron ():
                 except:
                     print "Failed to create /tmp/opsTest-results"
             baseResultsDir = "/tmp/opsTest-results"
+
+            filepath = os.path.abspath(inspect.stack()[2][1])
+            filename = os.path.splitext(os.path.basename(filepath))[0]
+
             self.ResultsDirectory['resultsDir'] = baseResultsDir + "/" \
-                + timeStamp + "/"
+                + filename + "-" + timeStamp + "/"
             gbldata.ResultsDirectory = baseResultsDir + "/"\
-                + timeStamp + "/"
+                + filename + "-" + timeStamp + "/"
             self.ResultsDirectory['rtlDir'] = baseResultsDir + "/"\
-                + timeStamp + "/RTL/."
+                + filename + "-" + timeStamp + "/RTL/."
         else:
             baseResultsDir = self.resultDir
             self.ResultsDirectory['resultsDir'] = baseResultsDir + "/"
@@ -223,7 +227,9 @@ class testEnviron ():
                             "test ")
 
         LogOutput('info', "", datastamp=True)
-        LogOutput('info', "Physical Topology is: " + str(self.rsvnId))
+        LogOutput('info', "\nPhysical Topology is: " + str(self.rsvnId))
+        LogOutput('info', "Test result directory is: " +
+                  self.ResultsDirectory['resultsDir'])
 
         # Read in the Topology
         if self.rsvnId == "virtual":
