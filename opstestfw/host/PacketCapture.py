@@ -124,7 +124,7 @@ class PacketCapture():
             LogOutput(
                 'error',
                 "Failed to transfer capture file to results directory")
-            returnCls = returnStruct(
+            returnCls = opstestfw.returnStruct(
                 returnCode=returnCode,
                 buffer=overallBuffer)
             return returnCls
