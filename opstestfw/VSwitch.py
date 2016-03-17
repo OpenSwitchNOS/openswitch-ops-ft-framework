@@ -75,6 +75,7 @@ class VSwitch(Device):
                            'Password:',
                            'switch:~[#$]\s*$',
                            '\(yes/no\)?',
+                           '\[y/n\]?',
                            pexpect.EOF,
                            pexpect.TIMEOUT]
         # Device Contexts
@@ -445,13 +446,23 @@ class VSwitch(Device):
                 self.expectHndl.send("\r")
                 break
             elif index == 13:
+                # y/n prompt
+                bailflag = 1
+                connectionBuffer.append(self.expectHndl.before)
+                if yesPromptResp == "yes":
+                    self.expectHndl.send("y")
+                else:
+                    self.expectHndl.send("n")
+                self.expectHndl.send("\r")
+                break
+            elif index == 14:
                 # got EOF
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
                 break
-            elif index == 14:
+            elif index == 15:
                 # got Timeout
                 bailflag = 1
                 connectionBuffer.append(self.expectHndl.before)
