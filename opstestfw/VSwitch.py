@@ -461,6 +461,7 @@ class VSwitch(Device):
                 connectionBuffer.append(self.expectHndl.before)
                 LogOutput('error', "connection closed to console")
                 returnCode = 1
+                exit(105)
                 break
             elif index == 15:
                 # got Timeout

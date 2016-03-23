@@ -321,6 +321,7 @@ class VHost(Device):
                 connectionBuffer.append(self.expectHndl.before)
                 opstestfw.LogOutput('error', "reached EOF")
                 returnCode = 1
+                exit(105)
             elif index == 9:
                 # got Timeout
                 bailflag = 1
