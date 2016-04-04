@@ -723,14 +723,17 @@ def LogOutput(dest, message, **kwargs):
                 i -= 1
                 if i > 0:
                     stackstring += "->"
-                    # Inspect the stacktrace to get the called module
-                    # Module trace needs to be dumped to logging module
-                    stackTrace = inspect.stack()
-                    module = inspect.getmodule(stackTrace[1][0])
-                    len1 = len(stackTrace)
-                    if len1 >= 4:
-                        if module is None:
-                            modulename = module.__name__
+                    try:
+                        # Inspect the stacktrace to get the called module
+                        # Module trace needs to be dumped to logging module
+                        stackTrace = inspect.stack()
+                        module = inspect.getmodule(stackTrace[1][0])
+                        len1 = len(stackTrace)
+                        if len1 >= 4:
+                            if module is None:
+                                modulename = module.__name__
+                    except:
+                        modulename = "[]"
 
             if logType == 'info' or logType == 'error':
                 print("%s %-6s\t%s" % (timestring, logType, msgLine))
