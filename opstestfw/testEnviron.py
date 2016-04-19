@@ -707,46 +707,13 @@ def LogOutput(dest, message, **kwargs):
         for msgLine in messageSpl:
             if timestampSent:
                 print('%s' % msgLine)
-            else:
-                # examine the callstack to print out.
-                mystack = inspect.stack()
-                mystacklen = len(mystack)
-            stackstring = ""
-            i = mystacklen - 1
-            while i > 0:
-                curMod = mystack[i][3]
-                if curMod == "<module>":
-                    # Need to skip module
-                    i -= 1
-                    continue
-                stackstring += curMod
-                i -= 1
-                if i > 0:
-                    stackstring += "->"
-                    try:
-                        # Inspect the stacktrace to get the called module
-                        # Module trace needs to be dumped to logging module
-                        stackTrace = inspect.stack()
-                        module = inspect.getmodule(stackTrace[1][0])
-                        len1 = len(stackTrace)
-                        if len1 >= 4:
-                            if module is None:
-                                modulename = module.__name__
-                    except:
-                        modulename = "[]"
-
             if logType == 'info' or logType == 'error':
                 print("%s %-6s\t%s" % (timestring, logType, msgLine))
     # Logging messages to Log files based on severity
-    try:
-        if modulename != "tcAction":
-            message = "::%-30s\t%s" % (modulename, message)
-    except NameError:
-        # blankString = ""
-        if logType == 'info':
-            message = "%s" % (message)
-        else:
-            message = "::%s" % (message)
+    if logType == 'info':
+        message = "%s" % (message)
+    else:
+        message = "::%s" % (message)
     LogOutputToFile(opstestfw.gbldata.ResultsDirectory, dest, message)
 
 
