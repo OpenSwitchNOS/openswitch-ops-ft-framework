@@ -249,7 +249,7 @@ class Topology (OpsVsiTest):
         for curSwitch in switches:
             xmlAddRet = self.VirtualXMLDeviceAdd(
                 name=str(curSwitch.container_name))
-            logDevRe = re.match("^\d+-(\S+)", curSwitch.container_name)
+            logDevRe = re.match("^\d+_(\S+)", curSwitch.container_name)
             if logDevRe:
                 logicalDevice = logDevRe.group(1)
                 self.topo[logicalDevice] = curSwitch.container_name
@@ -260,7 +260,7 @@ class Topology (OpsVsiTest):
         for curHost in hosts:
             xmlAddRet =\
                 self.VirtualXMLDeviceAdd(name=str(curHost.container_name))
-            logDevRe = re.match("^\d+-(\S+)", curHost.container_name)
+            logDevRe = re.match("^\d+_(\S+)", curHost.container_name)
             if logDevRe:
                 logicalDevice = logDevRe.group(1)
                 self.topo[logicalDevice] = curHost.container_name
