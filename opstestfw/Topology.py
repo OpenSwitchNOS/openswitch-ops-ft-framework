@@ -85,7 +85,7 @@ class Topology (OpsVsiTest):
         self.topoDict = kwargs.get('topoDict', None)
         self.runEnv = kwargs.get('runEnv', None)
         self.defaultSwitchContext = kwargs.get('defSwitchContext', "linux")
-        self.hostimage = 'ubuntu:latest'
+        self.hostimage = 'openswitch/ubuntutest:latest'
         self.topoType = 'virtual'
         # Initialize Structures
         self.LOGICAL_TOPOLOGY = ""
@@ -950,7 +950,7 @@ class Topology (OpsVsiTest):
             #print curTag
             wrkston_name = curTag.get('name')
             # Default to default image
-            self.topo_wrkston_image_dict[wrkston_name] = "ubuntu:latest"
+            self.topo_wrkston_image_dict[wrkston_name] = "openswitch/ubuntutest:latest"
             # =" + wrkston_name
             attribute_list = curTag.findall('attribute')
             # print "attrList "
