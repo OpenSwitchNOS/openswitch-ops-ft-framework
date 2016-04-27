@@ -90,7 +90,7 @@ def ShowVlan(**kwargs):
     opstestfw.LogOutput('debug', "Buffer: " + temporaryBuffer)
     if len(keys) == 1:
         keys = keys[0]
-        rgx = r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([\w\d ,]+)?'
+        rgx = r'(\d+)\s+(\w+)\s+(\w+)\s+([\w_]+)\s*(\(\w+\))?\s*([0-9\- ,]+)?'
         vlans = \
             re.findall(rgx, temporaryBuffer)
 

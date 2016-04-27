@@ -332,6 +332,7 @@ class VSwitch(Device):
         errorCheck = kwargs.get('errorCheck', True)
         ErrorFlag = kwargs.get('CheckError')
         yesPromptResp = kwargs.get('yesPrompt', "yes")
+        timeout = kwargs.get('timeout', 120)
 
         # Local variables
         bailflag = 0
@@ -360,7 +361,7 @@ class VSwitch(Device):
 
         while bailflag == 0:
             index = self.expectHndl.expect(self.expectList,
-                                           timeout=120)
+                                           timeout=timeout)
             LogOutput('debug', "Index ->" + str(index))
             if index == 0:
                 # Need to send login string
@@ -505,6 +506,10 @@ class VSwitch(Device):
                 returnCode = errCheckRetStr['returnCode']
                 LogOutput('debug', "Doing error check for Onie prompt")
 
+        # Special Logic for Segmentation Faults
+        if returnCode == 14:
+            assert False, "Received a Segmentation Fault during sending cmd " +\
+                str(command)
         # Return dictionary
         #LogOutput('debug', "Sent and received from "
         #          "device: \n" + self.santString + "\n")
@@ -652,6 +657,9 @@ class VSwitch(Device):
                 LogOutput("error",
                           "Detected--->" + Error_Code13.group(1))
                 returnCode = 13
+            Error_Code14 = re.match("Segmentation fault", line, re.I)
+            if Error_Code14:
+                returnCode = 14
 
 
         returnDict['returnCode'] = returnCode
