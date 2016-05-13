@@ -91,14 +91,13 @@ class Topology (OpsVsiTest):
         self.LOGICAL_TOPOLOGY = ""
         self.TOPOLOGY = ""
         self.tuntap_failure = False
+        self.switchd_failure = False
+        self.cur_hw_failure = False
 
         self.topo = dict()
         self.deviceObj = dict()
         self.id = str(os.getpid())
-        self.testdir = "/tmp/openswitch-test/" + str(self.id)
-        if os.path.exists(self.testdir) is True:
-            shutil.rmtree(self.testdir)
-        os.makedirs(self.testdir)
+        self.testdir = kwargs.get('resultsDir', None)
         envVsiDebug = os.environ.get('VSIDEBUG', None)
         if envVsiDebug is None:
             self.setLogLevel('info')
@@ -241,6 +240,18 @@ class Topology (OpsVsiTest):
                                        link=OpsVsiLink,
                                        controller=None,
                                        build=True)
+
+        # Check for docker bringup failures and update the flags
+        for switch in self.net.switches:
+            if isinstance(switch, VsiOpenSwitch):
+                if switch.cur_hw_failed:
+                    self.cur_hw_failure = True
+                elif switch.switchd_failed:
+                    self.switchd_failure = True
+                if self.switchd_failure or self.cur_hw_failure:
+                    self.printSyslogOnFailure()
+                    break
+
         print ""
         # Now we need to query what we have.... to put in the topology
         # We will not formally have mapping, so we will create the mapping
