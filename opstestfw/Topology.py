@@ -249,7 +249,6 @@ class Topology (OpsVsiTest):
                 elif switch.switchd_failed:
                     self.switchd_failure = True
                 if self.switchd_failure or self.cur_hw_failure:
-                    self.printSyslogOnFailure()
                     break
 
         print ""
@@ -417,14 +416,8 @@ class Topology (OpsVsiTest):
         for switch in self.net.switches:
             if isinstance(switch, VsiOpenSwitch) and switch.tuntap_failed:
                 self.tuntap_failure = True
-                self.printSyslogOnFailure()
+                switch.get_syslog_on_failure()
                 break
-
-    def printSyslogOnFailure(self):
-        tail_syslog_cmd = ['tail', '-n', '200', '/var/log/syslog']
-        tail_cmd = Popen(tail_syslog_cmd, stdout=PIPE)
-        out = tail_cmd.communicate()[0]
-        print "Last 200 lines of /var/log/syslog :\n" + str(out)
 
     def VirtualLinkModifyStatus(self, **kwargs):
         """
