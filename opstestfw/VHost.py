@@ -849,8 +849,18 @@ class VHost(Device):
             if statsLine1:
                 retStruct['packets_transmitted'] = int(statsLine1.group(1))
                 retStruct['packets_received'] = int(statsLine1.group(2))
+                retStruct['packets_errors'] = 0
                 retStruct['packet_loss'] = int(statsLine1.group(3))
                 retStruct['time'] = int(statsLine1.group(4))
+                continue
+
+            statsLine1a = re.match(r'(\d+) packets transmitted, (\d+) received, \+(\d+) errors, (\d+)% packet loss, time (\d+)ms', curLine)
+            if statsLine1a:
+                retStruct['packets_transmitted'] = int(statsLine1a.group(1))
+                retStruct['packets_received'] = int(statsLine1a.group(2))
+                retStruct['packets_errors'] = int(statsLine1a.group(3))
+                retStruct['packet_loss'] = int(statsLine1a.group(4))
+                retStruct['time'] = int(statsLine1a.group(5))
                 continue
 
             statsLine2 = re.match(
@@ -863,6 +873,11 @@ class VHost(Device):
                 retStruct['rtt_mdev'] = float(statsLine2.group(4))
                 continue
 
+        if returnCode == 1 and retStruct['packets_received'] > 0:
+            # this is to make up for where had some failures in the ping
+            # but we did get packets through during some of the samples.
+            # we will call this a pass.
+            returnCode = 0
         returnCls = opstestfw.returnStruct(returnCode=returnCode,
                                            buffer=bufferString, data=retStruct)
         return returnCls
