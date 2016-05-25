@@ -811,7 +811,11 @@ class VHost(Device):
 
         if returnCode == 0:
             # Send the command
-            retDevInt = self.DeviceInteract(command=command)
+            ping_timeout = 45
+            if packetCount > 30:
+                ping_timeout = packetCount + 30
+            retDevInt = self.DeviceInteract(command=command,
+                                            timeout=ping_timeout)
             retCode = retDevInt.get('returnCode')
             retBuff = retDevInt.get('buffer')
             overallBuffer.append(retBuff)
