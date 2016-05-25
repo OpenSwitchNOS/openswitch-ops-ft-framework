@@ -56,8 +56,20 @@ class testEnviron ():
         # We should have a topoObj by now
         self.topoObj.CreateDeviceObjects()
 
-        # Tuntap failure check
+        # Check for any docker bringup failures
         if self.rsvnId == 'virtual':
+            if self.topoObj.cur_hw_failure:
+                LogOutput('error', "cur_hw was not set to 1. "
+                                   "Check logs folder : "
+                                   + self.ResultsDirectory['resultsDir'])
+                self.topoObj.terminate_nodes()
+                pytest.fail("cur_hw was not set to 1")
+            if self.topoObj.switchd_failure:
+                LogOutput('error', "Switchd failed to startup. "
+                                   "Check the logs folder : "
+                                   + self.ResultsDirectory['resultsDir'])
+                self.topoObj.terminate_nodes()
+                pytest.fail("Switchd failed to startup")
             if self.topoObj.tuntap_failure:
                 self.topoObj.terminate_nodes()
                 pytest.fail("Failure adding tuntap interfaces")
@@ -238,7 +250,8 @@ class testEnviron ():
                       "specified in the test case topoDict structure")
             # Create a topology object
             self.topoObj = Topology(topoDict=self.topoDict, runEnv=self,
-                                    defSwitchContext=self.defaultSwitchContext)
+                                    defSwitchContext=self.defaultSwitchContext,
+                                    resultsDir=self.ResultsDirectory['resultsDir'])
 
         elif str.isdigit(self.rsvnId) is True:
             self.topoType = "physical"

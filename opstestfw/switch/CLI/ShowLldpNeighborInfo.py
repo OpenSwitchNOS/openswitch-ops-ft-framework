@@ -93,7 +93,7 @@ def ShowLldpNeighborInfo(**kwargs):
             globalStatsDict['Total_Neighbor_Entries_Dropped'] = ""
             globalStatsDict['Total_Neighbor_Entries_Aged-out'] = ""
             for line in bufferSplit:
-                portLine = re.match(r"^Port\s+:\s*([0-9-]+)\s*$", line)
+                portLine = re.match("^Port\s+:\s*(\d{1,2}-\d{1}|\d+)\s*$", line)
                 if portLine:
                     curPort = portLine.group(1)
                     portDict[curPort] = dict()
