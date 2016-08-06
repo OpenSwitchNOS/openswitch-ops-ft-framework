@@ -255,26 +255,11 @@ class Topology (OpsVsiTest):
         # Now we need to query what we have.... to put in the topology
         # We will not formally have mapping, so we will create the mapping
         # array here.
-        switches = self.net.switches
-        for curSwitch in switches:
-            xmlAddRet = self.VirtualXMLDeviceAdd(
-                name=str(curSwitch.container_name))
-            logDevRe = re.match("^\d+_(\S+)", curSwitch.container_name)
-            if logDevRe:
-                logicalDevice = logDevRe.group(1)
-                self.topo[logicalDevice] = curSwitch.container_name
-                self.topo[curSwitch.container_name] = logicalDevice
-
-        hosts = self.net.hosts
-        # hosts
-        for curHost in hosts:
-            xmlAddRet =\
-                self.VirtualXMLDeviceAdd(name=str(curHost.container_name))
-            logDevRe = re.match("^\d+_(\S+)", curHost.container_name)
-            if logDevRe:
-                logicalDevice = logDevRe.group(1)
-                self.topo[logicalDevice] = curHost.container_name
-                self.topo[curHost.container_name] = logicalDevice
+        for curDevice in self.net.switches + self.net.hosts:
+            container_name = containerToName(curDevice.container)
+            xmlAddRet = self.VirtualXMLDeviceAdd(name=container_name)
+            self.topo[curDevice.container.device] = container_name
+            self.topo[container_name] = curDevice.container.device
 
         # Query Links and update the XML
         topoLinkMininet = self.mntopo.iterLinks(withKeys=True, withInfo=True)
@@ -459,12 +444,7 @@ class Topology (OpsVsiTest):
         opstestfw.LogOutput('info', "Restarting Virtual Switch: " + switch)
         switches = self.mininetGlobal.net.switches
 
-        for curSwitch in switches:
-            if switch == curSwitch.container_name:
-                switchObj = curSwitch
-                # print switchObj
-                break
-
+        switchObj = self.searchNetNodes(switch)
         mylogicalDev = self.topo[switch]
 
         # cleanup the old container
@@ -506,18 +486,10 @@ class Topology (OpsVsiTest):
         :type :name : string
 
         """
-        switches = self.net.switches
-        hosts = self.net.hosts
-
-        for curSwitch in switches:
-            if curSwitch.container_name == name:
-                return(curSwitch)
-
-        for curHost in hosts:
-            if curHost.container_name == name:
-                return(curHost)
-
-        return(None)
+        for curDevice in self.net.switches + self.net.hosts:
+            if containerToName(curDevice.container) == name:
+                return curDevice
+        return None
 
     def terminate_nodes(self):
         """
